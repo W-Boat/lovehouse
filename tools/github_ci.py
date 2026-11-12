@@ -29,4 +29,4 @@ elif args.action=='logs':
    text=urllib.request.urlopen(req,timeout=30).read().decode('utf8','replace');Path('../../ci-'+j['name']+'.log').write_text(text,encoding='utf8');print('Saved failed job log:',j['name'])
 else:
  for a in api('/actions/runs/'+args.run+'/artifacts')['artifacts']:
-  target=Path('../../outputs')/(a['name']+'.zip');req=urllib.request.Request(a['archive_download_url'],headers=headers);target.write_bytes(urllib.request.urlopen(req,timeout=120).read());print('Saved '+target.name)
+  target=Path('../../outputs')/(a['name']+'.zip');req=urllib.request.Request(a['archive_download_url']+'?fresh='+str(time.time()),headers=headers);target.write_bytes(urllib.request.urlopen(req,timeout=120).read());print('Saved '+target.name)

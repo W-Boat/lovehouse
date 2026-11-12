@@ -4,15 +4,16 @@ from PIL import Image
 from fontTools.ttLib import TTFont
 from fontTools import subset
 root=Path(__file__).resolve().parents[1]
-assets=root/'public/assets';source=root/'tools/art-source';source.mkdir(exist_ok=True)
+assets=root/'public/assets';art_stamp=assets/'art-version.txt';rebuild_all=not art_stamp.exists() or art_stamp.read_text()!='768-v2';source=root/'tools/art-source';source.mkdir(exist_ok=True)
 for p in list(assets.glob('*.png')):
  dest=source/p.name
  if not dest.exists():p.replace(dest)
 for p in source.glob('*.png'):
  dest=assets/(p.stem+'.webp')
- if not dest.exists() or dest.stat().st_size<32 or dest.stat().st_mtime<p.stat().st_mtime:
+ if rebuild_all or not dest.exists() or dest.stat().st_size<32 or dest.stat().st_mtime<p.stat().st_mtime:
   im=Image.open(p).convert('RGBA');im.thumbnail((1152,1152) if 'actions' in p.stem or p.stem in ['hero','characters','sitting','gifts','props','icons-v2','world-actors','wheel-actors'] else (768,512),Image.Resampling.NEAREST)
   im.save(dest,'WEBP',lossless=True,method=6)
+art_stamp.write_text('768-v2')
 if (source/'icons-v2.png').exists():
  im=Image.open(source/'icons-v2.png');w,h=im.size;icon=im.crop((w//2,h*3//4,w*3//4,h));icon.thumbnail((64,64),Image.Resampling.NEAREST);icon.save(assets/'favicon.webp','WEBP',lossless=True)
  icons=root/'src-tauri/icons';icons.mkdir(exist_ok=True);icon.resize((256,256),Image.Resampling.NEAREST).save(icons/'icon.ico',format='ICO',sizes=[(32,32),(64,64),(128,128),(256,256)])

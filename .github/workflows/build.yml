@@ -39,6 +39,7 @@ jobs:
             文案.md
             需替换内容.md
   windows:
+    needs: web
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +54,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri -> target
+          cache-on-failure: true
       - run: pip install pillow fonttools brotli
       - run: npm ci
       - run: npm run desktop:build

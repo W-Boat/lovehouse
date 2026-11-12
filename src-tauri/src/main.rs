@@ -10,7 +10,7 @@ fn main() {
         let mut window=tauri::WebviewWindowBuilder::new(app,"main",tauri::WebviewUrl::App("index.html".into())).title("生日小屋").inner_size(1280.0,800.0).min_inner_size(800.0,500.0);
         if writable { window=window.data_directory(portable.clone()); }
         let view=window.build()?;
-        if !writable { view.eval("window.addEventListener('DOMContentLoaded',()=>window.dispatchEvent(new CustomEvent('portable-readonly')))")?; }
+        if !writable { view.eval("window.__portableReadonly=true;window.dispatchEvent(new CustomEvent('portable-readonly'))")?; }
         Ok(())
     }).run(tauri::generate_context!()).expect("The birthday cottage could not open");
 }

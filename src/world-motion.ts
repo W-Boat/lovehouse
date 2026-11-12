@@ -9,7 +9,7 @@ export class WorldMotion{
  if(z==='station'){this.sun=s.add.circle(230,75,15,0xffdf9d,.8).setDepth(1);this.objects.push(this.sun);image(480,122,'train-0',190,72,1)}
  if(z==='aquarium'){for(let i=0;i<4;i++)image(160+i*105,90+i%2*40,'jelly-0',36,47,1);for(let i=0;i<5;i++)image(120+i*90,125,'fish-0',24,16,1)}
  if(z==='ferris'){image(320,78,'motion-wheel',300,300,1);for(let i=0;i<8;i++)image(320,78,'motion-cabin',33,38,2)}
- if(z==='room'){image(77,106,'flame-0',31,29,2);for(const x of [309,320,331])image(x,159,'flame-0',3,7,4)}
+ if(z==='room'){image(77,106,'flame-0',21,24,2);for(const x of [309,320,331])image(x,159,'flame-0',3,7,4)}
  if(z==='camp')image(400,149,'flame-0',44,40,2);
  if(z==='haunted')image(428,130,'motion-ghost',32,40,3);
  if(z==='magic')for(let i=0;i<3;i++)image(226+i*80,98+i%2*30,'motion-book',30,24,3);
