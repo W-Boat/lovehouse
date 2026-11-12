@@ -1,3 +1,4 @@
+import {isolateFurniture} from './atlas';
 import {WindowView} from './window-view';
 import {HandFormation} from './hand-formation';
 import {indoorZones,renderWindowWeather} from './window-weather';
@@ -42,7 +43,7 @@ export class Cottage extends Phaser.Scene {
   for(let index=0;index<names.length;index++){if(this.textures.exists(names[index]))continue;
    const row=Math.floor(index/cols),actualCols=source==='boy-actions'&&row===3?5:cols,col=index%cols;const left=Math.round(col*img.width/actualCols),top=Math.round(row*img.height/rows),width=Math.round((col+1)*img.width/actualCols)-left,height=Math.round((row+1)*img.height/rows)-top;
    const cell=document.createElement('canvas');cell.width=width;cell.height=height;const ctx=cell.getContext('2d')!;ctx.imageSmoothingEnabled=false;ctx.drawImage(img,left,top,width,height,0,0,width,height);
-   const pixels=ctx.getImageData(0,0,width,height).data;let x0=width,y0=height,x1=-1,y1=-1;
+   const picture=ctx.getImageData(0,0,width,height);if(source==='furniture'){isolateFurniture(picture.data,width,height);ctx.putImageData(picture,0,0)}const pixels=picture.data;let x0=width,y0=height,x1=-1,y1=-1;
    for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(pixels[(y*width+x)*4+3]>64){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}
    const trim=document.createElement('canvas');trim.width=Math.max(1,x1-x0+1);trim.height=Math.max(1,y1-y0+1);const target=trim.getContext('2d')!;target.imageSmoothingEnabled=false;if(x1>=x0)target.drawImage(cell,x0,y0,trim.width,trim.height,0,0,trim.width,trim.height);this.textures.addCanvas(names[index],trim);
   }

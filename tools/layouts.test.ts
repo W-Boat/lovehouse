@@ -1,3 +1,4 @@
+import {isolateFurniture} from '../src/atlas';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {furnishings} from '../src/layouts';
@@ -28,4 +29,9 @@ test('indoor rain and snow remain inside glass panes and clear removes particles
  }
  assert.equal(windowContains('room',320,55),false,'central mullion stays untouched');
  assert.equal(windowContains('room',320,300),false,'floor stays dry');
+});
+
+test('furniture slicing removes a neighboring rug strip without shifting the lamp',()=>{
+ const pixels=new Uint8ClampedArray(12*12*4);for(let y=2;y<10;y++)for(let x=2;x<6;x++)pixels[(y*12+x)*4+3]=255;for(let y=1;y<11;y++)pixels[(y*12+10)*4+3]=255;
+ isolateFurniture(pixels,12,12);for(let y=1;y<11;y++)assert.equal(pixels[(y*12+10)*4+3],0);for(let y=2;y<10;y++)for(let x=2;x<6;x++)assert.equal(pixels[(y*12+x)*4+3],255);
 });
