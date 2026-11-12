@@ -1,0 +1,21 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "file": "public/assets/station.png",
+      "prompt": "Use case: illustration-story. Asset type: cozy pixel RPG playable scene background, landscape 3:2. A tiny romantic mountain railway station at sunrise above a sea of clouds, warm peach gold sky, distant blue hills, no characters. Elevated straight-on 3/4 orthographic view, no perspective vanishing point. Upper third: small old train carriage to right, lantern and flowers to left, horizon and railway behind railing. Wooden bench at x 25 percent y 42 percent; paper airplane writing stand at x 70 percent y 43 percent. Lower half: broad EMPTY walkable warm brick platform covering x 12 to 88 percent, y 52 to 92 percent, bottom-center path entering. Cozy detailed crisp 16 bit pixel game illustration, matching birthday cottage game, tiny flowers at edges. No text no UI no watermark."
+    },
+    {
+      "file": "public/assets/postoffice.png",
+      "prompt": "Use case: illustration-story. Asset type: cozy pixel RPG playable scene background, landscape 3:2. A romantic little postal courtyard in a rainy seaside village, sheltered by warm amber awnings. Elevated straight-on 3/4 orthographic view. Upper third has quaint postal facade, pale teal wooden door, glowing window, hanging wisteria, blank sign with envelope symbol only; red mailbox at 72 percent x 42 percent y; wooden cushioned bench at 25 percent x 42 percent y. Lower half broad EMPTY walkable rose and slate cobblestone courtyard covering x 12 to 88 percent y 52 to 92 percent, path exiting bottom center. Rain droplets and wet reflections at edges only, central floor unobstructed. Cozy crisp detailed 16-bit pixel art, lavender blue dusk with warm lamps, matching birthday cottage RPG. No people no lettering no UI no watermark."
+    },
+    {
+      "file": "public/assets/aquarium.png",
+      "prompt": "Use case: illustration-story. Asset type: cozy birthday pixel RPG playable background, landscape 3:2. Romantic tiny seaside aquarium interior, elevated straight-on 3/4 orthographic view. Huge panoramic glass aquarium occupies UPPER HALF with glowing pink and blue jellyfish, tiny fish silhouettes, teal water, warm wooden trim and golden lamps. Cushioned wooden bench centered x25% y43%, small brass listening shell on pedestal x73% y43%. Lower half is an EMPTY continuous walkable wood floor covering x12-88%, y52-92%, doorway path bottom center. Cozy detailed crisp 16 bit pixel illustration matching birthday cottage game. NO people, NO text, NO UI, NO watermark. All furniture at rear, no objects in lower half."
+    },
+    {
+      "file": "public/assets/camp.png",
+      "prompt": "Use case: illustration-story. Asset type: cozy birthday pixel RPG playable background landscape 3:2. Intimate romantic forest hilltop camping clearing under stars, elevated straight-on 3/4 orthographic view. Upper third: cream tent to right with pink blankets, dark pine silhouettes, string lanterns, distant mountains. Cushioned wooden log bench at x25% y43%; small stone-ring campfire at x65% y43%, beside marshmallow basket. Lower HALF mostly empty broad continuous warm ochre earth clearing covering x12-88% y52-92%, path exits bottom center, flowers along boundary only. Cozy detailed crisp 16 bit pixel illustration matching birthday cottage game. NO characters no text no UI no watermark. No furniture or obstacle in lower half."
+    }
+  ]
+}

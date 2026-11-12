@@ -1,0 +1,37 @@
+export type Spark={x:number;y:number;vx:number;vy:number;life:number;total:number;color:string;size:number};
+export function pixelBurst(x:number,y:number,color:string,random= Math.random):Spark[]{return Array.from({length:68},(_,i)=>{const angle=i/68*Math.PI*2,speed=38+random()*64,life=1.6+random()*.8;return{x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life,total:life,color,size:i%4===0?3:2}})}
+type CeremonyOptions={cake:CanvasImageSource;backdrop:CanvasImageSource;girl:CanvasImageSource;boy:CanvasImageSource;name:string;reduced:boolean;onBlown:()=>void;onDone:()=>void;onCancel:()=>void};
+type Rocket={x:number;y:number;target:number;color:string;vx:number};
+export class PixelCeremony {
+ private ctx:CanvasRenderingContext2D;private canvas:HTMLCanvasElement;private stage:'wish'|'smoke'|'fireworks'='wish';private time=0;private stageTime=0;private last=0;private raf=0;private particles:Spark[]=[];private rockets:Rocket[]=[];private nextRocket=.1;private count=0;private stopped=false;private root:HTMLElement;
+ private colors=['#f4cb78','#efafbd','#a9c6e8','#c1d7a4','#f4e4af'];
+ constructor(private options:CeremonyOptions){
+  this.root=document.getElementById('ceremony')!;this.canvas=document.getElementById('ceremony-canvas') as HTMLCanvasElement;this.ctx=this.canvas.getContext('2d')!;document.getElementById('game-frame')!.inert=true;this.root.classList.remove('hidden');this.root.dataset.stage='wish';
+  document.getElementById('ceremony-title')!.textContent='闭上眼睛，许一个愿吧';document.getElementById('ceremony-caption')!.textContent='今晚的烛光，只为你亮着。';
+  const button=document.getElementById('ceremony-action') as HTMLButtonElement;button.textContent='许好了，吹蜡烛';button.disabled=false;button.onclick=()=>this.blow();document.getElementById('ceremony-close')!.onclick=()=>{if(this.stopped)return;if(this.stage==='wish'){this.stop();options.onCancel()}else this.finish()};button.focus();this.raf=requestAnimationFrame(this.frame);
+ }
+ private blow(){if(this.stopped||this.stage!=='wish')return;this.stage='smoke';this.stageTime=0;this.root.dataset.stage='smoke';const b=document.getElementById('ceremony-action') as HTMLButtonElement;b.disabled=true;b.textContent='让愿望慢慢升起来…';document.getElementById('ceremony-caption')!.textContent='不用说出来，愿望已经好好收下了。';this.options.onBlown()}
+ private beginFireworks(){this.stage='fireworks';this.stageTime=0;this.root.dataset.stage='fireworks';document.getElementById('ceremony-title')!.textContent=`生日快乐，${this.options.name}。`;document.getElementById('ceremony-caption')!.textContent='愿新的一岁，抬头有光，身边有人。';const b=document.getElementById('ceremony-action') as HTMLButtonElement;b.disabled=false;b.textContent='收下这份祝福';b.onclick=()=>this.finish();if(!this.options.reduced)this.particles.push(...pixelBurst(320,this.canvas.height*.36,this.colors[0]))}
+ private finish(){if(this.stopped)return;this.stop();this.options.onDone()}
+ stop(){this.stopped=true;cancelAnimationFrame(this.raf);this.root.classList.add('hidden');document.getElementById('game-frame')!.inert=false;this.particles=[];this.rockets=[]}
+ private disk(x:number,y:number,r:number,color:string,alpha:number){this.ctx.globalAlpha=alpha;this.ctx.fillStyle=color;for(let row=-r;row<=r;row+=3){const width=Math.floor(Math.sqrt(Math.max(0,r*r-row*row))/3)*3;this.ctx.fillRect(Math.round(x-width),Math.round(y+row),width*2,3)}this.ctx.globalAlpha=1}
+ private candles(){const h=Math.round(Math.min(245,this.canvas.height*.63)),w=Math.round(h*1.125),x=Math.round((640-w)/2),y=Math.round(this.canvas.height*.24);this.ctx.drawImage(this.options.cake,320,190,900,800,x,y,w,h);return[594,681,769,856,943].map(px=>({x:x+(px-320)/900*w,y:y+(218-190)/800*h}))}
+ private drawWish(){
+  const ctx=this.ctx,height=this.canvas.height;ctx.fillStyle='#181623';ctx.fillRect(0,0,640,height);for(let i=0;i<44;i++){ctx.fillStyle=i%3===0?'#74604b':'#403443';ctx.fillRect((i*137+23)%640,(i*67+19)%height,1,1)}
+  this.disk(320,height*.58,130,'#e2a859',.035);const flames=this.candles();
+  for(let i=0;i<flames.length;i++){const p=flames[i];if(this.stage==='wish'||this.stageTime<.18){const flicker=this.options.reduced?0:Math.floor(Math.sin(this.time*9+i*2)*1.5),scale=this.stage==='smoke'?Math.max(0,1-this.stageTime/.18):1;this.disk(p.x,p.y-8,18,'#e8aa4d',.07);ctx.fillStyle='#ce6b32';ctx.fillRect(Math.round(p.x-3),Math.round(p.y-10*scale+flicker),6,Math.round(10*scale));ctx.fillStyle='#ffd27b';ctx.fillRect(Math.round(p.x-2),Math.round(p.y-14*scale+flicker),4,Math.round(12*scale));ctx.fillStyle='#fff0c0';ctx.fillRect(Math.round(p.x-1),Math.round(p.y-7*scale),2,Math.round(7*scale))}
+   if(this.stage==='smoke'&&this.stageTime>.15){const rise=this.options.reduced?10:this.stageTime*23;for(let j=0;j<4;j++){ctx.fillStyle='#a8a5b5';ctx.globalAlpha=Math.max(0,.5-this.stageTime*.28-j*.06);ctx.fillRect(Math.round(p.x+Math.sin(this.time*2+i+j)*3),Math.round(p.y-rise-j*4),2+j%2,3)}ctx.globalAlpha=1}
+  }
+ }
+ private drawFireworks(dt:number){
+  const ctx=this.ctx,h=this.canvas.height;ctx.fillStyle='#101b35';ctx.fillRect(0,0,640,h);ctx.globalAlpha=.65;ctx.drawImage(this.options.backdrop,0,0,1536,700,0,0,640,h);ctx.globalAlpha=1;ctx.fillStyle='#11192d';ctx.globalAlpha=.25;ctx.fillRect(0,0,640,h);ctx.globalAlpha=1;
+  if(this.options.reduced){for(let k=0;k<5;k++){const x=90+k*114,y=90+(k%2)*55;ctx.fillStyle=this.colors[k];for(let i=0;i<16;i++){const a=i/16*Math.PI*2;ctx.fillRect(Math.round(x+Math.cos(a)*30),Math.round(y+Math.sin(a)*30),3,3)}}}
+  else{
+   if(this.stageTime>=this.nextRocket&&this.stageTime<6.3){const x=75+Math.random()*490;this.rockets.push({x,y:h-15,target:55+Math.random()*Math.max(30,h*.45-55),color:this.colors[this.count++%5],vx:Math.random()*12-6});this.nextRocket=this.stageTime+.32+Math.random()*.18}
+   for(let i=this.rockets.length-1;i>=0;i--){const r=this.rockets[i];r.y-=160*dt;r.x+=r.vx*dt;ctx.fillStyle='#f4db9b';ctx.fillRect(Math.round(r.x),Math.round(r.y),2,5);ctx.fillStyle='#bb8957';ctx.fillRect(Math.round(r.x),Math.round(r.y+8),1,3);if(r.y<=r.target){this.particles.push(...pixelBurst(r.x,r.y,r.color));this.rockets.splice(i,1)}}
+   for(let i=this.particles.length-1;i>=0;i--){const p=this.particles[i];p.life-=dt;if(p.life<=0){this.particles.splice(i,1);continue}p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=27*dt;p.vx*=Math.exp(-.38*dt);ctx.fillStyle=p.color;ctx.globalAlpha=Math.min(1,p.life*.8);ctx.fillRect(Math.round(p.x),Math.round(p.y),p.size,p.size);if(p.life>1){ctx.globalAlpha=.16;ctx.fillRect(Math.round(p.x-p.vx*.035),Math.round(p.y-p.vy*.035),2,2)}}ctx.globalAlpha=1;
+  }
+  ctx.fillStyle='#0e1828';ctx.fillRect(0,h-28,640,28);ctx.fillStyle='#554b43';ctx.fillRect(0,h-31,640,3);for(let i=0;i<16;i++)ctx.fillRect(i*44,h-31,3,31);ctx.drawImage(this.options.girl,291,h-62,23,37);ctx.drawImage(this.options.boy,320,h-62,24,37);
+ }
+ private frame=(now:number)=>{if(this.stopped)return;const dt=this.last?Math.min(.04,Math.max(0,(now-this.last)/1000)):0;this.last=now;this.time+=dt;this.stageTime+=dt;const app=document.getElementById('app')!;const height=Math.max(240,Math.round(640*app.offsetHeight/app.offsetWidth));if(this.canvas.width!==640||this.canvas.height!==height){this.canvas.width=640;this.canvas.height=height}this.ctx.imageSmoothingEnabled=false;if(this.stage==='fireworks')this.drawFireworks(dt);else this.drawWish();if(this.stage==='smoke'&&this.stageTime>1.25)this.beginFireworks();if(this.stage==='fireworks'&&this.stageTime>(this.options.reduced?2.3:8.5)){this.finish();return}this.raf=requestAnimationFrame(this.frame)};
+}

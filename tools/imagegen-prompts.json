@@ -1,0 +1,15 @@
+{
+  "tool": "image_gen.imagegen",
+  "note": "以下保留素材生成简述；所有素材均在本次会话实际生成。原图保留于 workspace/generated_images。",
+  "cottage": "Original 16-bit pixel birthday cottage. 3:2 orthographic cutaway, honey wood cream walls chestnut furniture blue-violet night, moon window, fireplace, writing desk, sofa, snack table, central birthday cake, gift cabinet, music corner, sealed mystery pedestal, wide empty walking lanes. No people, text or UI.",
+  "coast": "Original crisp pixel-art coastal garden at blue hour, 3:2 top-down. Floral two-seat swing at upper center, large oak and bench on left, moonlit ocean on right, cottage door lower left, broad connected sandy paths, warm fairy lights. No people, text, UI.",
+  "characters": "Transparent 4 columns x 2 rows original pixel sprite sheet. Girl first row: chestnut long hair, cream blouse, rose pinafore. Boy second row: dark hair, cream shirt, green vest. Four columns down, left, up, right. Full-body equal cells with padding, no text.",
+  "gifts": "Transparent 4 columns x 3 rows original 16-bit inventory atlas: decorative moon film, keychain, chestnut bowl, capsule headphones; fitness wristband, cotton doll, chocolates, embossed envelope; notes, cat-ear knitted hat, sealed lilac gift, sealed navy mystery box. No text or revealed mystery contents.",
+  "cottageAfter": "Imagegen edit of original cottage: extinguish only the cake's candle flames and add tiny smoke, preserve rest of image including lit fireplace and string lights. No text, people or UI.",
+  "forest": "Original 16-bit 3:2 top-down firefly clearing with central path, picnic blanket left, fountain above, old oak bench right, lantern rope, firefly jar and wide empty walking lanes. No people/text/UI.",
+  "pier": "Original 16-bit 3:2 top-down moonlit pier with rectangular open wooden deck, bottom-left connecting walkway, empty bench, telescope, bottle and surrounding ocean. No people/text/UI.",
+  "props": "Transparent 4x2 original pixel atlas: paper lantern, firefly jar, copper wind chime, telescope; two-cup teapot tray, shell, blue note bottle, blank signpost.",
+  "propsTransparencyRepair": "Imagegen edit: preserve all objects and cell positions; remove cloudy translucent background and grid borders; empty margins and corners must be fully transparent alpha=0.",
+  "hero": "Reference 17928.jpg: ash brown shoulder-length hair, heavy eye-covering bangs, blue-white vertical striped loose shirt, cream braided cross-body cat bag. True transparent 4x4 pixel atlas: idle/down-left-up-right; step A same four directions; step B same four directions; front/side portraits, pink round suitcase, cat bag. Only the controllable girl.",
+  "birthdayCake": "Original transparent 3:2 pixel two-tier strawberry cake and lace table, five unlit candle sticks in a horizontal row. Imagegen edit requested removal of diffuse outside glow; game draws square flames and smoke at source candle coordinates."
+}

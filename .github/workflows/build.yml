@@ -1,0 +1,66 @@
+name: Lovehouse builds
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow fonttools brotli
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx vite build --mode e2e
+      - run: npm run test:e2e
+        env:
+          CI: 'true'
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lovehouse-web-and-checks
+          path: |
+            dist
+            playwright-report
+            test-results
+            docs
+            文案.md
+            需替换内容.md
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+      - run: pip install pillow fonttools brotli
+      - run: npm ci
+      - run: npm run desktop:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lovehouse-windows-x64-portable
+          path: |
+            src-tauri/target/release/lovehouse.exe
+            docs/Windows便携版.md
+            文案.md
+            需替换内容.md

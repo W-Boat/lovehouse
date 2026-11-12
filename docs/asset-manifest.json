@@ -1,0 +1,113 @@
+{
+  "assets": [
+    {
+      "path": "public/assets/cottage.png",
+      "source": "imagegen, this session",
+      "original": "exec-ec35568f-3f78-4fd3-874d-11e37b3046ec.png",
+      "status": "draft",
+      "use": "室内底图"
+    },
+    {
+      "path": "public/assets/coast.png",
+      "source": "imagegen, this session",
+      "original": "exec-c54f1d5d-c068-4664-b572-58f364751d01.png",
+      "status": "draft",
+      "use": "海岸花园底图"
+    },
+    {
+      "path": "public/assets/characters.png",
+      "source": "imagegen, this session",
+      "original": "exec-7e1c0602-b079-4877-b267-a52c7643ec75.png",
+      "status": "draft",
+      "grid": [
+        4,
+        2
+      ],
+      "use": "男孩四方向立绘，保留旧女孩美术作归档"
+    },
+    {
+      "path": "public/assets/gifts.png",
+      "source": "imagegen, this session",
+      "original": "exec-1002f732-6301-4fb5-91b8-daaf10571d50.png",
+      "status": "draft",
+      "grid": [
+        4,
+        3
+      ],
+      "use": "12 类原创礼物；月相仅装饰"
+    },
+    {
+      "path": "public/assets/cottage-after.png",
+      "source": "imagegen edit, this session",
+      "original": "exec-e85688b2-bdb7-48ee-92c5-ac6414d00522.png",
+      "status": "draft",
+      "use": "许愿后的熄烛底图"
+    },
+    {
+      "path": "src/audio.ts",
+      "source": "original synthesized melody in code",
+      "status": "original",
+      "use": "Web Audio 正弦波简短原创旋律与交互音"
+    },
+    {
+      "path": "src/style.css",
+      "source": "original UI code; system Chinese serif font fallback",
+      "status": "original",
+      "use": "原创木框纸质界面"
+    },
+    {
+      "path": "public/assets/forest.png",
+      "source": "imagegen, expansion session",
+      "original": "exec-2ad1d3b3-56aa-4aff-aff1-509c11d64a22.png",
+      "status": "draft",
+      "use": "萤火森林背景"
+    },
+    {
+      "path": "public/assets/pier.png",
+      "source": "imagegen, expansion session",
+      "original": "exec-38e37bc8-48b8-4f21-ab32-e8d7d7dfb9e5.png",
+      "status": "draft",
+      "use": "星光栈桥背景"
+    },
+    {
+      "path": "public/assets/props.png",
+      "source": "imagegen + imagegen transparency repair, expansion session",
+      "original": "exec-38830d6e-b50c-4c2e-af2c-5ec24f11c7d2.png",
+      "firstDraft": "exec-cedd339e-d172-4bf7-b8fa-4a80da52fd53.png",
+      "status": "draft",
+      "grid": [
+        4,
+        2
+      ],
+      "use": "八类环境互动道具"
+    },
+    {
+      "path": "public/assets/hero.png",
+      "source": "imagegen, user-supplied character reference 17928.jpg",
+      "original": "exec-84fada2c-5226-4998-a002-cb4ade350f80.png",
+      "status": "draft",
+      "grid": [
+        4,
+        4
+      ],
+      "use": "仅可控制女孩：四方向站立与迈步帧；附带肖像、行李箱、猫咪包"
+    },
+    {
+      "path": "public/assets/birthday-cake.png",
+      "source": "imagegen + imagegen transparency edit",
+      "original": "exec-b9a7c64b-4387-4556-a1d1-8b5d4b75a779.png",
+      "firstDraft": "exec-baa40b58-e002-43e2-a6a8-16f6dd18ea3c.png",
+      "status": "draft",
+      "use": "全屏烛光蛋糕特写，火焰/烟雾由代码生成"
+    },
+    {
+      "path": "src/celebration.ts",
+      "source": "original procedural pixel animation",
+      "status": "original",
+      "use": "全屏烛光、烟雾、火箭与烟花，不依赖第三方特效"
+    }
+  ],
+  "thirdPartyGameAssets": false,
+  "productScreenshotsAvailable": false,
+  "characterReferenceProvided": true
+}

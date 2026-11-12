@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {birthdayConfig as config} from '../content/birthday-config';
+import {findPath,roomWalkable,gardenWalkable} from '../src/navigation';
+import {parseSave} from '../src/state';
+test('all 12 gifts have distinct ids and reachable approach points',()=>{assert.equal(config.gifts.length,12);assert.equal(new Set(config.gifts.map(g=>g.id)).size,12);for(const g of config.gifts){const p={x:g.point[0],y:g.point[1]};assert.ok(roomWalkable(p),g.id+' approach must be on free floor');const path=findPath({x:320,y:356},p,roomWalkable);assert.ok(path.length,g.id+' is reachable');assert.ok(path.every(roomWalkable),g.id+' path never enters furniture');assert.ok(Math.hypot(path.at(-1)!.x-p.x,path.at(-1)!.y-p.y)<=12,g.id+' arrives near intended point')}});
+test('room path goes around central cake table',()=>{const path=findPath({x:320,y:356},{x:320,y:144},roomWalkable);assert.ok(path.length);assert.ok(path.every(roomWalkable));assert.ok(path.some(p=>p.x<232||p.x>413));assert.equal(roomWalkable({x:320,y:200}),false)});
+test('garden destinations reachable along paths, water is blocked',()=>{for(const p of [{x:309,y:179},{x:158,y:217},{x:490,y:250},{x:137,y:365}]){assert.ok(gardenWalkable(p));const path=findPath({x:155,y:365},p,gardenWalkable);assert.ok(path.length);assert.ok(path.every(gardenWalkable))}assert.equal(gardenWalkable({x:590,y:170}),false)});
+test('save parser recovers corrupt and future saves and filters gift ids',()=>{assert.equal(parseSave('broken').opened.length,0);assert.equal(parseSave('{"version":99,"celebrated":true}').celebrated,false);const s=parseSave(JSON.stringify({version:1,opened:['hat','hat','made-up','labubu'],hat:true,celebrated:'true',music:true}));assert.deepEqual(s.opened,['hat','labubu']);assert.equal(s.hat,true);assert.equal(s.celebrated,false);assert.equal(s.music,true)});
+test('no birth date or secret gift variant is invented',()=>{assert.equal(config.birthDateForMoon,'');assert.equal(config.labubuReveal.image,'');assert.ok(config.gifts.find(g=>g.id==='labubu')!.variant==='');assert.ok(config.letterText.includes('待填写'))});

@@ -1,0 +1,17 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "file": "public/assets/greenhouse.png",
+      "prompt": "Cozy romantic birthday pixel RPG landscape 3:2 background. Moonlit glass greenhouse on hill, elevated 3/4 orthographic view, warm amber lamps, rose pink flowers, deep teal night. Wishing tree at rear, cushioned bench left, record player right. Lower two thirds empty walkable terracotta floor, bottom center doorway. No characters, UI or text."
+    },
+    {
+      "file": "public/assets/sitting.png",
+      "references": [
+        "public/assets/hero.png",
+        "public/assets/characters.png"
+      ],
+      "prompt": "Transparent 2 columns x 2 rows equal-cell sprite sheet: girl and boy seated front in top row, seated back in bottom row. Preserve gray brown haired girl blue white striped shirt black shorts cat bag, and brown haired boy cream shirt green vest dark pants. Bent hips, horizontal thighs, bent knees, dangling shoes, hands on thighs. No furniture, text or shadows."
+    }
+  ]
+}
