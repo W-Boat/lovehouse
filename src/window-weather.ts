@@ -16,10 +16,7 @@ export const indoorZones=new Set<Zone>(['room','memory','aquarium','greenhouse',
 export function windowContains(zone:Zone,x:number,y:number){return (windowPanes[zone]??[]).some(p=>inPolygon({x,y},p))}
 export function renderWindowWeather(g:Phaser.GameObjects.Graphics,zone:Zone,weather:string,time:string,clock:number){
  const panes=windowPanes[zone]??[];
- // Preserve the aurora and mountain panorama; the house's baked moon is replaced.
- const replace=zone==='room';
- for(const points of panes){g.fillStyle(time==='day'?0x99c4d0:time==='dawn'?0xba8399:0x20324b,replace?1:time==='night'?.08:.27);g.fillPoints(points.map(([x,y])=>({x,y})),true)}
- if(replace){const color=time==='day'?0xffdf9e:time==='dawn'?0xffbd95:0xf8e9c6;g.fillStyle(color,.9);g.fillCircle(335,36,time==='night'?6:8);if(time==='night'){g.fillStyle(0x20324b,1);g.fillCircle(338,34,5)}}
+ for(const points of panes){g.fillStyle(time==='day'?0xffedd2:time==='dawn'?0xffc5b1:0x20324b,time==='night'?.025:.055);g.fillPoints(points.map(([x,y])=>({x,y})),true)}
  if(weather==='clear')return;
  for(const [index,points]of panes.entries()){
   const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),left=Math.min(...xs),top=Math.min(...ys),w=Math.max(...xs)-left,h=Math.max(...ys)-top;

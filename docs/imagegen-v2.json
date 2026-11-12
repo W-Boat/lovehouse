@@ -141,6 +141,24 @@
         "hotspring.png"
       ],
       "transparent_background": false
+    },
+    {
+      "id": "window-views",
+      "promptSummary": true,
+      "prompt": "Exact 3x3 landscape pixel garden atlas. Same hydrangeas, fence, forest and hills in every tile. Rows: night, dawn, day. Columns: clear, rain, snow. No frames or UI; used through the cottage original window panes.",
+      "frameTable": {
+        "columns": [
+          "clear",
+          "rain",
+          "snow"
+        ],
+        "rows": [
+          "night",
+          "dawn",
+          "day"
+        ]
+      },
+      "transparent_background": false
     }
   ]
 }

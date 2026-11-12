@@ -1,3 +1,4 @@
+import {WindowView} from './window-view';
 import {HandFormation} from './hand-formation';
 import {indoorZones,renderWindowWeather} from './window-weather';
 import {furnishings,furnishingSeats} from './layouts';
@@ -14,7 +15,7 @@ import {worlds,entrySpawn,inReach,type Zone,type Item} from './world';
 export type {Zone,Item} from './world';
 export class Cottage extends Phaser.Scene {
  readonly bridge=new Signals();
- private walkingNow=false;private afterStand?:()=>void;private staging=false;private stagingDone?:()=>void;private filmTextures:string[]=[];
+ private windowView?:WindowView;private walkingNow=false;private afterStand?:()=>void;private staging=false;private stagingDone?:()=>void;private filmTextures:string[]=[];
  private get bootKeys(){return save.celebrated?[...coreTextureKeys,'room-after' as const]:[...coreTextureKeys]}
  private handFormation=new HandFormation();private motion!:WorldMotion;private pairImage?:Phaser.GameObjects.Image;
  readonly actor=new ActorController();private buddy=new ActorController();private sceneCache:string[]=[];private actionTime=0;private actionKind='';private pairReady=false;private seatedPhase=0;private seatTargets?:number[];
@@ -57,7 +58,7 @@ export class Cottage extends Phaser.Scene {
   this.earwear=this.add.image(0,0,'gift-earphones').setDisplaySize(16,16).setDepth(13);
   this.cakeDark=this.add.rectangle(320,213.333,640,426.667,0x0b1022,.5).setDepth(20).setVisible(false);
   this.keys=this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,E') as Record<string,Phaser.Input.Keyboard.Key>;this.input.keyboard!.on('keydown-E',()=>{if(!this.blocked&&!this.seated)this.interactNearest()});
-  this.buildActionFrames();this.motion=new WorldMotion(this);this.rebuild();this.resizeView();this.syncFollowing();this.readyToEnter=true;this.bridge.emit('cottage-ready');
+  this.buildActionFrames();this.windowView=new WindowView(this);this.motion=new WorldMotion(this);this.rebuild();this.resizeView();this.syncFollowing();this.readyToEnter=true;this.bridge.emit('cottage-ready');
  }
  setFollowing(enabled:boolean){if(!enabled){this.holding=false;this.handFormation.reset()}save.following=enabled;persist();this.syncFollowing();this.bridge.emit('following',enabled)}
  syncFollowing(){if(this.player&&this.boy)this.follower.setEnabled(save.following,this.player,this.boy,this.walkable)}
@@ -223,7 +224,7 @@ export class Cottage extends Phaser.Scene {
   const nearest=this.actionKind||(this.holding&&this.handFormation.active)||this.seated?undefined:candidates.find(item=>item.id===this.focusId)??candidates[0];
   if(nearest?.id!==this.nearby?.id){this.nearby=nearest;this.bridge.emit('nearby',nearest)}
   this.glow.clear();if(this.nearby&&!this.blocked&&!this.seated&&!this.movingTo){this.glow.lineStyle(1,0xffe3a5,.7);this.glow.strokeEllipse(this.nearby.x,this.nearby.y+5,26,10);this.bridge.emit('hint-position',this.project(this.nearby.x,this.nearby.y-20))}
-  this.bridge.emit('portal-positions',this.objects.filter(i=>i.to).map(i=>({id:i.id,name:worlds[i.to!].name,...this.project(i.x,i.y)})));this.atmosphere();this.environment();this.motion?.update(this.idleTime);if(this.entered&&!this.blocked&&!this.seated&&!this.movingTo){const game=this.objects.find(i=>i.id.startsWith('game-')&&!this.autoGames.has(this.zone+':'+i.id)&&Math.hypot(i.point[0]-this.player.x,i.point[1]-this.player.y)<13);if(game){this.autoGames.add(this.zone+':'+game.id);this.stop();this.bridge.emit('interact',game.id)}}
+  this.bridge.emit('portal-positions',this.objects.filter(i=>i.to).map(i=>({id:i.id,name:worlds[i.to!].name,...this.project(i.x,i.y)})));this.windowView?.update();this.atmosphere();this.environment();this.motion?.update(this.idleTime);if(this.entered&&!this.blocked&&!this.seated&&!this.movingTo){const game=this.objects.find(i=>i.id.startsWith('game-')&&!this.autoGames.has(this.zone+':'+i.id)&&Math.hypot(i.point[0]-this.player.x,i.point[1]-this.player.y)<13);if(game){this.autoGames.add(this.zone+':'+game.id);this.stop();this.bridge.emit('interact',game.id)}}
   if(!this.blocked&&this.entered&&!this.seated&&this.zone==='room'&&this.player.y>=376&&Math.abs(this.player.x-320)<18){this.blocked=true;this.stop();this.bridge.emit('interact','door')}
  }
 }
