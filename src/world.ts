@@ -1,5 +1,6 @@
+import {furnishings} from './layouts';
 import {roomWalkable,gardenWalkable,type Point,inside,inPolygon,type Polygon,segmentWalkable,nearestWalkable,type Walkable} from './navigation';
-export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars';
+export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora';
 export type Item={id:string;name:string;x:number;y:number;point:[number,number];action?:string;kind?:'place'|'collect'|'slot'|'event';collect?:string;prop?:number;texture?:string;to?:Zone};
 export type World={name:string;caption:string;texture:string;spawn:[number,number];boy:[number,number];items:Item[];walkable:(point:Point)=>boolean};
 // Broad walkable floor regions match the painted clearing/deck instead of invisible center lines.
@@ -103,6 +104,23 @@ worlds.forest.items.push({...spot('magic-door','去魔法世界',300,345,'穿过
 worlds.garden.items.push({...spot('ferris-trail','去海边摩天轮',430,262,'去游乐园'),to:'ferris'});
 worlds.station.items.push({...spot('mars-train','乘星际列车去火星',520,310,'登车'),to:'mars'});
 worlds.room.items.push(spot('books','书桌上没读完的书',101,163,'翻一页'),spot('room-lights','今晚的灯串',422,140,'调暖一点'),spot('candles','桌上的烛光',290,257,'点亮烛光'),spot('cabinet','收好心意的柜子',530,157,'整理礼物'),spot('flower-pick','可以带走的一朵花',446,155,'拾取','collect','flower'));
+worlds.hotspring={...newRoom('暖汤足浴屋','鞋子放好，疲惫也放下来','hotspring','camp',[
+ spot('hotspring-seat','中央双人足浴座',322,205,'一起泡泡脚'),spot('spring-tea','足浴旁的樱花茶',195,265,'倒两杯茶'),spot('spring-towel','晒得暖暖的毛巾',480,254,'拿条热毛巾'),spot('spring-petals','水面上的花瓣',326,253,'拨一下水'),spot('spring-lantern','池边的小灯',346,182,'调暗灯光'),spot('spring-snow','窗外的雪山',159,104,'看看远山')]),walkable:p=>p.x>90&&p.x<567&&p.y>310&&p.y<403&&!inside(p,{x:80,y:255,w:200,h:96},5)&&!inside(p,{x:253,y:225,w:194,h:82},5)&&!inside(p,{x:452,y:236,w:78,h:67},5),spawn:[340,385],boy:[364,385]};
+worlds.market={...newRoom('云端生日集市','花、甜点，还有一个等你坐下的位置','market','ferris',[
+ spot('market-seat','花摊边的双人座',112,251,'坐下喝茶'),spot('market-flower','今天新到的花',160,158,'挑一朵花'),spot('market-bread','刚出炉的面包',465,155,'掰一半分享'),spot('market-cake','中央生日甜点摊',330,263,'给蛋糕点灯'),spot('market-cart','绕着花车走一圈',330,173,'闻闻花香'),spot('market-lantern','屋顶的许愿灯',430,83,'点亮心愿')]),walkable:p=>p.x>72&&p.x<570&&p.y>150&&p.y<407&&!inside(p,{x:85,y:150,w:145,h:40},5)&&!inside(p,{x:400,y:150,w:132,h:38},5)&&!inside(p,{x:255,y:218,w:185,h:102},5)&&!inside(p,{x:62,y:218,w:144,h:67},5),spawn:[340,386],boy:[365,386]};
+worlds.aurora={...newRoom('极光玻璃屋','摇椅轻轻晃，天上的光也慢慢走','aurora','station',[
+ spot('aurora-seat','中央双人摇椅',320,240,'坐着等极光'),spot('aurora-tea','中央圆桌上的热饮',322,263,'一起喝点热的'),spot('aurora-telescope','窗边的望远镜',531,156,'看看雪山'),spot('aurora-fire','一直暖着的壁炉',79,204,'添一块柴'),spot('aurora-blanket','留在摇椅上的毯子',199,242,'分一半毯子'),spot('aurora-wish','写在玻璃上的愿望',345,153,'留一个愿望')]),walkable:p=>p.x>82&&p.x<560&&p.y>285&&p.y<401&&!inside(p,{x:154,y:223,w:112,h:60},5)&&!inside(p,{x:374,y:223,w:112,h:63},5)&&!inside(p,{x:267,y:255,w:108,h:42},5),spawn:[320,370],boy:[346,370]};
+worlds.camp.items.push({...spot('spring-door','去暖汤足浴屋',530,350,'暖暖脚'),to:'hotspring'});
+worlds.ferris.items.push({...spot('market-door','去云端生日集市',520,365,'逛逛集市'),to:'market'});
+worlds.station.items.push({...spot('aurora-door','去极光玻璃屋',110,340,'等一场极光'),to:'aurora'});
+// Central furniture is part of navigation and interaction, rather than an ornamental overlay.
+for(const [zone,props]of Object.entries(furnishings)){
+ const w=worlds[zone as Zone],floor=w.walkable;
+ w.walkable=p=>floor(p)&&!props.some(o=>o.solid&&inside(p,o.solid,7));
+ for(const prop of props){if(prop.floor)continue;let item=w.items.find(i=>i.id===prop.id);const point:[number,number]=[prop.x,prop.y+33];
+ if(item)Object.assign(item,{name:prop.name,x:prop.x,y:prop.y-prop.h*.45,point});else w.items.push({id:prop.id,name:prop.name,x:prop.x,y:prop.y-prop.h*.45,point,kind:'event',action:prop.hips?'并肩坐下':'一起看看'});
+ }
+}
 for(const [zone,w] of Object.entries(worlds) as [Zone,World][]){
  if(w.items.length<7){w.items.push(spot(zone+'-keepsake','此处的一点小纪念',w.spawn[0],w.spawn[1]-10,'拾取','collect','shell'));}
  if(!w.items.some(i=>i.kind==='slot'))w.items.push({...spot(zone+'-display','放一件喜欢的小物',w.spawn[0]+30,w.spawn[1]-8,'摆放 / 取回','slot'),point:[w.spawn[0]+30,w.spawn[1]-8]});
@@ -110,6 +128,6 @@ for(const [zone,w] of Object.entries(worlds) as [Zone,World][]){
 export const links=(zone:Zone)=>worlds[zone].items.flatMap(i=>i.to?[i.to]:[]);
 export function routeBetween(from:Zone,to:Zone):Zone[]{const queue:Zone[][]=[[from]],seen=new Set<Zone>([from]);while(queue.length){const path=queue.shift()!,last=path[path.length-1];if(last===to)return path;for(const next of links(last))if(!seen.has(next)){seen.add(next);queue.push([...path,next])}}return[]}
 
-for(const w of Object.values(worlds))for(const item of w.items)if(!w.walkable({x:item.point[0],y:item.point[1]})){const safe=nearestWalkable({x:item.point[0],y:item.point[1]},w.walkable,90);if(safe)item.point=[safe.x,safe.y]}
+for(const w of Object.values(worlds))for(const item of w.items)if(!w.walkable({x:item.point[0],y:item.point[1]})){const safe=nearestWalkable({x:item.point[0],y:item.point[1]},w.walkable,160);if(safe)item.point=[safe.x,safe.y]}
 
 for(const [zone,w]of Object.entries(worlds) as [Zone,World][]){let n=0;while(w.items.filter(i=>!i.to).length<6){const p=nearestWalkable({x:w.spawn[0]-40+n*45,y:w.spawn[1]-30},w.walkable,80);if(!p)break;w.items.push({id:zone+'-small-note-'+n,name:n?'替你留的一盏灯':'今日的小纸条',action:n?'点灯':'写一句话',x:p.x,y:p.y,point:[p.x,p.y],kind:'event'});n++}}

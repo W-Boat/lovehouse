@@ -1,3 +1,4 @@
+import {furnishings} from '../src/layouts';
 import {worlds} from '../src/world';
 export type PlaceContent={text:string;choice:string;response:string;sit?:string};
 export const places:Record<string,PlaceContent>={
@@ -41,6 +42,21 @@ export const restingLines:Record<string,string>={'aquarium-seat':'水母慢慢�
 };
 
 const extra:Record<string,[string,string,string,string?]>={
+ 'hotspring-seat':['两张软椅紧挨着温热的水，毛巾就在旁边。','坐下来泡泡脚','今天走过的路，到这里可以先放下了。','hotspring-seat'],
+ 'market-seat':['逛累了吗？花摊边的茶还热着。','坐下分一杯茶','等会儿再逛。现在先陪你坐一会。','market-seat'],
+ 'aurora-seat':['两把摇椅对着整片天空，毯子也备好了。','坐着等极光','出现了。你看，绿色的光正在山尖上慢慢走。','aurora-seat'],
+ 'spring-tea':['樱花落进杯子里，香气很淡。','给你那一杯','小心烫，先捧在手里暖一会儿。'],
+ 'spring-towel':['毛巾刚烘好，折得方方正正。','替你拿一条','很暖。等会儿起来，脚也不会凉。'],
+ 'spring-petals':['花瓣顺着水波绕了半圈。','用脚尖拨一下水','两片花瓣碰到一起，又慢慢漂远了。'],
+ 'spring-snow':['屋里暖着，山上的雪还没化。','一起看一会儿','雪落得很慢，今天的时间也是。'],
+ 'market-flower':['这朵花的颜色，很像你刚才挑的衣服。','挑一朵送给你','不用等特别的日子，今天也可以买花。'],
+ 'market-bread':['刚出炉的面包太大了，一个人吃不完。','把软的那半给你','边走边吃，掉一点面包屑也没关系。'],
+ 'market-cake':['小摊上的蛋糕留了两把勺子。','点亮一根蜡烛','不用再许一次愿。先吃一口甜的吧。'],
+ 'aurora-tea':['杯沿还冒着白雾。','把杯子递给你','捧一会儿，等窗外的光慢慢变色。'],
+ 'aurora-fire':['木柴噼啪响了一声。','添一块柴','火旺了一点。想坐多久都可以。'],
+ 'aurora-blanket':['毯子够大，可以盖住两个人。','分一半给你','你那边暖了吗？再往你那里挪一点。'],
+ 'aurora-wish':['玻璃上起了一点薄雾，刚好够写几个字。','写下：明年也来','字会慢慢淡掉，约定先记在这里。'],
+
  'magic-seat':['这里的蘑菇长得像一把小椅子。软垫已经铺好了。','一起坐下','今天也可以做一个不必解释的梦。','magic-seat'],
  'haunted-seat':['幽灵挪开了靠垫：别怕，我只是有点怕孤单。','挨着坐一会','好啦，今晚谁也不是一个人。','haunted-seat'],
  'cinema-seat':['座位只有两张。爆米花可以一人一半。','坐下等开场','灯暗下来了，身边的人更清楚了。','cinema-seat'],
@@ -60,3 +76,5 @@ const extra:Record<string,[string,string,string,string?]>={
 };
 for(const [id,[text,choice,response,sit]]of Object.entries(extra))places[id]={text,choice,response,sit};
 for(const w of Object.values(worlds))for(const i of w.items)if(!i.to&&!places[i.id]&&i.kind==='event')places[i.id]={text:i.name+'就在这里。想和身边的人一起试一试吗？',choice:i.action??'试一试',response:'这一小段时间，也一起记住了。'};
+
+for(const props of Object.values(furnishings))for(const p of props){if(p.hips){places[p.id]={text:'软垫铺好了，旁边的空位是留给你的。',choice:'一起坐下',response:'现在不用去别处，再陪你坐一会儿。',sit:p.id};restingLines[p.id]='灯还亮着，身边也有人。'}else if(!p.floor&&!places[p.id])places[p.id]={text:p.name+'就在手边。',choice:'和你一起看看',response:'小小的日常，今天也一起记住了。'}}

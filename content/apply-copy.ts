@@ -11,3 +11,5 @@ config.birthDateForMoon=personal.birthDateForMoon;config.moonImage=personal.moon
 export {personal};
 
 for(const [id,film]of Object.entries(films))film.lines=film.lines.map((line,i)=>texts['film.'+id+'.'+i]??line);
+
+config.keychainLines=config.keychainLines.map((v,i)=>texts['keychain.'+i]??v);

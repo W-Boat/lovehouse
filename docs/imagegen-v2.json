@@ -1,0 +1,127 @@
+{
+  "tool": "built-in imagegen",
+  "runtimeFormat": "sprite atlases (WebP); GIF previews assembled from generated poses",
+  "nativeAnimatedGifReturned": false,
+  "assets": [
+    {
+      "id": "magic",
+      "prompt": "Use case: illustration-story. Asset type: pixel RPG playable scene background, landscape 3:2, 1536x1024. Cozy crisp detailed 16-bit pixel illustration, elevated straight-on 3/4 orthographic view matching romantic birthday cottage. No text, no characters, no UI, no watermark. Upper half has scenery and furniture; lower half must have continuous EMPTY walkable floor x12-88%, y52-92%, exit bottom center. A moonlit magical conservatory on floating islands, teal and rose colors, glowing potion workbench rear right, cushioned mushroom bench rear left, luminous wishing tree at top center, floating books, crystal portal rear corner. No floor obstacles in lower half.",
+      "transparent_background": false
+    },
+    {
+      "id": "haunted",
+      "prompt": "Use case: illustration-story. Asset type: pixel RPG playable scene background, landscape 3:2, 1536x1024. Cozy crisp detailed 16-bit pixel illustration, elevated straight-on 3/4 orthographic view matching romantic birthday cottage. No text, no characters, no UI, no watermark. Upper half has scenery and furniture; lower half must have continuous EMPTY walkable floor x12-88%, y52-92%, exit bottom center. An adorable haunted mansion drawing room, violet dusk, amber lamps, cute tiny friendly sheet ghosts at rear, smiling portraits, tall creaky door, velvet couch rear left, candelabra and toy chest rear right. Charming humorous rather than scary. Broad empty wooden lower floor.",
+      "transparent_background": false
+    },
+    {
+      "id": "cinema",
+      "prompt": "Use case: illustration-story. Asset type: pixel RPG playable scene background, landscape 3:2, 1536x1024. Cozy crisp detailed 16-bit pixel illustration, elevated straight-on 3/4 orthographic view matching romantic birthday cottage. No text, no characters, no UI, no watermark. Upper half has scenery and furniture; lower half must have continuous EMPTY walkable floor x12-88%, y52-92%, exit bottom center. A tiny romantic old-fashioned cinema screening room. Large BLANK dark lavender movie screen at top center, red velvet curtain, two red velvet armchairs rear left, brass projector on small stand rear right, popcorn cart at side. Empty broad warm burgundy carpet lower half. No movie still inside screen.",
+      "transparent_background": false
+    },
+    {
+      "id": "ferris",
+      "prompt": "Use case: illustration-story. Asset type: pixel RPG playable scene background, landscape 3:2, 1536x1024. Cozy crisp detailed 16-bit pixel illustration, elevated straight-on 3/4 orthographic view matching romantic birthday cottage. No text, no characters, no UI, no watermark. Upper half has scenery and furniture; lower half must have continuous EMPTY walkable floor x12-88%, y52-92%, exit bottom center. A romantic seaside amusement park ferris wheel boarding terrace, enormous elegant cream ferris wheel and pink gondolas above the horizon in UPPER HALF, starry peach-blue sky, rose garlands, glowing lanterns. Two cushioned waiting seats rear left, ticket booth rear right. Empty rose brick platform lower half.",
+      "transparent_background": false
+    },
+    {
+      "id": "mars",
+      "prompt": "Use case: illustration-story. Asset type: pixel RPG playable scene background, landscape 3:2, 1536x1024. Cozy crisp detailed 16-bit pixel illustration, elevated straight-on 3/4 orthographic view matching romantic birthday cottage. No text, no characters, no UI, no watermark. Upper half has scenery and furniture; lower half must have continuous EMPTY walkable floor x12-88%, y52-92%, exit bottom center. A spectacular intimate concert stage on Mars, red hills beyond, star-filled black space, big empty performance stage rear center with rose red LED wings, luminous coral planet rings, audience light sticks only at outer edges, cushioned moon rocks rear left. Lower half empty red terracotta festival ground. No performers baked into stage.",
+      "transparent_background": false
+    },
+    {
+      "id": "memory-v2",
+      "prompt": "Use case: illustration-story. Asset type: pixel RPG playable scene background, landscape 3:2, 1536x1024. Cozy crisp detailed 16-bit pixel illustration, elevated straight-on 3/4 orthographic view matching romantic birthday cottage. No text, no characters, no UI, no watermark. Upper half has scenery and furniture; lower half must have continuous EMPTY walkable floor x12-88%, y52-92%, exit bottom center. A distinct nostalgic memory projection room, teal walls, warm brass film projector rear right, large blank cream projection screen top center, photo wall with abstract pastel photos rear corners, two cream plush cinema chairs rear left, film reel shelves, rose flowers and gold lamps. Empty deep teal patterned rug lower half. Completely different from birthday cottage.",
+      "transparent_background": false
+    },
+    {
+      "id": "girl-actions",
+      "referenced_image_paths": [
+        "hero.png"
+      ],
+      "transparent_background": true,
+      "prompt": "Use case: identity-preserve. Create a transparent game sprite atlas 4 columns x 4 rows, 16 equal cells, all same character centered same scale and same head proportions, reference girl's gray brown hair, blue white striped shirt, black shorts and cat bag. Crisp 16 bit pixel art. Row1: standing front, left, back, right. Row2: genuinely SEATED front, left, back, right, hips flexed, knees bent, thighs forward, dangling boots. Row3: front reaching BOTH arms forward to hug (4 phases: hands lift, extend, close hug, lower). Row4: four distinct silly dance poses with bent knees, leaning left, leaning right, dab, joyful arms up. No words no furniture no ground. Preserve transparent padding, all sprites aligned feet baseline in each cell. Do not squash standing to create seated."
+    },
+    {
+      "id": "boy-actions",
+      "referenced_image_paths": [
+        "characters.png"
+      ],
+      "transparent_background": true,
+      "prompt": "Use case: identity-preserve. Create transparent game sprite atlas 4 columns x 4 rows, 16 equal cells. Use ONLY bottom row BOY from reference: short dark brown hair, cream shirt, green vest, dark trousers and boots. Same scale each cell, pixel art. Row1 standing front,left,back,right. Row2 genuinely SEATED front,left,back,right, bent hips and knees, horizontal thighs,dangling boots. Row3 hug action four frames lifting arms, extending arms, closing hug, lowering. Row4 four distinct silly dance poses bent knees,lean left,lean right,dab,arms up. No girl,no words,no furniture,no ground. Transparent padding and consistent anchor positions."
+    },
+    {
+      "id": "gifts-v2",
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept. Transparent pixel game item sprite sheet 2 columns by 2 rows, equal cells isolated objects centered, warm cozy 16 bit pixel art. Top left: cute cotton plush idol doll with bright RED short hair and entirely WHITE clothing. Top right: pair of bright RED open ear earhook headphones, curved hooks around ears, not earbuds or giant headband headphones. Bottom left: PINK silicone fitness wrist band with tiny black rectangular screen. Bottom right: WHITE knitted cat ear beanie hat. No letters no words no shadows no backgrounds. Sharp clear silhouettes with transparent padding."
+    },
+    {
+      "id": "icons-v2",
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept. A 4x4 equal-cell atlas of SIXTEEN distinct cozy pixel RPG UI icons, crisp 24px-style pixel grid, warm cream outlines brown shadow and rose/teal/gold accents, transparent background. Order left-to-right top-to-bottom: music note, closed gift journal, camera, fullscreen corners; gear, folded world map, two loving hands, sun behind cloud; leather backpack, inventory flower, two portraits, envelope; gold direction signpost, door with arrow, small cream cottage with heart (favicon), sparkling wand. No text. Each icon centered in cell with generous transparent gutters. Consistent line weights, no gradients or glossy 3D."
+    },
+    {
+      "id": "station-clean",
+      "referenced_image_paths": [
+        "station.png"
+      ],
+      "transparent_background": false,
+      "prompt": "Edit only specified background elements. Preserve exactly all station floor, bench, writing stand, rails, mountain cloud scenery, warm pixel art composition and 3:2 canvas. REMOVE the train carriage on upper right completely, revealing the mountain sky and rails behind it. REMOVE the bright sun disc so only a uniform softly glowing dawn sky remains there. This is a game background to animate a separate moving train and rising sun. No new objects, no characters, no text."
+    },
+    {
+      "id": "aquarium-clean",
+      "referenced_image_paths": [
+        "aquarium.png"
+      ],
+      "transparent_background": false,
+      "prompt": "Edit only aquarium glass contents: REMOVE all jellyfish and fish silhouettes from the water, preserve aquarium tank, coral, rocks, bubbles, teal lighting, ALL room furniture, bench, shell pedestal, architecture and empty floor exactly. Match same cozy pixel game art. This will receive animated creatures as separate game sprites. No new creatures, no text."
+    },
+    {
+      "id": "ferris-clean",
+      "referenced_image_paths": [
+        "ferris.png"
+      ],
+      "transparent_background": false,
+      "prompt": "Remove ONLY the giant ferris wheel and its spokes, central heart and ALL gondolas from upper half, revealing unobstructed peach-blue starry sky and distant sea behind. Keep support pillars if needed but no central wheel. Preserve station stairs, two cushioned waiting chairs, ticket booth, garlands, lights, floor and entire lower half exactly. Same warm pixel art and 3:2 canvas. No text."
+    },
+    {
+      "id": "world-actors",
+      "transparent_background": true,
+      "prompt": "Transparent game pixel art sprite atlas EXACTLY 4 columns x 4 rows, 16 equal cells with generous transparent gutters. Row1: FOUR views of the SAME small vintage maroon-gold train carriage seen from SIDE, stages door closed, door opening, door open, door closing; train length fits each cell, consistent scale. Row2: FOUR sequential pulsing frames of same pink-purple glowing jellyfish, tentacles curl gently. Row3: FOUR swimming frames of same small orange fish turning, tail left right. Row4: FOUR frames flickering golden campfire flame ONLY without logs. Crisp detailed 16-bit pixel art, cozy birthday cottage. No words no backgrounds no ground shadow."
+    },
+    {
+      "id": "wheel-actors",
+      "transparent_background": true,
+      "prompt": "Transparent pixel RPG prop atlas 2 columns x 2 rows. Top left: complete round elegant cream and gold ferris wheel with spokes and heart hub, NO support legs, NO gondolas, perfectly circular, front view. Top right: single pink gold ferris gondola hanging upright with open window, front view. Bottom left: cute shy little white sheet ghost with rosy cheeks, no text. Bottom right: glowing open magical book with teal pages, no text. All isolated centered within equal cells, warm crisp 16-bit pixel art and transparent padding."
+    },
+    {
+      "id": "girl-walk",
+      "prompt": "Identity-preserving 4x4 four-direction walking cycle. Four contact/passing frames per direction, same scale and baseline. Transparent.",
+      "transparent_background": true
+    },
+    {
+      "id": "boy-walk",
+      "prompt": "Identity-preserving 4x4 four-direction walking cycle. Four contact/passing frames per direction, same scale and baseline. Transparent.",
+      "transparent_background": true
+    },
+    {
+      "id": "girl-heads",
+      "prompt": "Identity-preserving 4x4 modular head atlas: original, short, ponytail, side bunches; front, left, back, right. Transparent.",
+      "transparent_background": true
+    },
+    {
+      "id": "boy-heads",
+      "prompt": "Identity-preserving 4x4 modular head atlas: original, short, ponytail, side bunches; front, left, back, right. Transparent.",
+      "transparent_background": true
+    },
+    {
+      "id": "couple-actions",
+      "prompt": "4 columns x 3 rows: genuine two-character hug, head pat, gifting flower and sharing chocolate, actual contact. Transparent.",
+      "transparent_background": true
+    },
+    {
+      "id": "sit-transition",
+      "prompt": "6 columns x 2 rows: girl and boy each six phases of sitting down, real hip and knee bending, constant head size and body width. Transparent.",
+      "transparent_background": true
+    }
+  ]
+}

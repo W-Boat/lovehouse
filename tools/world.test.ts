@@ -11,7 +11,7 @@ test('every location and every portal is reachable within its own scene',()=>{
  }
 });
 test('scene graph is fully connected with a path back and safe arrival points',()=>{
- const seen=new Set<Zone>(['room']),queue:Zone[]=['room'];while(queue.length){const from=queue.shift()!;for(const item of worlds[from].items){if(!item.to)continue;const spawn=entrySpawn(from,item.to);assert.ok(worlds[item.to].walkable({x:spawn[0],y:spawn[1]}),from+' -> '+item.to);if(!seen.has(item.to)){seen.add(item.to);queue.push(item.to)}}}assert.equal(seen.size,15);
+ const seen=new Set<Zone>(['room']),queue:Zone[]=['room'];while(queue.length){const from=queue.shift()!;for(const item of worlds[from].items){if(!item.to)continue;const spawn=entrySpawn(from,item.to);assert.ok(worlds[item.to].walkable({x:spawn[0],y:spawn[1]}),from+' -> '+item.to);if(!seen.has(item.to)){seen.add(item.to);queue.push(item.to)}}}assert.equal(seen.size,18);
  for(const zone of ['forest','pier'] as const)assert.ok(worlds[zone].items.some(item=>item.to==='garden'));
 });
 test('interaction prompt only appears in range and has an explicit local verb',()=>{

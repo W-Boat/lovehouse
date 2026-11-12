@@ -1,3 +1,6 @@
+import * as handFormation from '../src/hand-formation';
+import * as windowWeather from '../src/window-weather';
+import * as layouts from '../src/layouts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -16,7 +19,7 @@ function loadScene(){
  const code=transformSync(readFileSync('src/scene.ts','utf8'),{loader:'ts',format:'cjs',target:'es2022'}).code;
  const output={exports:{} as any};
  class Scene{sys={};}
- const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:defaults(),persist:()=>{}},'./navigation':navigation,'./world':world,'./follow':follow,'./actors':actors,'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./assets':{textureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
+ const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:defaults(),persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./assets':{textureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
  vm.runInNewContext(code,{module:output,exports:output.exports,require:(id:string)=>{if(!(id in dependencies))throw new Error(id);return dependencies[id]}});
  return new output.exports.Cottage();
 }

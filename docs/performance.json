@@ -1,0 +1,30 @@
+{
+  "coreTextureBytes": 10310648,
+  "coreTextureKeys": [
+    "room",
+    "room-after",
+    "hero",
+    "characters",
+    "gifts",
+    "props",
+    "sitting",
+    "cake",
+    "girl-actions",
+    "boy-actions",
+    "girl-walk",
+    "boy-walk",
+    "icons-v2",
+    "gifts-v2",
+    "world-actors",
+    "wheel-actors",
+    "girl-heads",
+    "boy-heads",
+    "couple-actions"
+  ],
+  "fixedFontBytes": 41288,
+  "initialCoreExcludingAudioBytes": 10742937,
+  "largestTextureBytes": 1159946,
+  "totalPublicBytes": 32883372,
+  "mobilePhysicalDeviceTest": "not performed; GitHub browser emulation only",
+  "fps": "pending CI sampling"
+}

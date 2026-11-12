@@ -9,6 +9,7 @@ export const birthdayConfig = {
   mysteryBoxReveal:{text:'真正的惊喜，在现实中的盒子里。',image:''},
   mysteryBoxUnlockMode:'anytime' as 'anytime'|'afterCake',
   musicSources:[] as string[],
+  keychainLines:['慢慢走','灯还亮着','我在身边'],
   characterAppearance:{girl:'参考图改编：棕灰披肩发、遮眼刘海、蓝白条纹衬衫、编织斜挎猫咪包；四方向行走',boy:'深棕短发、绿色马甲（默认原创形象）'},
   gifts:[
     {id:'moon',name:'出生那天的月亮',subtitle:'把一束月光，留在窗边',icon:0,x:315,y:103,point:[320,139],message:'【待填写赠言】从你来到世界的那天起，月光就有了特别的意义。',variant:''},

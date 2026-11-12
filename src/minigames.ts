@@ -1,5 +1,5 @@
 import {save,persist} from './state';
-import type {GiftId} from '../content/birthday-config';
+import {birthdayConfig as config,type GiftId} from '../content/birthday-config';
 export type GameResult={status:'won'|'skipped'|'exit';score:number};
 export type MinigameDefinition={id:GiftId;title:string;rule:string};
 export const giftGames:Record<GiftId,MinigameDefinition>={
@@ -39,7 +39,7 @@ export function launchGiftGame(id:GiftId,host:HTMLElement,finish:(r:GameResult)=
   function place(i:number){if(paused||selected<0)return;const p=pieces[selected];if(p.placed)return;if(p.slot!==i||p.rotation!==0){status.textContent='位置或方向还差一点，试着转一转。';return}p.placed=true;slots[i].textContent='';if(artUrl){slots[i].style.backgroundImage='url('+artUrl+')';slots[i].style.backgroundSize='300% 300%';slots[i].style.backgroundPosition=(i%3)*50+'% '+Math.floor(i/3)*50+'%'}slots[i].classList.add('placed');tray.querySelector<HTMLElement>(`[data-piece="${i}"]`)!.hidden=true;score+=10;if(pieces.every(p=>p.placed))success()}}
  }
  else if(id==='keychain'){
- const lines=[['慢慢','走'],['灯还','亮着'],['我在','身边']];let picked:string[]=[];restart=()=>{resetBoard();picked=[];const target=lines[level],display=el('p','把词片串起来','phrase-display');board.append(display);const pool=[...target,'风很轻','别着急'].sort(()=>Math.random()-.5);for(const word of pool)btn(word,()=>{if(paused)return;picked.push(word);display.textContent=picked.join(' · ');if(word!==target[picked.length-1]){picked=[];display.textContent='再来一次，从第一片开始。'}else if(picked.length===target.length)success()},board);hint=()=>`这一句是「${target.join('')}」。`}
+ const lines=config.keychainLines.map(line=>{const chars=[...line],mid=Math.max(1,Math.ceil(chars.length/2));return [chars.slice(0,mid).join(''),chars.slice(mid).join('')||'。']});let picked:string[]=[];restart=()=>{resetBoard();picked=[];const target=lines[level],display=el('p','把词片串起来','phrase-display');board.append(display);const pool=[...target,'风很轻','别着急'].sort(()=>Math.random()-.5);for(const word of pool)btn(word,()=>{if(paused)return;picked.push(word);display.textContent=picked.join(' · ');if(word!==target[picked.length-1]){picked=[];display.textContent='再来一次，从第一片开始。'}else if(picked.length===target.length)success()},board);hint=()=>`这一句是「${target.join('')}」。`}
  }
  else if(id==='notes'){
  const sets=[{a:['起床','出门','看日落','说晚安'],clue:'先起床，再出门。日落在晚安之前。'},{a:['烧水','泡茶','晾一晾','一起喝'],clue:'先烧水，再泡茶。喝之前要晾一晾。'},{a:['折信','装信封','贴邮票','投进邮筒'],clue:'信先折好，装进信封才贴邮票，最后寄出。'}];let a:string[]=[];let selected=-1;restart=()=>{resetBoard(sets[level].clue);a=[...sets[level].a].reverse();selected=-1;render();btn('检查顺序',()=>{if(a.every((v,i)=>v===sets[level].a[i]))success();else status.textContent='还差一点。选中两张便签可以交换位置。'});hint=()=>sets[level].a.join(' → ')};const render=()=>{board.replaceChildren();a.forEach((v,i)=>btn(`${i+1}. ${v}`,()=>{if(paused)return;if(selected<0){selected=i;status.textContent='再选一张，与它交换。'}else{[a[i],a[selected]]=[a[selected],a[i]];selected=-1;render()}},board))}
