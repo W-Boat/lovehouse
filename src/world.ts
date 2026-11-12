@@ -111,3 +111,5 @@ export const links=(zone:Zone)=>worlds[zone].items.flatMap(i=>i.to?[i.to]:[]);
 export function routeBetween(from:Zone,to:Zone):Zone[]{const queue:Zone[][]=[[from]],seen=new Set<Zone>([from]);while(queue.length){const path=queue.shift()!,last=path[path.length-1];if(last===to)return path;for(const next of links(last))if(!seen.has(next)){seen.add(next);queue.push([...path,next])}}return[]}
 
 for(const w of Object.values(worlds))for(const item of w.items)if(!w.walkable({x:item.point[0],y:item.point[1]})){const safe=nearestWalkable({x:item.point[0],y:item.point[1]},w.walkable,90);if(safe)item.point=[safe.x,safe.y]}
+
+for(const [zone,w]of Object.entries(worlds) as [Zone,World][]){let n=0;while(w.items.filter(i=>!i.to).length<6){const p=nearestWalkable({x:w.spawn[0]-40+n*45,y:w.spawn[1]-30},w.walkable,80);if(!p)break;w.items.push({id:zone+'-small-note-'+n,name:n?'替你留的一盏灯':'今日的小纸条',action:n?'点灯':'写一句话',x:p.x,y:p.y,point:[p.x,p.y],kind:'event'});n++}}

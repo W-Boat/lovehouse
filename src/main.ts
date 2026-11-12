@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
+import '../content/apply-copy';
 import './style.css';
 import './upgrade.css';
 import {Cottage,type Zone,type Item} from './scene';
 import {birthdayConfig as config,type Gift,type GiftId} from '../content/birthday-config';
 import {save,persist,reset,grantItem} from './state';
-import {music,sound,setAmbience} from './audio';
+import {music,sound,setAmbience,duckAudio} from './audio';
 import {gameViewport,localPoint,localDelta,requestImmersive} from './viewport';
 import {worlds,actionLabel,inReach} from './world';
 import {mediaUrl} from './assets';
@@ -26,8 +27,8 @@ let ready=false,loadFailed=false,modalOpen=false,modalKind='',openingGift=false,
 const esc=(value:string)=>value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function toast(text:string){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').classList.remove('hidden');toastTimer=window.setTimeout(()=>$('toast').classList.add('hidden'),3300)}
 function updateHUD(){document.body.classList.toggle('reduced-motion',save.reduced);const count=$('progress').querySelector('b');if(count)count.textContent=String(save.opened.length);$('music').classList.toggle('active',save.music);$('music').classList.toggle('muted',!save.music);$('ceremony-music').textContent=save.music?'♫':'♪';$('music').setAttribute('aria-label',save.music?'关闭音乐':'开启音乐');$('music').title=save.music?'音乐已开启':'音乐已静音';$('progress').setAttribute('aria-label',`已拆开 ${save.opened.length} 份心意`)}
-function showModal(html:string,kind='general',closable=true){disposeGame();if(dialogueOpen)closeDialogue();$('nearby').classList.add('hidden');if(!modalOpen)lastFocus=document.activeElement as HTMLElement;modalKind=kind;modalOpen=true;scene.blocked=true;scene.stop();$('modal-content').innerHTML=html;$('modal-backdrop').classList.remove('hidden');$('close-modal').classList.toggle('hidden',!closable);$('modal').scrollTop=0;window.setTimeout(()=>{$('modal').querySelector<HTMLButtonElement>('button:not([disabled])')?.focus()},0)}
-function closeModal(){if(openingGift)return;theaterDispose?.();theaterDispose=undefined;disposeGame();if(modalTimer)clearTimeout(modalTimer);modalOpen=false;modalKind='';$('modal-backdrop').classList.add('hidden');scene.darken(false);scene.blocked=!started||cinematic;lastFocus?.focus();if(scene.nearby)showNearby(scene.nearby)}
+function showModal(html:string,kind='general',closable=true){duckAudio(true);disposeGame();if(dialogueOpen)closeDialogue();$('nearby').classList.add('hidden');if(!modalOpen)lastFocus=document.activeElement as HTMLElement;modalKind=kind;modalOpen=true;scene.blocked=true;scene.stop();$('modal-content').innerHTML=html;$('modal-backdrop').classList.remove('hidden');$('close-modal').classList.toggle('hidden',!closable);$('modal').scrollTop=0;window.setTimeout(()=>{$('modal').querySelector<HTMLButtonElement>('button:not([disabled])')?.focus()},0)}
+function closeModal(){if(openingGift)return;theaterDispose?.();theaterDispose=undefined;duckAudio(false);disposeGame();if(modalTimer)clearTimeout(modalTimer);modalOpen=false;modalKind='';$('modal-backdrop').classList.add('hidden');scene.darken(false);scene.blocked=!started||cinematic;lastFocus?.focus();if(scene.nearby)showNearby(scene.nearby)}
 $('close-modal').onclick=closeModal;
 $('modal-backdrop').addEventListener('pointerdown',e=>{if(e.target===$('modal-backdrop')&&modalKind!=='wish'&&modalKind!=='reset')closeModal()});
 document.addEventListener('keydown',e=>{if((e.key==='Escape'||e.key==='e'||e.key==='E')&&dialogueOpen){e.preventDefault();e.stopPropagation();closeDialogue();return}if(e.key==='Escape'&&modalOpen&&modalKind!=='wish')closeModal();if(e.key==='Tab'&&modalOpen){const items=Array.from($('modal').querySelectorAll<HTMLElement>('button:not(.hidden):not([disabled]),a[href],input,textarea'));const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}});
@@ -63,7 +64,7 @@ function celebration(){showModal(`<div class="celebration"><span class="big-star
 type Choice={label:string;run:()=>void};
 function showDialogue(speaker:string,text:string,choices:Choice[]=[],portrait=true){
  if(modalOpen)return;lastFocus=document.activeElement as HTMLElement;dialogueOpen=true;scene.blocked=true;scene.stop();$('nearby').classList.add('hidden');document.body.classList.add('conversing');
- $('dialogue-speaker').textContent=speaker;$('dialogue-text').textContent=text;$('dialogue-portrait').classList.toggle('hidden',!portrait);$('dialogue').classList.remove('hidden');const holder=$('dialogue-choices');holder.replaceChildren();
+ $('dialogue-speaker').textContent=speaker;$('dialogue-text').textContent=text;$('dialogue-portrait').classList.toggle('hidden',!portrait);if(portrait){$('dialogue-portrait').style.backgroundImage='url('+scene.avatar('boy')+')';$('dialogue-portrait').style.backgroundSize='contain';$('dialogue-portrait').style.backgroundPosition='center';$('dialogue-portrait').style.backgroundRepeat='no-repeat'}$('dialogue').classList.remove('hidden');const holder=$('dialogue-choices');holder.replaceChildren();
  for(const choice of choices){const button=document.createElement('button');button.className='dialogue-choice';button.textContent=choice.label;button.onclick=choice.run;holder.append(button)}
  $('dialogue-close').focus();
 }
@@ -75,7 +76,7 @@ function talk(){
 }
 function placeDialogue(id:string){const content=places[id];if(!content)return;const item=scene.getItem(id);showDialogue(item?.name??'此刻',content.text,[{label:content.choice,run:()=>{closeDialogue();scene.remember(id);if(id==='chime')sound(1046);if(id==='shell'||id==='ocean-echo')sound(587);if(content.sit)scene.sit(content.sit);quietLine(content.response)}}],false)}
 function interact(id:string){
- if(modalOpen||dialogueOpen||cinematic)return;if(id.startsWith('game-')){const kind=id.slice(5);startGiftGame(({pairs:'chocolate',rhythm:'earphones',catch:'chestnuts',sequence:'notes',wish:'moon',ribbon:'hat'} as Record<string,GiftId>)[kind]??'notes');return}if(['chair-left','chair-right','greenhouse-seat','memory-seat'].includes(id)){scene.sit(id);return}if(id==='record'){scene.affection('dance');quietLine('唱片卡住了，我们也跟着卡一下。');return}if(id==='seed'||id==='future'){writeFuture();return}if(id==='aquarium-wish'){writeFuture('birthday-aquarium-note','留在海蓝里的悄悄话','这一句悄悄话，已经替你放进海蓝里。');return}if(id==='post-letter'){writeFuture('birthday-postcard','寄给明年的明信片','这一封信，留给明年的你拆开。');return}const gift=config.gifts.find(g=>g.id===id);if(gift){openGift(gift);return}const item=scene.getItem(id);if(item?.kind==='collect'){enhancements.collect(item);return}if(item?.kind==='slot'){enhancements.bag(item);return}if(['movie','memory-projector','concert','ferris-ride'].includes(id)){openTheater(id);return}if(['movie-note','mars-message'].includes(id)){writeFuture('birthday-'+id,'留给这一刻的话','这一句，也好好收下了。');return}
+ if(modalOpen||dialogueOpen||cinematic)return;if(id.startsWith('game-')){const kind=id.slice(5);startGiftGame(({pairs:'chocolate',rhythm:'earphones',catch:'chestnuts',sequence:'notes',wish:'moon',ribbon:'hat'} as Record<string,GiftId>)[kind]??'notes');return}if(['chair-left','chair-right','greenhouse-seat','memory-seat'].includes(id)){scene.sit(id);return}if(id==='record'){scene.affection('dance');quietLine('唱片卡住了，我们也跟着卡一下。');return}if(id==='seed'||id==='future'){writeFuture();return}if(id==='aquarium-wish'){writeFuture('birthday-aquarium-note','留在海蓝里的悄悄话','这一句悄悄话，已经替你放进海蓝里。');return}if(id==='post-letter'){writeFuture('birthday-postcard','寄给明年的明信片','这一封信，留给明年的你拆开。');return}const gift=config.gifts.find(g=>g.id===id);if(gift){openGift(gift);return}const item=scene.getItem(id);if(item?.kind==='collect'){enhancements.collect(item);return}if(item?.kind==='slot'){enhancements.bag(item);return}if(['movie','memory-projector','concert','ferris-ride'].includes(id)){openTheater(id);return}if(id.includes('-small-note-0')||['movie-note','mars-message'].includes(id)){writeFuture('birthday-'+id,'留给这一刻的话','这一句，也好好收下了。');return}
  if(item?.to){travel(item.to);return}if(id==='cake')wish();else if(id==='boy')talk();else if(places[id])placeDialogue(id);else if(['sofa','swing','bench','sea'].includes(id))scene.sit(id);
 }
 function travel(zone:Zone){
