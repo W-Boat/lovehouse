@@ -1,6 +1,6 @@
-import argparse,json,os,subprocess,urllib.request,urllib.parse,zipfile,io,time
+import argparse,json,os,hashlib,subprocess,urllib.request,urllib.parse,zipfile,io,time
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument('action',choices=['auth','status','download','logs']);p.add_argument('--run',default='');args=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('action',choices=['auth','status','download','logs']);p.add_argument('--run',default='');p.add_argument('--name',default='');args=p.parse_args()
 env=dict(os.environ,GIT_TERMINAL_PROMPT='0',GCM_INTERACTIVE='never');token=os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')
 if not token:
  try:
@@ -29,4 +29,5 @@ elif args.action=='logs':
    text=urllib.request.urlopen(req,timeout=30).read().decode('utf8','replace');Path('../../ci-'+j['name']+'.log').write_text(text,encoding='utf8');print('Saved failed job log:',j['name'])
 else:
  for a in api('/actions/runs/'+args.run+'/artifacts')['artifacts']:
-  target=Path('../../outputs')/(a['name']+'.zip');req=urllib.request.Request(a['archive_download_url']+'?fresh='+str(time.time()),headers=headers);target.write_bytes(urllib.request.urlopen(req,timeout=120).read());print('Saved '+target.name)
+  if args.name and a['name']!=args.name:continue
+  target=Path('../../outputs')/(a['name']+'.zip');req=urllib.request.Request(a['archive_download_url']+'?fresh='+str(time.time()),headers=headers);target.write_bytes(urllib.request.urlopen(req,timeout=120).read());receipt=Path('../../outputs/artifact-receipts.json');records=json.loads(receipt.read_text(encoding='utf8')) if receipt.exists() else {};records[a['name']]={'run':args.run,'headSha':a.get('workflow_run',{}).get('head_sha'),'artifactId':a['id'],'sha256':hashlib.sha256(target.read_bytes()).hexdigest()};receipt.write_text(json.dumps(records,indent=2),encoding='utf8');print('Saved '+target.name)
