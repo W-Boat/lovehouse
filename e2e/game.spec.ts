@@ -23,5 +23,5 @@ test('central seating and hand contact stay visible at the furniture scale',asyn
  }
 });
 test('window weather responds immediately without wetting the room',async({page},info)=>{
- await enter(page);for(const weather of ['rain','snow','clear']){await page.evaluate(w=>{const s=(window as any).__cottage;s.weather=w;s.daylight=w==='rain'?'day':'night'},weather);await page.waitForTimeout(250);await page.screenshot({path:`test-results/${info.project.name}/window-${weather}.png`})}
+ await enter(page);for(const weather of ['rain','snow','clear']){await page.locator('#sky-settings').click();await page.selectOption('#sky-weather',weather);await page.selectOption('#sky-time',weather==='rain'?'day':'night');await expect(page.locator('#sky-preview')).toBeVisible();if(weather==='rain')await page.screenshot({path:`test-results/${info.project.name}/weather-panel.png`});await page.locator('#sky-save').click();expect(await page.evaluate(()=>(window as any).__cottage.weather)).toBe(weather);await page.waitForTimeout(250);await page.screenshot({path:`test-results/${info.project.name}/window-${weather}.png`})}
 });

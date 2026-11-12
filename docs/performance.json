@@ -21,11 +21,11 @@
     "holding-walk",
     "window-views"
   ],
-  "fixedFontBytes": 41404,
+  "fixedFontBytes": 41856,
   "loaderBytes": 122934,
-  "compressedEntryBytes": 413807,
-  "fontCssBytes": 91601,
-  "estimatedCoreWithHttpCompressionBytes": 4820564,
+  "compressedEntryBytes": 414332,
+  "fontCssBytes": 91607,
+  "estimatedCoreWithHttpCompressionBytes": 4821547,
   "estimateNotes": "Static byte estimate. HTTP compression depends on the selected host; not a measured network transfer. Excludes delayed music, adjacent-scene prefetch and optional name-font chunks.",
   "mobilePhysicalDeviceTest": "not performed; browser emulation does not substitute for devices",
   "fps": "not measured on physical devices"
