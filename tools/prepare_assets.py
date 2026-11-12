@@ -11,7 +11,7 @@ for p in list(assets.glob('*.png')):
 for p in source.glob('*.png'):
  dest=assets/(p.stem+'.webp')
  if rebuild_all or not dest.exists() or dest.stat().st_size<32 or dest.stat().st_mtime<p.stat().st_mtime:
-  sizes={'furniture':(640,640),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(512,512),'boy-walk':(512,512),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
+  sizes={'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(512,512),'boy-walk':(512,512),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
   im=Image.open(p).convert('RGBA');im.thumbnail(sizes.get(p.stem,(768,512)),Image.Resampling.NEAREST)
   im.save(dest,'WEBP',lossless=True,method=6)
 art_stamp.write_text('pixel-atlas-v3')

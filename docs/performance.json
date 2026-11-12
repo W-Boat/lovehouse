@@ -1,8 +1,7 @@
 {
-  "coreTextureBytes": 10310648,
+  "coreTextureBytes": 3607826,
   "coreTextureKeys": [
     "room",
-    "room-after",
     "hero",
     "characters",
     "gifts",
@@ -16,15 +15,17 @@
     "icons-v2",
     "gifts-v2",
     "world-actors",
-    "wheel-actors",
     "girl-heads",
     "boy-heads",
-    "couple-actions"
+    "couple-actions",
+    "holding-walk"
   ],
-  "fixedFontBytes": 41288,
-  "initialCoreExcludingAudioBytes": 10742937,
-  "largestTextureBytes": 1159946,
-  "totalPublicBytes": 32883372,
-  "mobilePhysicalDeviceTest": "not performed; GitHub browser emulation only",
-  "fps": "pending CI sampling"
+  "fixedFontBytes": 41404,
+  "loaderBytes": 122934,
+  "compressedEntryBytes": 413272,
+  "fontCssBytes": 91601,
+  "estimatedCoreWithHttpCompressionBytes": 4277037,
+  "estimateNotes": "Static byte estimate. HTTP compression depends on the selected host; not a measured network transfer. Excludes delayed music, adjacent-scene prefetch and optional name-font chunks.",
+  "mobilePhysicalDeviceTest": "not performed; browser emulation does not substitute for devices",
+  "fps": "not measured on physical devices"
 }

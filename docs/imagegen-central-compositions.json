@@ -1,0 +1,41 @@
+[
+  {
+    "id": "hotspring",
+    "prompt": "Use case: illustration-story. Asset type: cozy pixel RPG scene, landscape 3:2. True crisp 16-bit pixel art, warm romantic birthday game atmosphere. IMPORTANT COMPOSITION: SUBJECTS and INTERACTIVE FURNITURE are IN THE MIDDLE and foreground, not lined up at the back. Layered foreground props frame a practical winding walkable path; no huge empty floor. Elevated orthographic 3/4 view. No people, no writing, no UI. A small timber footbath tea house on a snowy mountain. Main subject CENTER at x50% y55% a warm shallow foot-soaking pool with TWO clear wooden cushioned seats along near rim, each wide enough for an adult chibi character. Steam, folded towels, a low tea table at x27% y65%, lanterns, small stone stepping path around pool, big arched window on upper left looking into quiet snowy mountains. Shelves and umbrella stand near foreground corners. Natural small scale intimate room, furniture fills 60 percent of frame.",
+    "transparent_background": false
+  },
+  {
+    "id": "market",
+    "prompt": "Use case: illustration-story. Asset type: cozy pixel RPG scene, landscape 3:2. True crisp 16-bit pixel art, warm romantic birthday game atmosphere. IMPORTANT COMPOSITION: SUBJECTS and INTERACTIVE FURNITURE are IN THE MIDDLE and foreground, not lined up at the back. Layered foreground props frame a practical winding walkable path; no huge empty floor. Elevated orthographic 3/4 view. No people, no writing, no UI. A floating cloud garden night market, central island with THREE colorful small flower and pastry stalls arranged around x25% y45%, x67% y45%, x50% y70%, small flower cart central, two-seat bench and tea table x25% y65%, lantern strings overhead, floating islands beyond. Platforms and rugs distinguish winding paths around stalls, ornate wood rails foreground. Warm rose amber lanterns and teal sky. Functional dense playful living market, no huge empty courtyard.",
+    "transparent_background": false
+  },
+  {
+    "id": "aurora",
+    "prompt": "Use case: illustration-story. Asset type: cozy pixel RPG scene, landscape 3:2. True crisp 16-bit pixel art, warm romantic birthday game atmosphere. IMPORTANT COMPOSITION: SUBJECTS and INTERACTIVE FURNITURE are IN THE MIDDLE and foreground, not lined up at the back. Layered foreground props frame a practical winding walkable path; no huge empty floor. Elevated orthographic 3/4 view. No people, no writing, no UI. An intimate glass cabin under northern lights. CENTER composition: a pair of cream cushioned rocking chairs at x40% and x60% y55% facing a small glass-roof sky view, low round table between them at x50% y65%, large patterned wool rug, fireplace at left middle, telescope at right middle, thick knit blankets and small plants foreground corners. Upper half panoramic window and glass roof with teal and purple aurora over snowy mountains. Warm lamp-lit wood, blue winter outside. No empty lower half.",
+    "transparent_background": false
+  },
+  {
+    "id": "furniture",
+    "prompt": {
+      "transparent_background": true,
+      "prompt": "Transparent pixel RPG FURNITURE atlas EXACT 4 columns x 4 rows, isolated objects centered in equal cells with no overlap, generous transparent gutters, elevated 3/4 orthographic, coherent warm cozy 16bit pixel art. Row1 round wooden tea table; wooden two-person upholstered bench with visible pink cushions; single cream armchair with visible seat; big flower pot. Row2 small tea cart; short bookshelf; tall brass standing lamp; ornate burgundy rectangular rug. Row3 picnic basket; shallow wooden FOOTBATH basin; small market flower stall; glass display cabinet. Row4 wooden chest; tabletop chess board; folded cream blanket; potted fern. No characters no text no ground shadows."
+    },
+    "transparent_background": true
+  },
+  {
+    "id": "holding-walk",
+    "prompt": {
+      "transparent_background": true,
+      "prompt": "Transparent pixel RPG TWO PERSON handholding walk sprite atlas EXACTLY FOUR columns x FOUR rows. BOTH same characters in EVERY cell: gray-brown haired girl blue white striped shirt black shorts cat bag on LEFT, brown haired boy cream shirt green vest dark trousers on RIGHT. They must physically HOLD HANDS with fingers together between them, no rope or line or leash. Hands remain in contact in all walking frames. Row1 FOUR frames walking toward viewer. Row2 FOUR frames walking LEFT as a close couple with linked hands. Row3 FOUR frames walking AWAY from viewer. Row4 FOUR frames walking RIGHT together. Same head size and foot baseline every cell. Cute crisp 16bit pixel art no text no furniture."
+    },
+    "transparent_background": true
+  },
+  {
+    "id": "loading-cottage",
+    "prompt": {
+      "transparent_background": true,
+      "prompt": "Transparent cozy pixel game title-screen illustration, landscape 3:2. A small charming rose-roof cottage on an oval grass island with warm glowing windows, little cream front door, white cat on porch, flower pots, hanging lantern and mailbox. A winding short stone path leads toward viewer. A few golden fireflies around roof. Crisp DELIBERATE 16bit pixel art, restrained palette warm cream, muted rose, teal leaves, midnight plum outlines. Centered composition, cottage fills 65% canvas with transparent padding, no lettering no progress bar no people. This is the gentle entrance/loading illustration for a romantic birthday cottage game."
+    },
+    "transparent_background": true
+  }
+]

@@ -122,6 +122,25 @@
       "id": "sit-transition",
       "prompt": "6 columns x 2 rows: girl and boy each six phases of sitting down, real hip and knee bending, constant head size and body width. Transparent.",
       "transparent_background": true
+    },
+    {
+      "id": "holding-walk-v2",
+      "prompt": "Edit holding-walk atlas, preserve 4x4 physical hand-contact poses; match girl-actions reference chin-length ash bob, covering bangs, vertical striped collared blue shirt, cat bag, dark ankle boots. Preserve boy identity and all stride directions. Clean transparent background.",
+      "promptSummary": true,
+      "references": [
+        "holding-walk.png",
+        "girl-actions.png"
+      ],
+      "transparent_background": true
+    },
+    {
+      "id": "hotspring-v2",
+      "prompt": "Edit the central footbath room: replace giant pool with two small wooden foot-soaking bowls under the two chairs, reveal a continuous wooden floor aisle between chairs and front entry, retain intimate central furniture composition, mountain window, tea corner and surrounding details.",
+      "promptSummary": true,
+      "references": [
+        "hotspring.png"
+      ],
+      "transparent_background": false
     }
   ]
 }
