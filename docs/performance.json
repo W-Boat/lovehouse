@@ -23,9 +23,9 @@
   ],
   "fixedFontBytes": 41856,
   "loaderBytes": 122934,
-  "compressedEntryBytes": 414332,
+  "compressedEntryBytes": 414542,
   "fontCssBytes": 91607,
-  "estimatedCoreWithHttpCompressionBytes": 4821547,
+  "estimatedCoreWithHttpCompressionBytes": 4821757,
   "estimateNotes": "Static byte estimate. HTTP compression depends on the selected host; not a measured network transfer. Excludes delayed music, adjacent-scene prefetch and optional name-font chunks.",
   "mobilePhysicalDeviceTest": "not performed; browser emulation does not substitute for devices",
   "fps": "not measured on physical devices"

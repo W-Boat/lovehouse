@@ -64,3 +64,17 @@ test('new scene seats restore both actors to reachable floor on standing',()=>{
 test('scheduled interaction never fires remotely and fires once the player arrives',()=>{
  const scene=loadScene();scene.player=fakeObject(320,350);scene.blocked=false;const item=world.worlds.room.items.find(i=>i.id==='chair-left')!;let count=0;scene.bridge.on('interact',()=>count++);scene.approach(item);const callback=scene.pending;assert.equal(typeof callback,'function');callback();assert.equal(count,0);scene.player.setPosition(...item.point);callback();assert.equal(count,1);
 });
+
+test('superseded scene loads and fade callbacks cannot commit stale destinations',async()=>{
+ const scene=loadScene(),loading=new Map<string,()=>void>(),listeners=new Map<string,Set<()=>void>>(),commits:string[]=[],done:string[]=[];
+ scene.ensureZone=(zone:string)=>new Promise<void>(resolve=>loading.set(zone,resolve));scene.resizeView=()=>{};scene.changeZone=(zone:string)=>{commits.push(zone);scene.zone=zone};
+ const camera={once(event:string,fn:()=>void){if(!listeners.has(event))listeners.set(event,new Set());listeners.get(event)!.add(fn)},off(event:string,fn:()=>void){listeners.get(event)?.delete(fn)},fadeOut(){},fadeIn(){}};scene.cameras={main:camera};
+ const emit=(event:string)=>{const callbacks=[...(listeners.get(event)??[])];listeners.delete(event);callbacks.forEach(fn=>fn())};
+ const old=scene.transitionTo('memory',()=>done.push('memory')),latest=scene.transitionTo('magic',()=>done.push('magic'));loading.get('memory')!();await old;assert.equal(listeners.get('camerafadeoutcomplete')?.size??0,0);loading.get('magic')!();await latest;
+ const newest=scene.transitionTo('aurora',()=>done.push('aurora'));assert.equal(listeners.get('camerafadeoutcomplete')?.size??0,0);loading.get('aurora')!();await newest;emit('camerafadeoutcomplete');emit('camerafadeincomplete');
+ assert.deepEqual(commits,['aurora']);assert.deepEqual(done,['aurora']);assert.equal(scene.transitioning,false);assert.equal(scene.blocked,false);
+});
+test('a failed obsolete load does not unblock a newer transition',async()=>{
+ const scene=loadScene(),requests=new Map<string,{resolve:()=>void;reject:()=>void}>();scene.cameras={main:{fadeIn(){},once(){},off(){},fadeOut(){}}};scene.ensureZone=(zone:string)=>new Promise<void>((resolve,reject)=>requests.set(zone,{resolve,reject}));let errors=0;scene.bridge.on('zone-error',()=>errors++);
+ const old=scene.transitionTo('memory',()=>{}),latest=scene.transitionTo('aurora',()=>{});requests.get('memory')!.reject();await old;assert.equal(scene.transitioning,true);assert.equal(scene.blocked,true);assert.equal(errors,0);requests.get('aurora')!.reject();await latest;assert.equal(scene.transitioning,false);assert.equal(scene.blocked,false);assert.equal(errors,1);
+});

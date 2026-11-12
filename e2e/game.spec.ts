@@ -25,3 +25,11 @@ test('central seating and hand contact stay visible at the furniture scale',asyn
 test('window weather responds immediately without wetting the room',async({page},info)=>{
  await enter(page);for(const weather of ['rain','snow','clear']){await page.locator('#sky-settings').click();await page.selectOption('#sky-weather',weather);await page.selectOption('#sky-time',weather==='rain'?'day':'night');await expect(page.locator('#sky-preview')).toBeVisible();if(weather==='rain')await page.screenshot({path:`test-results/${info.project.name}/weather-panel.png`});await page.locator('#sky-save').click();expect(await page.evaluate(()=>(window as any).__cottage.weather)).toBe(weather);await page.waitForTimeout(250);await page.screenshot({path:`test-results/${info.project.name}/window-${weather}.png`})}
 });
+
+test('rapid scene requests only commit the latest destination under the fade',async({page})=>{
+ await enter(page);await page.evaluate(()=>{const s=(window as any).__cottage;(window as any).__arrivals=[];s.bridge.on('zone',(zone:string)=>(window as any).__arrivals.push({zone,alpha:s.cameras.main.fadeEffect.alpha}));void s.transitionTo('memory',()=>{})});
+ await page.waitForTimeout(70);await page.evaluate(()=>{void (window as any).__cottage.transitionTo('magic',()=>{})});await page.waitForTimeout(70);await page.evaluate(()=>{void (window as any).__cottage.transitionTo('aurora',()=>{})});
+ await page.waitForFunction(()=>{const s=(window as any).__cottage;return s.zone==='aurora'&&!s.transitioning});await page.waitForTimeout(800);
+ const result=await page.evaluate(()=>{const s=(window as any).__cottage;return{arrivals:(window as any).__arrivals,blocked:s.blocked,floor:s.walkable(s.player)&&s.walkable(s.boy)}});
+ expect(result.arrivals.map((v:any)=>v.zone)).toEqual(['aurora']);expect(result.arrivals.every((v:any)=>v.alpha>=.99)).toBeTruthy();expect(result.blocked).toBeFalsy();expect(result.floor).toBeTruthy();
+});
