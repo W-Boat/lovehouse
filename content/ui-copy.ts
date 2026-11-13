@@ -205,7 +205,57 @@ export const uiCopyDefaults={
  "calendar.summary": "{date}　星期{weekday}　{time}　{season} · {weather} · {temperature}°C",
  "calendar.preview-label": "{season}、{weather}、{period}的窗景预览",
  "theater.canvas-label": "{title}，原创像素动画",
- "theater.countdown": "演出即将开始 · {seconds}"
+ "theater.countdown": "演出即将开始 · {seconds}",
+ "wardrobe.hair.original": "原来的样子",
+ "wardrobe.hair.short": "轻盈短发",
+ "wardrobe.hair.ponytail": "小马尾",
+ "wardrobe.hair.twin": "双侧发束",
+ "wardrobe.color.ash": "棕灰",
+ "wardrobe.color.brown": "深棕",
+ "wardrobe.color.black": "乌黑",
+ "wardrobe.color.red": "栗红",
+ "wardrobe.color.gold": "奶金",
+ "wardrobe.color.pink": "粉棕",
+ "wardrobe.skin.light": "浅暖",
+ "wardrobe.skin.natural": "自然",
+ "wardrobe.skin.honey": "蜜色",
+ "wardrobe.skin.deep": "深暖",
+ "wardrobe.outfit.daily": "日常",
+ "wardrobe.outfit.rose": "暖粉",
+ "wardrobe.outfit.cream": "月光白",
+ "settings.tab.sound": "声音",
+ "settings.tab.time": "时间",
+ "settings.tab.graphics": "画面",
+ "settings.tab.controls": "操作",
+ "settings.tab.characters": "角色",
+ "settings.tab.progress": "进度",
+ "settings.tab.about": "关于",
+ "settings.controls-help": "点击物件会自动走近；WASD 或方向键移动，E 互动。手机使用摇杆。",
+ "settings.fullscreen-help": "全屏由进入或全屏按钮请求。浏览器不支持时，仍可正常游玩；添加到主屏幕可获得更完整的沉浸布局。",
+ "settings.import": "导入存档",
+ "settings.about.title": "生日小屋 2.0 · 两个人的小世界",
+ "settings.about.music": "音乐：Moonlight、Childhood — Scott Buckley，CC BY 4.0，scottbuckley.com.au。为循环播放调整了音量和淡入淡出。",
+ "settings.about.font": "字体：Fusion Pixel / 缝合像素，OFL 1.1。完整素材来源和许可随源码提供。",
+ "settings.about.storage": "单人进度保存在当前设备；加入双人房间后，会向所选服务器发送角色状态、聊天和共同信笺。",
+ "climate.season.spring": "春天",
+ "climate.season.summer": "夏天",
+ "climate.season.autumn": "秋天",
+ "climate.season.winter": "冬天",
+ "climate.weather.clear": "晴朗",
+ "climate.weather.rain": "细雨",
+ "climate.weather.snow": "飘雪",
+ "climate.period.night": "月夜",
+ "climate.period.dawn": "清晨",
+ "climate.period.day": "日间",
+ "climate.period.dusk": "傍晚",
+ "climate.weekday.sun": "日",
+ "climate.weekday.mon": "一",
+ "climate.weekday.tue": "二",
+ "climate.weekday.wed": "三",
+ "climate.weekday.thu": "四",
+ "climate.weekday.fri": "五",
+ "climate.weekday.sat": "六",
+ "pet.affection": "{name} 喜欢你"
 } as const;
 export type UICopyId=keyof typeof uiCopyDefaults;
 export function uiCopy(id:UICopyId):string{return (personal.texts as Record<string,string>)["ui."+id]??uiCopyDefaults[id]}
@@ -215,3 +265,6 @@ export function htmlCopy(id:UICopyId):string{return uiCopy(id).replace(/[&<>"']/
 export function formatCopy(id:UICopyId,values:Record<string,string|number>):string{return uiCopy(id).replace(/\{([a-z]+)\}/g,(match,key)=>Object.hasOwn(values,key)?String(values[key]):match)}
 
 export function htmlFormatCopy(id:UICopyId,values:Record<string,string|number>):string{return formatCopy(id,values).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!))}
+
+export const wardrobeOptionIds={hair:["wardrobe.hair.original","wardrobe.hair.short","wardrobe.hair.ponytail","wardrobe.hair.twin"],color:["wardrobe.color.ash","wardrobe.color.brown","wardrobe.color.black","wardrobe.color.red","wardrobe.color.gold","wardrobe.color.pink"],skin:["wardrobe.skin.light","wardrobe.skin.natural","wardrobe.skin.honey","wardrobe.skin.deep"],outfit:["wardrobe.outfit.daily","wardrobe.outfit.rose","wardrobe.outfit.cream"]} as const;
+export const settingsTabCopyIds=["settings.tab.sound","settings.tab.time","settings.tab.graphics","settings.tab.controls","settings.tab.characters","settings.tab.progress","settings.tab.about"] as const;

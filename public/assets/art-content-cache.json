@@ -1,0 +1,622 @@
+{
+  "aquarium-clean.png": {
+    "output": "1d6d64d3b1ea95ff0470daa7bc22c5dfbb5fc066fe1ce8e38d85faae8b2227b8",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "61ca1566985d765fc37e32e6a74a62608ac26f3374c53b83f28a237280b93f93"
+  },
+  "aquarium.png": {
+    "output": "74ec696fafed8b6e6b54f6bb181a2cbfe0a26d1211fd955fdedc815b02b47ab8",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "b1616a08d69d15f245674774dddad23615b090e17416d6ebebc677426f338563"
+  },
+  "aurora.png": {
+    "output": "8e1991746801761764780baa71b68c8bdf9ab457015482f1dcdbeb4970a931c1",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "27577225b7c1dc5710202462d068d97fb88cffe6444d02dc135cf274738a8ec8"
+  },
+  "birthday-cake.png": {
+    "output": "d3118c83906426a011ed22b523244a16ded2c6dc33148a8970bbbed6a6de20c5",
+    "recipe": "lossless-rgba-nearest-v1-(384, 384)",
+    "source": "018c8cda9af0d0dc06b0d33d5a891a4ab5548488e7d8aca241c07e087cd24dff"
+  },
+  "boy-actions.png": {
+    "output": "bd3e6532a6fbcc108433c22d52ca6c494c5b7e6c9f1be2495b3950141c5efd85",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "3f93173e260599b9a876a12883da8006d3252944db1596b24da2e03f80cbf56d"
+  },
+  "boy-heads.png": {
+    "output": "b9d077cbccb8e1eb18e6075da7aa338d74d52a1976b123e850ad56ee15d7ce26",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "94f29214436c49b66ad09353e4f95dd0ba0c31c75e12ddb4bff9a13d8cc0a9a5"
+  },
+  "boy-walk.png": {
+    "output": "8166f7006309fcd385b6bd40041dffa749910d402b2d0cc9628c93e8506c6921",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "27667fbe4328cc1c0b668bb6fea3fb6ebb077ab41227c78543ae75e4a71f3ff5"
+  },
+  "camp.png": {
+    "output": "7242fd9e6ce51068d3cfa3efeb40d6a0efd696be21be8395ce1ed53b5e9eec98",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "94e11609aad073d3322466dd468fc3be8b1f07e11de7e770e169c690d47ea19d"
+  },
+  "characters.png": {
+    "output": "b37c909bceaa27e2aaafd478b272508d7af639b0930757c5d15704bd0d573468",
+    "recipe": "lossless-rgba-nearest-v1-(512, 256)",
+    "source": "f4791659a9d774972d4b3fc0050e8b2ddc3ce7750724e9f300aac2b38d5ea7b5"
+  },
+  "cinema.png": {
+    "output": "1b1ed58787d2943dd630d3f3b064f3fe08aea2b5d997c8e2101f20bddd21ae6d",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "9455ccc8604a875a96221646db66701215316a76a6c76e91e3139967740907c4"
+  },
+  "coast.png": {
+    "output": "5bcf47b202c4d5e1aa496776d14bda989bd7b80d602749762cbcc69c4e219104",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "f3d157e9279dca5f6339cd6fe2ab3f9d9d6671fe20f6383864f4d59d91a34919"
+  },
+  "cottage-after.png": {
+    "output": "9c3b9f4f0a78c3a02a286c08cb20ed3426d01056956039818af697d69fcf8562",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "9bf1c84d1f3c25945e4a98fb2cabda5e28a089d9d97e8df1e251965947e068dc"
+  },
+  "cottage.png": {
+    "output": "777ccf46669a0c93a95ee9d6c483c0b844f664c4f136c22af686019ca8efa79b",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "5692d689c6774c4aedf6711ba2095ee86b495d37750c717a8bd9b2c7b90d5f4d"
+  },
+  "couple-actions.png": {
+    "output": "cd1034fd343dffe2f223e34e6d63e96542a7a5770312565d44e94a26d19f6dba",
+    "recipe": "lossless-rgba-nearest-v1-(768, 576)",
+    "source": "3589bcf016052cba62bebee07fd99a46fbc94f26229ec9ebcecb63135e68639e"
+  },
+  "ferris-clean.png": {
+    "output": "b7c2ef0b5864c8801f2f0f25db897bf3baa24ea30b25476a748fce42bb097183",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "8267305c1e36a379a7080218eb5ed33367d805d12cc5e69e8452654acaefcb47"
+  },
+  "ferris.png": {
+    "output": "441bff1d39e4fa1a16545a65a45054dad78f90ac4a8097d3a1c9cc9e4f169de8",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "cfe4fd19ff095a1bfa3b59b355c0b38ab994eb5608dc883842dcb3a8c46b0166"
+  },
+  "footbath-poses-v2.png": {
+    "output": "5d6cf8e09dc06fd8bfa1b81fa5cf02cdd81ed85a8a3ebed6d71122ca5a750733",
+    "recipe": "lossless-rgba-nearest-v1-(384, 256)",
+    "source": "609920894b558ca5071ac805b93770ae27209137ce7d190afa9c0f893b5f49e0"
+  },
+  "footbath-poses.png": {
+    "output": "cf3d1a437c810d8757a08bb8e295352f1126480ac114dec6d5acb66ebcd4eaa0",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "27ebb9fb40409dafc42a485ffa726b77d960ad6f5ce25e19329c7075587878aa"
+  },
+  "forest.png": {
+    "output": "ce16b464bd7688d407241b67318d4556db780d116e66ddc05dd9cf06aef1bee7",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "0f11549ef2ff4093fc2998362fdaa0066445585dca3049970e2e58c6823de96c"
+  },
+  "furniture.png": {
+    "output": "43d0ffff7d6410b75ab28bff0f7578b76a436f5ea8555c81d0be96554d9277a8",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "996d01a04b2ff61c9aac943cba68ad48df0b4de883581a02e8dd7530db2340ba"
+  },
+  "gifts-v2.png": {
+    "output": "06cff7e0e0e7dc4bcb812c5abb862256bac62ab3ffae667624bb3bf638178792",
+    "recipe": "lossless-rgba-nearest-v1-(256, 256)",
+    "source": "fcd78c673948621f2ed70752c80d5a8ea3f4d473528b224a1b6119bd3de87068"
+  },
+  "gifts.png": {
+    "output": "10a6656c65c3f340b1f0ba482238f434d241743aed8a49cf05820702b182c94b",
+    "recipe": "lossless-rgba-nearest-v1-(512, 384)",
+    "source": "7c6427aea6bbd2786192a5fee3235517141698e5885ee174d4c19f8eb80e326b"
+  },
+  "girl-actions.png": {
+    "output": "a89cbb6977b5b065a45ae18c0439efd1e770fa2b1240e06572c4ac8c5120207e",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "43014e753e328f84e80373ede946944bffcf72eb1256a8b2580345d4ef43832d"
+  },
+  "girl-heads.png": {
+    "output": "e542467bd54f08e36eac0201abd241b797047fa15cb79cc38ceace8e64e08c43",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "bb662e6ee7e08933fc06fceea72752bb246ac2b5192464a9105a20ebbcf9ad6b"
+  },
+  "girl-walk.png": {
+    "output": "18bb7891a0492c370b4b8701815e26df8677fe091f9db7044f2f3fe4780b68d0",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "23901da489846891bea112964af7c5c7ed1387c5142fef7318d564098b7a6c4a"
+  },
+  "greenhouse.png": {
+    "output": "265aa22804aeae256b44d5680e43e998f388638d6298b4220aa72f073d71146f",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "9a44d492110484c96e134e3ef082555c8794e1881b45f2e0fe72934d4001acda"
+  },
+  "haunted.png": {
+    "output": "f3519e2a801649852b45d9e5c7a124dd16db6eec27ea50628124e2b7f9fca1b4",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "24259a5e15b74da8d65b36264db032891e013bfaece5d6f45612fe4befb64748"
+  },
+  "hero.png": {
+    "output": "808feb986f79d9f0eac3106b0da2bcf3060b869504e3f5ff5b5cfe8aa93c10ad",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "7e17b69d5b6c3284cfec992f6033bccdc770a1d68c20f1edada3fad4934688e4"
+  },
+  "holding-walk-v2.png": {
+    "output": "8e040e6af94a2d84e567e600b36f1494c98f3a40cc9b3d8702d755d0d41a4a74",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "95ab7bf83cf444799373670de04ecd0325dfc1a17d34e9f0a373fce5aeecbce8"
+  },
+  "holding-walk.png": {
+    "output": "d8c4189a2f8085153ae8515200116bfcf32ea58fdf5faf4d8a1af6aeb498e8a1",
+    "recipe": "lossless-rgba-nearest-v1-(768, 768)",
+    "source": "0d42d249086f936563a49fb88574fae74ac5a78993b30424deb9141bc76eaee2"
+  },
+  "hotspring-v2.png": {
+    "output": "535bd882bc94a7e835d99e3aaa6a89bed5b01c2d0ba4960473b373fec6d78d71",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "9cbf591a226719c2cfd5ba8288c753c66d8511e267cd0f22eb2684def4052e87"
+  },
+  "hotspring.png": {
+    "output": "6910a94ef278ee13a956ef9d0f1cb2478024fe359f8b0f536973f639dc05d1e0",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "4e5582777c4e96970417b5470ee6d52819be5d5f99dc6ee2297904478de955ab"
+  },
+  "icons-v2.png": {
+    "output": "63a98a602cfd6cf05348dfd60c80be3980ef80af5613bcb5079c48aed6303d21",
+    "recipe": "lossless-rgba-nearest-v1-(256, 256)",
+    "source": "012ffa04695da5340757eff533b8e1559a8b78430cd751fba276ab0e1284afff"
+  },
+  "loading-cottage.png": {
+    "output": "0d782daf71e2676ced0801b42a55fa94f292f7727b40340b90bb9363057d3956",
+    "recipe": "lossless-rgba-nearest-v1-(384, 384)",
+    "source": "0ac9cc3b762818f0d3b90554b907664f82f68c57913a7ba7aac053da508ff4ad"
+  },
+  "magic.png": {
+    "output": "c73cae95eedd30a972fe7798f0508de56ff8da5effb84771f38a4a4a155ab339",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "e1eabb421ed07dab10da30bc6d21e88060714f91ed228b92e80715cbde171cf4"
+  },
+  "market.png": {
+    "output": "bb76331266a05a645efa5b30d7c40fe23a50f8e7b1ca741de856799b6fdab4da",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "4daf0ca6654bdd3c48e454adebc76415920eb62f3c7ce57c552facba5209a862"
+  },
+  "mars.png": {
+    "output": "3f788aa2c83ad725d43866f9b02e6ade684cfd8dbb4603dd734d1a2d85c53ac1",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "4317d3934e874c25834b24f3b9d6ff67aee14e2ba3d2e0bcf0efefbcf27fced3"
+  },
+  "memory-v2.png": {
+    "output": "52c3bb9e14c173bf07e8994ed78562e4baa103d510f5ebda104b97492313974f",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "c9a0bc6fdecdf55060d47dbf1f8fa9c1f4dde91b9e7bae7061dc3f5fa9539641"
+  },
+  "outdoor-camp-autumn-day.png": {
+    "output": "70a3ab1b523a92ad6336af7a6c93ec7a70b5b8390894ee5c16a0aa8104c990c6",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "7f7b4ccbff421bf85aceb58e031f2ec59270d9f53682b93a9c8889de416364ae"
+  },
+  "outdoor-camp-autumn-night.png": {
+    "output": "c1916a8fef7f65b474036168037a747c04258eac3b57c130185d70981cd0ca31",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "afabea52bf327fa25838f0438c3e780d86e3e06393481568c56826bf80e71284"
+  },
+  "outdoor-camp-spring-day.png": {
+    "output": "1c6512cc4feed3e0cfca8a5e903a3bace30a55ef0d420376f564c91bce7e2f64",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "99568172f6834ed1f30c9ee1050dbeeb011dc99f4076b726946b776990912b90"
+  },
+  "outdoor-camp-spring-night.png": {
+    "output": "c2616d21bc3e1a93444d0d27f457f21d5f2490dc26bdcbf8a6e8c666ff02e5e0",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "8654e543a6dd84800d53e632173a615a054bbe883cdcbf239240ef9c3207bb40"
+  },
+  "outdoor-camp-summer-day.png": {
+    "output": "ffe48836855a53a4d0b08e04339f1934072530cbb7b8fa5a764fab450de1ef6e",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "166e44cb2df6af4cdd8b33180e8f89120eb73033d600869480e27d2d4dc7348a"
+  },
+  "outdoor-camp-summer-night.png": {
+    "output": "efc2e0120dd772670ce2e090b82c6a3911e675fd9812d65095109f5808025a50",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "a0a48e6e855d0a369a3897d61c68dc9d3fe042a890695528b6a2bb0fe82f27cc"
+  },
+  "outdoor-camp-winter-day.png": {
+    "output": "e61c2d8e2c01dd62847038581b1eb88cc8cf7c20d93cf6bb1d95561e35f54cd1",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "eb0a3bc0627349f07b9b14c2afa966fa4bf15825d66f0d539557e0e29f45ed6f"
+  },
+  "outdoor-camp-winter-night.png": {
+    "output": "114a1c07f0fb9aa166cf2dd9a084d1ff570e310b4300ea34e25618a9ba332249",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "c8338c30052a1dd088feece402da6708ea9d7951ccf1b4d43991f055ea86817c"
+  },
+  "outdoor-ferris-autumn-day.png": {
+    "output": "2a225ca8db88ef5284b5de4ee55870630b76a019ebba6f5c8d185a186909ae47",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "bb3d5c9dafe8b393313ef7b5e9934d3e2550d4d1577fa1d4d7e0bed64c9030d3"
+  },
+  "outdoor-ferris-autumn-night.png": {
+    "output": "282349cdc369280c2fc27ddd4546ad3094668bd18a21b4eedd9dab2f7ee19b81",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "112b5af0662d3faf6deda6d18fd1fe4bf532f68d0dea31030dd17d9ed378d3a1"
+  },
+  "outdoor-ferris-spring-day.png": {
+    "output": "80d7f9b8e515e0fd03c98ae12b3d319075d6fff7f0ce68a4b697722db4f97956",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "df4b0133a643617c67106c946cbfa88906dbe5340c564ae82753c6dca8a27397"
+  },
+  "outdoor-ferris-spring-night.png": {
+    "output": "2f9b47a1c3a5a3fd7893f34d451657eedb0099781696c7e25caa2aff5af59960",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "4cfb944634fbfdf2b70593a7870c933f7a3e868211953389e07868ec57f4f415"
+  },
+  "outdoor-ferris-summer-day.png": {
+    "output": "edf82980caee3abef9ac9b0fe0aee7aff0abff8afbf57731cebcd25350092beb",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "67faaf7d63ef1da527da6d41022109b1a3e303d4e98d2d9b519f46239971ea1f"
+  },
+  "outdoor-ferris-summer-night.png": {
+    "output": "8e5abec29dcc7d749471eed7643f1c9114fa250d98c3385ed9fa60a3ffe272d0",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "2c5f24f06cb05a5c9c58d16156604448df2f3e999cda1cc22a48c5829f9068a4"
+  },
+  "outdoor-ferris-winter-day.png": {
+    "output": "93f55c9a0f8d07af87fe60d79dfafa586aec20449a7369d43bbd94183ecfbf8d",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "c876db8b282a5157018464231b5688c0201b94b629a53ea295433a53a5b2e938"
+  },
+  "outdoor-ferris-winter-night.png": {
+    "output": "f88ffe51a0c73c07f8c1178bd8c5d26966ae55e846712e3bbd041556fee07c90",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "35b4566759eb87e13e53692f0f50b1a637e33897262c1e3123ce5223d640e733"
+  },
+  "outdoor-forest-autumn-day.png": {
+    "output": "1ddddd0b4e87ac9e131a4d7fc13aeec49f279703c7bc50fad659bbef85c6cfd6",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "b90bc71251e222c1cb7f362d24dd0ea16c3fbb4fc761ce05ef19a1ef46445b41"
+  },
+  "outdoor-forest-autumn-night.png": {
+    "output": "ed91e22f9fbedb6a1cc5c7388e38278fb87dd9cbd0e952fc8d809e1c8b07c417",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "4360798c0ab6294d8afade7949fa739ef34d4b1e3c5239cf275a08b0e5f25e00"
+  },
+  "outdoor-forest-spring-day.png": {
+    "output": "4be411f689295bdcf3a104e7d7e6a3b1b320f9de251ad97c1fb61240eb2df17b",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "6593313fb7fe5c14a560498ee84d481eb626f7fa2c4c9b4741f2e3881657c223"
+  },
+  "outdoor-forest-spring-night.png": {
+    "output": "01c1b6cd8f0876bdd8a61761fa602576e7da112a0d180fa9092e5c2fdc395f7b",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "ef8b5cc7e65ee3f59a4cb4570d5ac91d88a5ed4ee034f8c22cec308ef5437300"
+  },
+  "outdoor-forest-summer-day.png": {
+    "output": "defe9e344718621bfe9c52b05dcbff041494e744d9c8d16d73aaedb7395136f7",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "cee6f56435f9af2df19f57b52a2b92b5c98f923184f55dfbac01ea6df68f0e0f"
+  },
+  "outdoor-forest-summer-night.png": {
+    "output": "87103247e3b069c4331a2c8ec554001a95c3584f49e4f1f0c750792cb71df4a6",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "8332c69115e00f35f687e572f5d2460f5725b351d4ed119cfb65122bb59ba231"
+  },
+  "outdoor-forest-winter-day.png": {
+    "output": "ad84e4cc2ef2c63873afe70a8e1e4fbfd2484ee4e6258f3df54ed39da07cbc10",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "0953dc800a7adc785b6567c1eada250fef1179e17810e96376e4ca82fb50a8ea"
+  },
+  "outdoor-forest-winter-night.png": {
+    "output": "53c822796a4877d74fb0b2aa2df80215f7eee0c7de58da109eac7f4a1415f954",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "3f91b0d4e7807cb022297d57ec5830e940e05d193dc6cd69a725de73e0a5a926"
+  },
+  "outdoor-garden-autumn-day.png": {
+    "output": "31747cfa4d356152c835ceaac65ab358b57d83bfaa7df5276c6309ecc583c118",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "09a799cbc861d88886d423c4425c6651a4525a75c6d003b7cc75c21fe1a1db19"
+  },
+  "outdoor-garden-autumn-night.png": {
+    "output": "ac0eb51ad6955d9ca65ac1922be3fcd9aeda2db622c116254904a4f1fa5bebfa",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "d19171410ce433a076401440b8c161027d99ca562013e3565d6952583e5a736a"
+  },
+  "outdoor-garden-spring-day.png": {
+    "output": "e6a16af932f1582d410b811db0d0b53c51204a182459078fa37407333b51d006",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "521508b61aa843e80900b35b6c53d83956d2d7449795cd1e8eba375f8a59b11c"
+  },
+  "outdoor-garden-spring-night.png": {
+    "output": "0c7b5db864b748d1a5393a697570ef83dce81509a40c34938c396cd1a2b7c174",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "6170598a55c5eb4327f8eea00d9a71a405393421696a918e58454e81a956700c"
+  },
+  "outdoor-garden-summer-day.png": {
+    "output": "85b65d2be8702e9f8f7928ba81f17f1a07ac01957089d4b28467f97e39128132",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "8d4cb899b94d98a099ee1e21a7145a23a353a2ee7d26a9d1aee7940791b87e10"
+  },
+  "outdoor-garden-summer-night.png": {
+    "output": "8ccc063b78e4e88f6a04366f2e84ca7ab8521452594da83b358276beff2c94af",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "881714c1cd272003270f98279e5b653d1bc1d713c24a1498ba1747917a75c616"
+  },
+  "outdoor-garden-winter-day.png": {
+    "output": "3e010af9d17bb7714e0afc7ece2124daff765c7dcc530c87b2f615352914eab7",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "c93e12f8bef1ff3dfae2712f2ba79eb44373f8a4afc303c37410db6de535861a"
+  },
+  "outdoor-garden-winter-night.png": {
+    "output": "e5b375ec9951888f06bee3f05cafdca9220209e8223115ec0f842e2a5adbef5d",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "16c4ffc470d0c2925252dea81ed9cfdccfb4b974e9ba9fe47b8806face9fe1be"
+  },
+  "outdoor-market-autumn-day.png": {
+    "output": "960b3d3bd203d19162d82fb3b1c80ef8af59baf085a6694b9f13b8a620472ec5",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "12e4fcb3c06c2315e5d908dcd9f4ebfe0ec558b75fc7abebd20ff70538fa3510"
+  },
+  "outdoor-market-autumn-night.png": {
+    "output": "2550270b4e4fbaaa879be9fa3e99a7dda171c7f1eb057f1e2d3a80d5292f8eaa",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "f941eb7b8e49c9e19a7086fbbfffc9d55fac2369505d9377856de8cb98925626"
+  },
+  "outdoor-market-spring-day.png": {
+    "output": "0783c2ea1d4e8a0dd6a17423d67439153192764a2ee9c677b949d0f208e3b4d6",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "aee328472d4c4bda7028994e4cc2ff83019448ab46f00b6924063177dec1a957"
+  },
+  "outdoor-market-spring-night.png": {
+    "output": "2e366cbaaf814b9ba1cb26b4b3a4993476220482043cd8d507091f55a2b8f837",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "ce3097843f135b58355f6e66d121ac113f2590c28ad292ce30ca5a04128d94fd"
+  },
+  "outdoor-market-summer-day.png": {
+    "output": "19b42c502231484779ec5d89af9047a93c5593243597a58181dffbf65ada2406",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "ced16c499677e1aca179ac08eb49ccac754d0cdb99eae163bc505506ddb3d1a6"
+  },
+  "outdoor-market-summer-night.png": {
+    "output": "62b9430939beb675dfd303db0ff1ff0615d7f2fafe1e18e25b7fd9c605df4e27",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "11629e820bc1055a4c966e92127542266a5af4d619c457649dafd7d4d15eb36a"
+  },
+  "outdoor-market-winter-day.png": {
+    "output": "a664de77dc908282e5b31b3325e4f9617b69d4c28cb371ab1083fdfd4a665224",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "4a66cb201380300197dce9c695828c7a006f3eaeffa0dfc8e496bb4f18c39a34"
+  },
+  "outdoor-market-winter-night.png": {
+    "output": "4cd92094c6cb38e2fe2c20db02cdd38c657eecf6ce64e2091dbd022b6d060f5e",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "b46efecc6e67ad0feb2ab9a7174027d4ddf5237b0b86d3b5b57ede7e034b4690"
+  },
+  "outdoor-mars-autumn-day.png": {
+    "output": "78e564ce2f3886e8a19d3cec2ba07c80fbccb590b694e3ffa5b50eae7e2efb72",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "2f1999ed3f2b2aef084783f4d6b3b4d506534a1aa968548251c6fa8e640dc525"
+  },
+  "outdoor-mars-autumn-night.png": {
+    "output": "f61f28677be5f05e130283f8f781750e4817439163ba5a3eaca33ab4e9654bc3",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "1263beb994fd5491b63b802bb7a2afa2b598d4c625aaebf42addd5b61ab0c720"
+  },
+  "outdoor-mars-spring-day.png": {
+    "output": "2d07a70a7477fca3e0839f9e204e9bb85a332b8f9368db0877a5445a0623cd07",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "28692d83ff8a6cdf4999fdd987efaf740497ce7ad382b458865823e45a9e51f1"
+  },
+  "outdoor-mars-spring-night.png": {
+    "output": "01e2ea1df819fa09662fd9cf589486fa7b9249464e4e429f7967ca661030c47e",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "3e40211a4af71156b3f9c13d996957fc7b4245c89e7bb41c857b8638786a8908"
+  },
+  "outdoor-mars-summer-day.png": {
+    "output": "d2290dcd736a5419b4aa644df67061c77114bad0145a5483a8bb14bfe76d3b22",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "972c17344ef858ec874af825ecd040f446f4b9d12a7a673cbfa98f3caa041acc"
+  },
+  "outdoor-mars-summer-night.png": {
+    "output": "f9b5c2a00fb8b7d73280fb39813fcfa7103ad430973716d336dc15fbefb4010e",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "98edba467c6defa0fce60f961028f230dfbd70c0fc5d2f5bd4ca8e6f33dd81be"
+  },
+  "outdoor-mars-winter-day.png": {
+    "output": "033b0f48181a1c4e0fbe611cd7b05a100c82e47ca4c340ce5229d1719b7f4550",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "e6e33f0a533a44f5ba756d95fdfb9a70fc2174c465378ce8595a32c7bc10d068"
+  },
+  "outdoor-mars-winter-night.png": {
+    "output": "bfd71fc61f209bb290334665f5cdcb2a777e316791bd83d199b02aa09686c6cc",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "e4fe54efdc5869013c2f26618cd3da08f2f89d8871e41228a5aae5690a6b92f1"
+  },
+  "outdoor-pier-autumn-day.png": {
+    "output": "b2614cb48cec7895ceb7616a55047debd726fc7e0c20df5424fcb3e5cecc608a",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "0533a15e7d4e2b18f909f089710eaf0002a001cfd548d7faec706bf5fda5fa56"
+  },
+  "outdoor-pier-autumn-night.png": {
+    "output": "369a9a5bf2fdc1150c362c98cb2c7b61b9673e25233f6f2d8a19411d71c6e18e",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "d896235064f78bd846ce339d919b5696b6d996b5c21c90180046ace1b7fdf544"
+  },
+  "outdoor-pier-spring-day.png": {
+    "output": "24bc5be1cc99366a63fddc9dcb0d4f60a410d6af3fd6de4c20c52c006bb1cb6e",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "60cbace5f1dad93feb67a2333dadc63d157b2817a4dba0c9de13822792bad3c8"
+  },
+  "outdoor-pier-spring-night.png": {
+    "output": "7464d10f75c90374eb484b132d95a41cdbb4eaf878d4edefa6bf71102f1e7712",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "c3272dd364b44627a43772e1c5c6305a6d6edd0738f867d1980481130ee031a9"
+  },
+  "outdoor-pier-summer-day.png": {
+    "output": "afcc190f3cf3135fc81521c6758efdaab8eb7c3d13e084bba090bd9e4d06d21c",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "12cd418e085e1c4de9c95bed88cc4b01d4c18ba85e129b96d0165318f582b34c"
+  },
+  "outdoor-pier-summer-night.png": {
+    "output": "b7d5fd1284a8c219fc9db4ecd96faa917ff80cf202fbe1a48f7a7d764b93402f",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "f03e8d91011e22cbd9f2d59f23eb8dfc22291c78fe1330995a7b3c51b14ca9e7"
+  },
+  "outdoor-pier-winter-day.png": {
+    "output": "35417da9880f44a7f06bc95f5fbc3e1c5c1eb42a120cdb7719b57a71b2dd965b",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "387c67b6a0329bc1d4d875c3edd88bec2c8b66f1cf6e20e60fd8c305b4ec8f4d"
+  },
+  "outdoor-pier-winter-night.png": {
+    "output": "0ea3fa5e4ea0513efb0395ee213bcdd92f825ff92122699e6d776d7a75d9dd96",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "67f292f2ffd50dbc1f7192c967a745332b284276f781688ca59a9056bc9c6ff6"
+  },
+  "outdoor-postoffice-autumn-day.png": {
+    "output": "40a6f5afb3cd4fa2d9c65ef00260c926a3548da58d64d62c6fa2c2b186886935",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "d9ae010e1caa42316b292b73b5a333ea50ee8935d75e4f7fc27830e46a5d46d6"
+  },
+  "outdoor-postoffice-autumn-night.png": {
+    "output": "530501b55a98fb1768702d82e71e20b5dc19717b09bd863403291a93a96e2bc2",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "732a98fb0057645b65d7d3cd13638dbebadb89bd498736e8a74b8faa488ed8cd"
+  },
+  "outdoor-postoffice-spring-day.png": {
+    "output": "43bca0e047a9bac120c680f33c63c120d6f78339b951a040952f959e175082fc",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "faf33a7f321342ed44bb523fdc2353ed1a08ec1635c364ec9ccc2bf4e8bbb413"
+  },
+  "outdoor-postoffice-spring-night.png": {
+    "output": "080ef2356a8982dcd6b1f70131d05a06a047c1aa870d44af4a2e57b01a9ddd33",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "0d6af7a57a056d002b5e25704306a073dd71dd672408825015240321c7937b97"
+  },
+  "outdoor-postoffice-summer-day.png": {
+    "output": "d8d9b7bc2c46c3ed982b1906323704a08ae5e4f43548d4d3b8e3621543db528e",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "2f218b8279ce0748880499a20271f9d168d0c7726cdef4a7d2a22da504e02ddb"
+  },
+  "outdoor-postoffice-summer-night.png": {
+    "output": "aa7ddc55a1c5f2bf85d7d139be2fc6f63f53262a92bf9ebf5d40379ba3149f42",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "4c7065d694e5571a44c9251345a35d0b6b37c22e8b487c1adf49f3eceb931cd2"
+  },
+  "outdoor-postoffice-winter-day.png": {
+    "output": "eff585cb336cf5e2ee9553961b1d177dffd20ac7107e1bcfc5202d086ccc64ae",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "1fc02b25cb5670af97157165174b786ccc05475a6079fd02790a634114cc4fe6"
+  },
+  "outdoor-postoffice-winter-night.png": {
+    "output": "aa773c99f3a20cb2b6fa4dbd8db4293bdafda8dff7269b669f6961bcd5437afd",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "7382d9af9a44c1421805de1e070119419a93e92aa921b22ad747c0286508372a"
+  },
+  "outdoor-station-autumn-day.png": {
+    "output": "b322c6d241043059fbd212e1c1e773a5bb2213ef3c6dff107a657c33ed0dc5b6",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "f1010ff389877856fd57b41d24ec9aca4ab47ae46a191ac8a0fffe4ffd027ec0"
+  },
+  "outdoor-station-autumn-night.png": {
+    "output": "a14f37db0254665108302f396f399c79906d4d9f47004673eb2f41e8c91c0c4e",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "30866d3528f1c1646dff4d9817579157137511caf25213ade268f6df9f708013"
+  },
+  "outdoor-station-spring-day.png": {
+    "output": "2398561b84c4dabdd71b6336e77f06a36cb81ce0349bf986960d72e24f38e977",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "d9d9a72cef5591ff23e56f3d178d62802929a11312865558eaf835d238bd6647"
+  },
+  "outdoor-station-spring-night.png": {
+    "output": "906227154654107479a8931dc28b66b0dae20b072acefbe55295a96eb0b1231f",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "02d8efb15916546275d20d2a76c8265fef4aef837824f5191d676bb70ed41fe7"
+  },
+  "outdoor-station-summer-day.png": {
+    "output": "97b319149c62edb0d9099b8a594c181a6d31aa596cf8fedb11099d5030198dcd",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "b4b41f5eee0e9b43bd4544a309fc51b417f594bc9055e5d707474bc6b7afd3db"
+  },
+  "outdoor-station-summer-night.png": {
+    "output": "bebb46fe2f3137260b6aa31364deeea2c4423ed290b428ae6514e1ed9ea6e118",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "d6195b559de013c36c2c53de635946b383ba39eb7ff2ca34db32411f1403bbaf"
+  },
+  "outdoor-station-winter-day.png": {
+    "output": "be385d2e2f8448c400abe44589fd42faf49556e1a8e18087f27744ce43e9ab9c",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "0e5dcc48078c2590958ae8e7f2fb977501e0e8b8276263f4b6a9d44277f0f1b4"
+  },
+  "outdoor-station-winter-night.png": {
+    "output": "6c4807656b4464ca6fe1bf11433b92f0ab3bad8c7bb8d9fe491233bca96fb402",
+    "recipe": "lossless-rgb-nearest-v1-768x512",
+    "source": "f79bf2aec868c8170d26ea3f899ee0d1677a8e37b57627e180841114c94dbbf8"
+  },
+  "pier.png": {
+    "output": "5b3458379227b7a791d6e8b236f9a8986d9eb5482b348617250abacd8fd99a60",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "81c92e4329d9e23cbe5efc09053686f4bc576acf9bacda6210055f0c4828dbe2"
+  },
+  "postoffice.png": {
+    "output": "d2e69176416b913e38f0ef5015ef2311aad85d1225c6fd42eb140a9f26b61bc0",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "77af02a3c515d01ea34b90d0e4d2eeac17a1c4eff93c1bd78a87c9ba19a97f9a"
+  },
+  "props.png": {
+    "output": "0be66e822150721f258a7bf309846a378f335d7edd49b6a0257a727e60323478",
+    "recipe": "lossless-rgba-nearest-v1-(512, 256)",
+    "source": "348495f0324f733e484f1b27689cb4e47fd42d7991709ce350fe83d8c938fe81"
+  },
+  "season-views.png": {
+    "output": "4b36f407f398a55e8b983ae560084ef06a4ea51703a3609c885b2d82bb7d1db4",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "7eadbf0c7c61dfc5ac9a75d76fbfac423b0917a3b6c5a048ef6e99f531b73969"
+  },
+  "seats-back.png": {
+    "output": "332b50e06054e8f202dbb51ae738c336b0215f98c119d1c95dcc005eab57fb49",
+    "recipe": "lossless-rgba-nearest-v1-(384, 384)",
+    "source": "14fadbf3483b7260eb775bf76bfaa0df8efde26e6dcd24ffb2fde3b9e654fd3a"
+  },
+  "sit-transition.png": {
+    "output": "608a6e589042aa5183b83e35301e706d3edf075e7ec5bfb8b58efa1f27f72eb5",
+    "recipe": "lossless-rgba-nearest-v1-(768, 256)",
+    "source": "3a87b02d99390a73b16bbeb65d893106ab45cb6c3c4a7f225b212134295e594c"
+  },
+  "sitting.png": {
+    "output": "dfdb0cf38f3f745aa8d9a7ade75bb72cd24ca20a7e1314c423a618184a4ada80",
+    "recipe": "lossless-rgba-nearest-v1-(256, 256)",
+    "source": "3fce7125fad199947f5ef773a8df93cab96d55cf6edbe7caeb58387fb173f838"
+  },
+  "station-clean.png": {
+    "output": "db1fe3cc2f200bfa89edfeff81a3e72b3921a6a72e4512df3f237e38b813eb6a",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "ce475239237e03eff49b92d0ad36d37acf592d36f32f3b6403170e870d6dd689"
+  },
+  "station.png": {
+    "output": "36fdff79831aeba5c0a3953db8414325ae802b8166cdf98c47eb46baf587d83f",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "93c3b3d2d81ed05b506aaf71e8b324c74a4dfa03df6bbb016738603c9c6882e8"
+  },
+  "weather-icons-v2.png": {
+    "output": "972f0f2a9989cf517cab5bb7c65a775a6f8e11186677c3611b397b367184af04",
+    "recipe": "lossless-rgba-nearest-v1-(192, 128)",
+    "source": "42d413ae4ccd850c9965f75d9b0f277920c4ac5d2fa0f5160e245d76e2c480ee"
+  },
+  "weather-icons.png": {
+    "output": "69d0be1bb14dbcc5a8a6adb23deb904868afaeae1ea509d8d58958027e019bed",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "1ad9345f14f337593acb45319fcfb6b0c0beffa42a57fcbfc9987e26be3ed637"
+  },
+  "wheel-actors.png": {
+    "output": "59332c324bb1ec9b86822ccc7599b752fef04eede6cb47f7ff1436f64ce2183b",
+    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "source": "44e10b55014ff2087f212589e17e9aae670f26151038de9e36009602fa079002"
+  },
+  "window-views.png": {
+    "output": "04e5324e96a3103511f389cd9c5949965083304a0b1390b4a1a5b651e8620bca",
+    "recipe": "lossless-rgba-nearest-v1-(640, 426)",
+    "source": "8d814ccba5e050773d87ce51481028e0547f9db8129c2aed5fa407258208f8aa"
+  },
+  "world-actors.png": {
+    "output": "0db6121452a6c31abc5f4eea95789b088d0cd9bb8cc5b28f8c372ae4f3f89bfa",
+    "recipe": "lossless-rgba-nearest-v1-(640, 640)",
+    "source": "475ed304f128287246aa3670038c479fee3576a57e563535fbf7af8ec11e1df7"
+  }
+}

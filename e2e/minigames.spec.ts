@@ -2,9 +2,17 @@ import {letterPieces} from '../src/letter-puzzle';
 import {solveGiftPuzzle} from '../tools/solve-gift-puzzle';
 import {test,expect,type Page} from '@playwright/test';
 import {birthdayConfig} from '../content/birthday-config';
-async function enter(page:Page){await page.goto('/');await expect(page.locator('#custom-save')).toBeVisible({timeout:45000});await page.locator('#custom-save').click()}
+// Legal post-ceremony fixture: no gifts or game results are pre-completed.
+async function enter(page:Page){await page.addInitScript(()=>{if(!localStorage.getItem('birthday-cottage-v2'))localStorage.setItem('birthday-cottage-v2',JSON.stringify({version:2,celebrated:true,onboarded:false,opened:[],games:{}}))});await page.goto('/');await expect(page.locator('#custom-save')).toBeVisible({timeout:45000});await page.locator('#custom-save').click()}
 async function start(page:Page,id:string){await page.evaluate(value=>(window as any).__cottage.bridge.emit('interact',value),id);await expect(page.locator('#game-host')).toBeVisible()}
-async function won(page:Page,id:string){await expect(page.locator('#game-host')).toHaveCount(0);expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).games[value].status,id)).toBe('won');expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.filter((x:string)=>x===value).length,id)).toBe(1)}
+async function won(page:Page,id:string){
+ await expect(page.locator('#game-host')).toHaveCount(0);
+ await expect.poll(()=>page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).games[value]?.status,id),{message:'Game completion is persisted'}).toBe('won');
+ // The gift ribbon animation intentionally precedes the single inventory grant.
+ await expect.poll(()=>page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.filter((x:string)=>x===value).length,id),{message:'Gift is granted once after its opening animation',timeout:10000}).toBe(1);
+}
+
+
 test('moon rotation, sentence fragments, notes, stitches and chocolate complete through real inputs',async({page})=>{
  test.setTimeout(180000);await enter(page);
  for(const id of ['moon','keychain','notes','hat','chocolate']){
@@ -29,7 +37,7 @@ test('rhythm requires actual notes on all three rounds',async({page})=>{
  await won(page,'earphones');
 });
 test('pause blocks chocolate placement and retry starts a fresh board',async({page})=>{
- await enter(page);await start(page,'chocolate');const host=page.locator('#game-host');await host.getByRole('button',{name:'暂停',exact:true}).click();await host.locator('.game-board button').nth(0).click({force:true});await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'继续',exact:true}).click();await host.locator('.game-board button').nth(0).click();await expect(host.locator('.game-board')).toContainText('甜');await host.getByRole('button',{name:'重新开始',exact:true}).click();await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toHaveCount(0);expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes('chocolate'))).toBe(false);
+ await enter(page);await start(page,'chocolate');const host=page.locator('#game-host');await host.getByRole('button',{name:'暂停',exact:true}).click();await host.locator('.game-board button').nth(0).click({force:true});await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'继续',exact:true}).click();await host.locator('.game-board button').nth(0).click();await expect(host.locator('.game-board')).toContainText('甜');await host.getByRole('button',{name:'重新开始',exact:true}).click();await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toBeHidden();expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes('chocolate'))).toBe(false);
 });
 
 test('route planning, push boxes and two-character switches solve all three distinct layouts',async({page})=>{
@@ -40,9 +48,10 @@ test('route planning, push boxes and two-character switches solve all three dist
 test('letter scraps rotate and drag into all three envelopes',async({page})=>{
  test.setTimeout(120000);await enter(page);await start(page,'letter');
  for(let level=0;level<3;level++)for(const piece of letterPieces(level)){
-  const canvas=page.locator('#game-host canvas');await page.getByRole('button',{name:'选下一片',exact:true}).click();await canvas.focus();for(let i=piece.rotation;i%4!==0;i++)await page.keyboard.press('r');
-  const box=(await canvas.boundingBox())!;const pos=(x:number,y:number)=>({x:box.x+x/600*box.width,y:box.y+y/360*box.height});const from=pos(piece.x,piece.y),to=pos(piece.target.x,piece.target.y);
+  const canvas=page.locator('#game-host canvas');await page.getByRole('button',{name:'选下一片',exact:true}).click();await canvas.focus();await canvas.scrollIntoViewIfNeeded();for(let i=piece.rotation;i%4!==0;i++)await page.keyboard.press('r');
+  const geometry=await canvas.evaluate((node:HTMLCanvasElement)=>{const r=node.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,w:node.width,h:node.height,rotated:document.getElementById('app')?.classList.contains('rotated')??false}});const pos=(x:number,y:number)=>geometry.rotated?({x:geometry.x+geometry.width-y/geometry.h*geometry.width,y:geometry.y+x/geometry.w*geometry.height}):({x:geometry.x+x/geometry.w*geometry.width,y:geometry.y+y/geometry.h*geometry.height});const from=pos(piece.x,piece.y),to=pos(piece.target.x,piece.target.y);
   await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:10});await page.mouse.up();
+  if(piece.id<5)await expect(page.locator('.game-status')).toContainText(`已修好 ${piece.id+1} / 6 片`);else if(level<2)await expect(page.locator('.game-status')).toContainText(`第 ${level+2} / 3 封`);
  }
  await won(page,'letter');
 });
@@ -65,6 +74,6 @@ test('catch falling chestnuts by tracking visible pixels, through three rounds',
 test('all twelve games permit retry, pause, resume and exit without receiving a gift',async({page})=>{
  test.setTimeout(120000);await enter(page);
  for(const id of ['moon','keychain','chestnuts','earphones','band','doll','chocolate','letter','notes','hat','labubu','mystery']){
-  await start(page,id);const host=page.locator('#game-host');await host.getByRole('button',{name:'重新开始',exact:true}).click();await host.getByRole('button',{name:'暂停',exact:true}).click();await expect(host.locator('.game-board')).toHaveClass(/paused/);await host.getByRole('button',{name:'继续',exact:true}).click();await expect(host.locator('.game-board')).not.toHaveClass(/paused/);await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toHaveCount(0);expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes(value),id)).toBe(false);
+  await start(page,id);const host=page.locator('#game-host');await host.getByRole('button',{name:'重新开始',exact:true}).click();await host.getByRole('button',{name:'暂停',exact:true}).click();await expect(host.locator('.game-board')).toHaveClass(/paused/);await host.getByRole('button',{name:'继续',exact:true}).click();await expect(host.locator('.game-board')).not.toHaveClass(/paused/);await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toBeHidden();expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes(value),id)).toBe(false);
  }
 });

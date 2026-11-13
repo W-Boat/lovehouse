@@ -1,12 +1,13 @@
+import {uiCopy} from '../content/ui-copy';
 export type Season='spring'|'summer'|'autumn'|'winter';
 export type Weather='clear'|'rain'|'snow';
 export type DayPeriod='night'|'dawn'|'day'|'dusk';
 export type CalendarSettings={enabled:boolean;initialized:boolean;date:string;minutes:number;timeMode:'auto'|'manual';timeScale:1|10|30|60;seasonMode:'auto'|'manual';season:Season;weatherMode:'auto'|'manual';weather:Weather;temperatureMode:'auto'|'manual';temperature:number};
 export const FIRST_CALENDAR_DATE='2026-10-23';
 export const calendarDefaults=():CalendarSettings=>({enabled:false,initialized:false,date:FIRST_CALENDAR_DATE,minutes:18*60,timeMode:'auto',timeScale:10,seasonMode:'auto',season:'autumn',weatherMode:'auto',weather:'clear',temperatureMode:'auto',temperature:16});
-export const seasonNames:Record<Season,string>={spring:'春天',summer:'夏天',autumn:'秋天',winter:'冬天'};
-export const weatherNames:Record<Weather,string>={clear:'晴朗',rain:'细雨',snow:'飘雪'};
-export const periodNames:Record<DayPeriod,string>={night:'月夜',dawn:'清晨',day:'日间',dusk:'傍晚'};
+export const seasonNames:Record<Season,string>={get spring(){return uiCopy('climate.season.spring')},get summer(){return uiCopy('climate.season.summer')},get autumn(){return uiCopy('climate.season.autumn')},get winter(){return uiCopy('climate.season.winter')}};
+export const weatherNames:Record<Weather,string>={get clear(){return uiCopy('climate.weather.clear')},get rain(){return uiCopy('climate.weather.rain')},get snow(){return uiCopy('climate.weather.snow')}};
+export const periodNames:Record<DayPeriod,string>={get night(){return uiCopy('climate.period.night')},get dawn(){return uiCopy('climate.period.dawn')},get day(){return uiCopy('climate.period.day')},get dusk(){return uiCopy('climate.period.dusk')}};
 const bounded=(n:unknown,lo:number,hi:number,fallback:number)=>typeof n==='number'&&Number.isFinite(n)?Math.max(lo,Math.min(hi,n)):fallback;
 export function validCalendarDate(value:unknown):value is string{
  if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
@@ -68,3 +69,5 @@ export function calendarSnapshot(c:CalendarSettings,fallback:{weather:string;tim
  return{enabled:c.enabled,date:c.date,minutes,weekday:new Date(Date.UTC(year,month-1,day)).getUTCDay(),season,weather,period:c.enabled?periodForMinutes(minutes,times):fallbackPeriod,temperature:Math.round(temperature*10)/10,skyBlend:blend,daylight:blend[2]+blend[1]*.45,...times};
 }
 export function clockLabel(minutes:number){const n=Math.floor(minutes)%1440;return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
+
+export function weekdayName(index:number){return uiCopy((['climate.weekday.sun','climate.weekday.mon','climate.weekday.tue','climate.weekday.wed','climate.weekday.thu','climate.weekday.fri','climate.weekday.sat'] as const)[((index%7)+7)%7])}

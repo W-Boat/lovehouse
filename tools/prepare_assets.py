@@ -8,6 +8,17 @@ assets=root/'public/assets';art_stamp=assets/'art-version.txt';rebuild_all=not a
 for p in list(assets.glob('*.png')):
  dest=source/p.name
  if not dest.exists():p.replace(dest)
+sizes={'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(512,512),'boy-walk':(512,512),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
+cache_path=assets/'art-content-cache.json'
+try:art_cache=json.loads(cache_path.read_text())
+except (OSError,ValueError):art_cache={}
+def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
+def needs_export(p,dest,recipe):
+ if rebuild_all or not dest.exists() or dest.stat().st_size<32:return True
+ entry=art_cache.get(p.name)
+ if entry:return entry!={'source':digest(p),'output':digest(dest),'recipe':recipe}
+ return dest.stat().st_mtime<p.stat().st_mtime
+def record_export(p,dest,recipe):art_cache[p.name]={'source':digest(p),'output':digest(dest),'recipe':recipe}
 for p in source.glob('*.png'):
  if p.stem.startswith('pet-'):continue # normalized 6x96 animation strips are prepared separately
  # Seasonal backgrounds are generated individually. Four-up comparison sheets
@@ -16,15 +27,19 @@ for p in source.glob('*.png'):
   if not re.fullmatch(r'outdoor-(garden|forest|pier|station|postoffice|camp|ferris|market|mars)-(spring|summer|autumn|winter)-(day|night)',p.stem):continue
   folder=assets/'seasons';folder.mkdir(exist_ok=True)
   dest=folder/(p.stem.removeprefix('outdoor-')+'.webp')
-  if rebuild_all or not dest.exists() or dest.stat().st_mtime<p.stat().st_mtime:
+  recipe='lossless-rgb-nearest-v1-768x512'
+  if needs_export(p,dest,recipe):
    im=Image.open(p).convert('RGB');im.thumbnail((768,512),Image.Resampling.NEAREST)
    im.save(dest,'WEBP',lossless=True,method=6)
+  record_export(p,dest,recipe)
   continue
  dest=assets/(p.stem+'.webp')
- if rebuild_all or not dest.exists() or dest.stat().st_size<32 or dest.stat().st_mtime<p.stat().st_mtime:
-  sizes={'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(512,512),'boy-walk':(512,512),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
+ recipe='lossless-rgba-nearest-v1-'+str(sizes.get(p.stem,(768,512)))
+ if needs_export(p,dest,recipe):
   im=Image.open(p).convert('RGBA');im.thumbnail(sizes.get(p.stem,(768,512)),Image.Resampling.NEAREST)
   im.save(dest,'WEBP',lossless=True,method=6)
+ record_export(p,dest,recipe)
+cache_path.write_text(json.dumps(art_cache,sort_keys=True,indent=2))
 art_stamp.write_text('pixel-atlas-v3')
 if (source/'icons-v2.png').exists():
  im=Image.open(source/'icons-v2.png');w,h=im.size;icon=im.crop((w//2,h*3//4,w*3//4,h));icon.thumbnail((64,64),Image.Resampling.NEAREST);icon.save(assets/'favicon.webp','WEBP',lossless=True)
