@@ -13,8 +13,10 @@ test('two players publish, score and receive the same quiz outcomes',async({brow
   }));
   await host.getByRole('button',{name:'创建双人房间',exact:true}).click();
   const room=host.locator('#online-room-info');
-  await expect(room).toContainText('房间 ');
-  await guest.getByLabel('房间号',{exact:true}).fill((await room.innerText()).match(/^房间 (\S+)/)![1]);
+  await expect(host.locator('#online-status')).toContainText('已连接双人房间');
+  const roomCode=/^房间 (\S+) ·/;
+  await expect(room).toHaveText(roomCode);
+  await guest.getByLabel('房间号',{exact:true}).fill((await room.innerText()).match(roomCode)![1]);
   await guest.getByRole('button',{name:'加入房间',exact:true}).click();
   const h=host.locator('.online-quiz'),g=guest.locator('.online-quiz');
   await expect(h.getByLabel('这局题数').locator('option')).toHaveText(['5','10','15','20']);
