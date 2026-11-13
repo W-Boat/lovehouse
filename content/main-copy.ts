@@ -1,5 +1,9 @@
 import personal from './personal.json';
 export const mainCopyDefaults={
+  "cat.follow": "团团甩了甩尾巴，跟上了你的脚步。",
+  "cat.rest": "团团慢慢走回自己的小窝，蜷成了一小团。",
+  "school.note-title": "写在毕业册里的话",
+  "school.note-saved": "这一页收好了。下次一起回来，再读一遍。",
   "cat.pet": "团团蹭了蹭你的手，呼噜声轻轻响起来。",
   "cat.play": "羽毛一动，团团立刻扑了过来。",
   "cat.feed": "团团跑到饭碗边，把尾巴竖了起来。",

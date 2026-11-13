@@ -37,3 +37,6 @@ Node.js 22、Python 3.12+；`pip install pillow fonttools brotli`，`npm ci`。
 ## 验收
 
 详见 docs/验收报告.md、docs/41项需求对应表.md、docs/素材来源.md。桌面浏览器自动化与手机尺寸模拟不等同于实体手机验收；实机测试状态会明确标注。
+
+
+某平一高从遂平·嵖岈山进入；主房间新增团团宠物和唱片房入口。唱片房接入 HeoMusic 的 APlayer/Meting 内核，支持歌单设置、真实封面和地面 LRC 投影。配置见 `content/music-room.json`，说明见 `docs/校园、猫猫与唱片房.md`。本轮新增内容按要求延后浏览器和实机验收。

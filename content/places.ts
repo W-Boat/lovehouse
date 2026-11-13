@@ -97,3 +97,10 @@ places["chaya-rock"]={"text": "奇石在山脊上露出一个圆圆的脑袋。"
 places["chaya-tea"]={"text": "野餐篮里有一壶茶和两只杯子。", "choice": "分一杯", "response": "山风一吹，热气就往同一个方向跑。"};
 places["tianmo-boat"]={"text": "小船系在木桩上，随水晃了一下。", "choice": "看水纹", "response": "一圈波纹撞到岸边，又散开了。"};
 places["tianmo-tea"]={"text": "木桌上有一只搪瓷壶。", "choice": "倒两杯", "response": "坐到长椅那边，能看见石山的倒影。"};
+
+places['school-bell']={text:'教学楼的窗户开着一小扇。',choice:'听一声铃',response:'铃声落下来。今天不用赶着跑，我们可以慢慢走。'};
+places['school-board']={text:'布告栏里夹着一张被风吹翘的纸。',choice:'翻开便签',response:'有人写着：别忘了去操场看一眼晚霞。'};
+places['school-basketball']={text:'篮筐下面放着一颗篮球。',choice:'投一球',response:'球在篮圈上绕了一下，落进去了。轮到你啦。'};
+places['school-plane']={text:'草稿纸的背面，折出了一双翅膀。',choice:'放飞纸飞机',response:'它越过走廊，朝着晚霞飞了一小段。'};
+places['school-radio']={text:'广播里传来一阵轻轻的电流声。',choice:'听一会广播',response:'点歌台今日留言：愿你想去的地方，都有人陪你抵达。'};
+places['school-lunch']={text:'饭盒旁边，放着两只干净的小叉子。',choice:'分享点心',response:'你先挑喜欢的，剩下那一半留给我。'};

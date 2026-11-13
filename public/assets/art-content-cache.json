@@ -159,6 +159,11 @@
     "recipe": "lossless-rgba-nearest-v1-(512, 512)",
     "source": "7e17b69d5b6c3284cfec992f6033bccdc770a1d68c20f1edada3fad4934688e4"
   },
+  "highschool.png": {
+    "output": "06d226afc55fff5a3f63c53e8b5ff68f08675f5ce396fcabdd9bda22c2ca2409",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "67ad6de466e334a2639a32f7746c52d3aaf38acc94426bfdc50b87ab80612214"
+  },
   "holding-walk-v2.png": {
     "output": "8e040e6af94a2d84e567e600b36f1494c98f3a40cc9b3d8702d755d0d41a4a74",
     "recipe": "lossless-rgba-nearest-v1-(512, 512)",
@@ -213,6 +218,11 @@
     "output": "52c3bb9e14c173bf07e8994ed78562e4baa103d510f5ebda104b97492313974f",
     "recipe": "lossless-rgba-nearest-v1-(768, 512)",
     "source": "c9a0bc6fdecdf55060d47dbf1f8fa9c1f4dde91b9e7bae7061dc3f5fa9539641"
+  },
+  "musicroom.png": {
+    "output": "1122d9b3e1747f971256b59b28a52205fedfa98bbad1aa4867d90b6644eb6688",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "aa59c2206bd753c0e9f9087a232c595c5db0bb9dde77add6b33812ab43c7b9d9"
   },
   "outdoor-camp-autumn-day.png": {
     "output": "70a3ab1b523a92ad6336af7a6c93ec7a70b5b8390894ee5c16a0aa8104c990c6",

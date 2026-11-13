@@ -1,15 +1,21 @@
 import Phaser from 'phaser';
+import {SchoolMotion} from './school-motion';
+import {RoomCat} from './room-cat';
 import type {Cottage} from './scene';
 import {save} from './state';
 export class WorldMotion{
+ private school?:SchoolMotion;
+ private roomCat?:RoomCat;
  private cat?:Phaser.GameObjects.Image;
  private catAction='';
  private catUntil=0;
  private clock=0;
  private objects:Phaser.GameObjects.GameObject[]=[];private images:Phaser.GameObjects.Image[]=[];private sun?:Phaser.GameObjects.Arc;
  constructor(private scene:Cottage){}
- destroy(){this.objects.forEach(o=>o.destroy());this.objects=[];this.images=[];this.sun=undefined;this.cat=undefined;this.catAction='';this.catUntil=0}
- rebuild(){this.destroy();const s=this.scene,z=s.zone;const image=(x:number,y:number,key:string,w:number,h:number,depth=2)=>{const i=s.add.image(x,y,key).setDisplaySize(w,h).setDepth(depth);this.objects.push(i);this.images.push(i);return i};
+ destroy(){this.school?.destroy();this.school=undefined;this.roomCat?.destroy();this.roomCat=undefined;this.objects.forEach(o=>o.destroy());this.objects=[];this.images=[];this.sun=undefined;this.cat=undefined;this.catAction='';this.catUntil=0}
+ rebuild(){const catPoint=this.scene.zone==='room'?this.roomCat?.position:undefined;this.destroy();const s=this.scene,z=s.zone;const image=(x:number,y:number,key:string,w:number,h:number,depth=2)=>{const i=s.add.image(x,y,key).setDisplaySize(w,h).setDepth(depth);this.objects.push(i);this.images.push(i);return i};
+ if(z==='highschool')this.school=new SchoolMotion(s);
+ if(z==='room'&&s.textures.exists('cottage-cat-0'))this.roomCat=new RoomCat(s,catPoint);
  if(z==='catcottage')this.cat=image(335,213,'cottage-cat-0',45,45,10.22).setOrigin(.5,1);
  if(z==='station'){this.sun=s.add.circle(230,75,15,0xffdf9d,.8).setDepth(1);this.objects.push(this.sun);image(480,122,'train-0',190,72,1)}
  if(z==='aquarium'){for(let i=0;i<4;i++)image(160+i*105,90+i%2*40,'jelly-0',36,47,1);for(let i=0;i<5;i++)image(120+i*90,125,'fish-0',24,16,1)}
@@ -20,11 +26,13 @@ export class WorldMotion{
  if(z==='magic')for(let i=0;i<3;i++)image(226+i*80,98+i%2*30,'motion-book',30,24,3);
  }
  interact(id:string){
+  if(id.startsWith('school-')){this.school?.interact(id);return}
+  if(id.startsWith('room-cat-')){this.roomCat?.interact(id);return}
   if(!this.cat||!['cat-pet','cat-play','cat-feed'].includes(id))return;
   this.catAction=id;
   this.catUntil=this.clock+4;
  }
- update(clock:number){this.clock=clock;const t=save.reduced?0:clock,s=this.scene,z=s.zone;if(z==='station'){const p=t%44,train=this.images[0];const x=p<8?780-(p/8)*300:p<26?480:480-(p-26)/18*750;train?.setX(x).setTexture('train-'+(p>10&&p<23?2:p>8&&p<26?1:0));this.sun?.setY(s.calendarState.enabled?110-45*s.calendarState.daylight:110-45*(.5-.5*Math.cos(t/50))).setAlpha(s.calendarState.enabled?(s.calendarState.period==='night'?0:.7):.65+Math.sin(t/40)*.12)}
+ update(clock:number){this.roomCat?.update(clock);this.school?.update(clock);this.clock=clock;const t=save.reduced?0:clock,s=this.scene,z=s.zone;if(z==='station'){const p=t%44,train=this.images[0];const x=p<8?780-(p/8)*300:p<26?480:480-(p-26)/18*750;train?.setX(x).setTexture('train-'+(p>10&&p<23?2:p>8&&p<26?1:0));this.sun?.setY(s.calendarState.enabled?110-45*s.calendarState.daylight:110-45*(.5-.5*Math.cos(t/50))).setAlpha(s.calendarState.enabled?(s.calendarState.period==='night'?0:.7):.65+Math.sin(t/40)*.12)}
  else if(z==='catcottage'&&this.cat){
   const acting=clock<this.catUntil;
   const progress=acting?Math.min(1,(4-(this.catUntil-clock))/.8):0;

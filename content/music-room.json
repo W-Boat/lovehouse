@@ -1,0 +1,11 @@
+{
+ "mode":"offline",
+ "server":"tencent",
+ "id":"8668419170",
+ "type":"playlist",
+ "api":"https://music.zhheo.com/meting-api/?server=:server&type=:type&id=:id&r=:r",
+ "localTracks":[
+  {"name":"Moonlight","artist":"Scott Buckley","url":"audio/moonlight.m4a","cover":"assets/loading-cottage.webp","lrc":""},
+  {"name":"Childhood","artist":"Scott Buckley","url":"audio/childhood.m4a","cover":"assets/loading-cottage.webp","lrc":""}
+ ]
+}

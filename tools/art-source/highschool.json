@@ -1,0 +1,11 @@
+{
+  "generator": "image_gen builtin",
+  "source": "exec-2b7b1b66-7ee1-40df-b945-2b20b8785a5e.png",
+  "concept": "某平一高，遂平一高题材的化名像素改编，不是测绘复刻",
+  "references": [
+    "https://www.gx211.cn/school/schoolcontent2275.shtml",
+    "https://www.htu.edu.cn/physics/2026/0828/c1829a402514/page.htm"
+  ],
+  "usage": "world.highschool",
+  "coordinates": "640 x 426.667 world units"
+}

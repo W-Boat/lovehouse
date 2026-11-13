@@ -1,0 +1,9 @@
+{
+  "generator": "image_gen builtin",
+  "source": "exec-5eb2cddd-2ae8-4318-a0f2-3a030802d116.png",
+  "usage": "world.musicroom",
+  "concept": "大唱片机、独立封面框、木地板实时歌词投影、双人座位",
+  "edit": "Removed baked-in tonearm with image_gen to allow real layered lift/drop animation",
+  "finalSource": "exec-295c0805-e78a-467e-a1a3-a7011ffd012f.png",
+  "reference": "tools/art-reference/musicroom-with-arm.png"
+}

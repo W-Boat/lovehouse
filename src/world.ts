@@ -1,6 +1,6 @@
 import {furnishings,backgroundSeats} from './layouts';
 import {roomWalkable,gardenWalkable,type Point,inside,inPolygon,type Polygon,segmentWalkable,nearestWalkable,type Walkable} from './navigation';
-export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora'|'shichahai'|'gulou'|'chaya'|'tianmo'|'tanghulu'|'catcottage';
+export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora'|'shichahai'|'gulou'|'chaya'|'tianmo'|'tanghulu'|'catcottage'|'highschool'|'musicroom';
 export type Item={id:string;name:string;x:number;y:number;point:[number,number];action?:string;kind?:'place'|'collect'|'slot'|'event';collect?:string;prop?:number;texture?:string;to?:Zone};
 export type World={name:string;caption:string;texture:string;spawn:[number,number];boy:[number,number];items:Item[];walkable:(point:Point)=>boolean};
 // Broad walkable floor regions match the painted clearing/deck instead of invisible center lines.
@@ -170,6 +170,41 @@ worlds.catcottage={...newRoom('猫猫小屋','把脚步放轻，猫咪正在打�
 ]),walkable:p=>p.x>70&&p.x<566&&p.y>225&&p.y<399
  &&!inside(p,{x:289,y:205,w:97,h:42},5)};
 worlds.greenhouse.items.push(onward('to-catcottage','catcottage','去猫猫小屋',469,353));
+
+// A fictional campus inspired by Suiping No.1 Senior High School; not a surveyed replica.
+worlds.highschool={...newRoom('某平一高','下课铃响了，这次一起慢慢走','highschool','chaya',[
+ spot('school-bell','教学楼的上课铃',320,134,'听一声铃'),
+ spot('school-board','银杏树下的布告栏',87,202,'翻看校园便签'),
+ spot('school-basketball','操场边的篮球架',608,173,'投一颗球'),
+ spot('school-plane','折好的一架纸飞机',365,277,'放飞纸飞机'),
+ spot('school-note','毕业册里的空白页',230,307,'写下留言'),
+ spot('school-radio','晚自习前的校园广播',407,179,'点一段广播'),
+ spot('school-lunch','留给你的那份点心',582,318,'分一半点心'),
+ spot('school-book','图书角的小书签',453,213,'收藏书签','collect','school-bookmark'),
+ spot('school-photo','教学楼前的合影',320,300,'拍张合影'),
+]),walkable:p=>((p.x>65&&p.x<578&&p.y>237&&p.y<400&&(p.y<356||p.x>242&&p.x<415))||(p.x>555&&p.x<627&&p.y>210&&p.y<310))
+ &&!inside(p,{x:96,y:234,w:64,h:34},5)
+ &&!inside(p,{x:515,y:234,w:63,h:35},5)
+ &&!inside(p,{x:545,y:313,w:70,h:41},5)};
+worlds.chaya.items.push(onward('to-highschool','highschool','去某平一高',544,337));
+worlds.room.items.push(
+ spot('room-cat-pet','团团 · 摸摸猫',435,329,'摸摸猫'),
+ spot('room-cat-feed','团团的饭碗',461,333,'添点猫粮'),
+ spot('room-cat-play','团团的绒线球',417,334,'陪猫玩一会'),
+ spot('room-cat-follow','猫猫的小窝',451,316,'跟随 / 回窝'),
+);
+
+worlds.musicroom={...newRoom('两个人的唱片房','把喜欢的歌，放给身边的人听','musicroom','room',[
+ spot('music-turntable','中央大唱片机',312,150,'播放 / 暂停'),
+ spot('music-records','你的歌单与唱片',510,198,'配置歌单'),
+ spot('music-next','下一张唱片',534,207,'换一首歌'),
+ spot('music-floor','地板上的歌词光影',320,301,'切换投影亮度'),
+ spot('music-note','夹在唱片里的小纸条',185,310,'写下点歌留言'),
+ spot('music-photo','一起听歌的合影',360,333,'拍张合影'),
+]),walkable:p=>p.x>70&&p.x<572&&p.y>218&&p.y<400&&(p.y<363||p.x>244&&p.x<398)
+ &&!inside(p,{x:65,y:218,w:98,h:66},5)
+ &&!inside(p,{x:537,y:208,w:84,h:89},5)};
+worlds.room.items.push(onward('to-musicroom','musicroom','去两个人的唱片房',466,375));
 
 // The painted carpet immediately in front of rear seats is usable floor too.
 for(const [zone,rect]of [['memory',{x:75,y:202,w:142,h:32}],['magic',{x:80,y:184,w:92,h:50}],['cinema',{x:65,y:185,w:115,h:49}],['haunted',{x:90,y:195,w:95,h:39}]] as [Zone,{x:number;y:number;w:number;h:number}][]){const prior=worlds[zone].walkable;worlds[zone].walkable=p=>prior(p)||inside(p,rect)}
