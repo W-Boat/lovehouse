@@ -11,6 +11,7 @@ export function createOnlineQuiz(send:(message:{type:string;[key:string]:unknown
  function mount(parent:HTMLElement){
   section=document.createElement('section');
   section.className='online-quiz';
+  section.id='online-quiz';
   parent.append(section);
   renderKey='';
  }
