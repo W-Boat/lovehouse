@@ -1,5 +1,6 @@
 import {test,expect,type Page} from '@playwright/test';
-import art from '../content/ceremony-art.json';
+import {readFileSync} from 'node:fs';
+const art=JSON.parse(readFileSync(new URL('../content/ceremony-art.json',import.meta.url),'utf8')) as {wicks:[number,number][]};
 async function flames(page:Page){return page.evaluate(wicks=>{
  const c=document.getElementById('ceremony-canvas') as HTMLCanvasElement,g=c.getContext('2d')!,pixels=g.getImageData(0,0,c.width,c.height).data;
  const h=Math.round(Math.min(245,c.height*.58)),w=Math.round(h*1.125),left=Math.round((640-w)/2),top=Math.round(c.height*.24);let warm=0;
