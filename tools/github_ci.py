@@ -30,4 +30,25 @@ elif args.action=='logs':
 else:
  for a in api('/actions/runs/'+args.run+'/artifacts')['artifacts']:
   if args.name and a['name']!=args.name:continue
-  target=Path('../../outputs')/(a['name']+'.zip');req=urllib.request.Request(a['archive_download_url']+'?fresh='+str(time.time()),headers=headers);target.write_bytes(urllib.request.urlopen(req,timeout=120).read());receipt=Path('../../outputs/artifact-receipts.json');records=json.loads(receipt.read_text(encoding='utf8')) if receipt.exists() else {};records[a['name']]={'run':args.run,'headSha':a.get('workflow_run',{}).get('head_sha'),'artifactId':a['id'],'sha256':hashlib.sha256(target.read_bytes()).hexdigest()};receipt.write_text(json.dumps(records,indent=2),encoding='utf8');print('Saved '+target.name)
+  target=Path('../../outputs')/(a['name']+'.zip')
+  temporary=target.with_suffix('.zip.download')
+  request=urllib.request.Request(a['archive_download_url']+'?fresh='+str(time.time()),headers=headers)
+  digest=hashlib.sha256()
+  try:
+   with urllib.request.urlopen(request,timeout=120) as response, temporary.open('wb') as stream:
+    while chunk:=response.read(1024*1024):
+     stream.write(chunk)
+     digest.update(chunk)
+   with zipfile.ZipFile(temporary) as archive:
+    invalid=archive.testzip()
+    if invalid:raise ValueError('Corrupt artifact member: '+invalid)
+   temporary.replace(target)
+  finally:
+   temporary.unlink(missing_ok=True)
+  receipt=Path('../../outputs/artifact-receipts.json')
+  records=json.loads(receipt.read_text(encoding='utf8')) if receipt.exists() else {}
+  records[a['name']]={'run':args.run,'headSha':a.get('workflow_run',{}).get('head_sha'),'artifactId':a['id'],'sha256':digest.hexdigest()}
+  staged_receipt=receipt.with_suffix('.json.stage')
+  staged_receipt.write_text(json.dumps(records,indent=2),encoding='utf8')
+  staged_receipt.replace(receipt)
+  print('Saved '+target.name)
