@@ -6,10 +6,16 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      windows_only:
+        description: Build the Windows portable client without running web acceptance
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   web:
+    if: ${{ !inputs.windows_only }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +65,13 @@ jobs:
       - run: pip install pillow fonttools brotli
       - run: npm ci
       - run: npm run desktop:build
+      - name: Record portable build provenance
+        shell: pwsh
+        run: |
+          git rev-parse HEAD | Set-Content -Encoding ascii docs/windows-commit.txt
+          $exe = Get-Item -LiteralPath src-tauri/target/release/lovehouse.exe
+          $hash = (Get-FileHash -LiteralPath $exe.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  lovehouse.exe" | Set-Content -Encoding ascii docs/windows-sha256.txt
       - uses: actions/upload-artifact@v4
         with:
           name: lovehouse-windows-x64-portable
@@ -66,5 +79,7 @@ jobs:
             src-tauri/target/release/lovehouse.exe
             src-tauri/Cargo.lock
             docs/Windows便携版.md
+            docs/windows-commit.txt
+            docs/windows-sha256.txt
             文案.md
             需替换内容.md
