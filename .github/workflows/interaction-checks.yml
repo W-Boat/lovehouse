@@ -23,9 +23,10 @@ jobs:
       - run: npx playwright test e2e/tea.spec.ts e2e/display-scale.spec.ts e2e/interaction-props.spec.ts e2e/content-updates.spec.ts e2e/interaction-targets.spec.ts --max-failures=0
         env:
           CI: 'true'
-      - run: npx playwright test e2e/minigames.spec.ts --grep "claw catches" --max-failures=0
+      - run: npx playwright test e2e/minigames.spec.ts --grep "claw catches" --max-failures=0 --output=claw-test-results
         env:
           CI: 'true'
+          PLAYWRIGHT_HTML_OUTPUT_DIR: claw-playwright-report
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -33,3 +34,5 @@ jobs:
           path: |
             playwright-report
             test-results
+            claw-test-results
+            claw-playwright-report
