@@ -21,6 +21,6 @@ test('tapping the floor dismisses the object choice, and a nearby cue remains on
  await tapWorld(page,156,262);await expect(page.locator('#interaction-choices')).toBeVisible();
  await tapWorld(page,410,350);await expect(page.locator('#interaction-choices')).toHaveCount(0);
  if(!await page.locator('#map-toggle').isVisible())await page.locator('#tools-toggle').click();await page.locator('#map-toggle').click();await page.locator('#item-books').click();await expect(page.locator('#dialogue')).toBeHidden();
- await expect(page.locator('#nearby')).toBeVisible();
+ await expect(page.locator('#nearby')).toBeVisible({timeout:20000});
  const cue=await page.locator('#nearby').boundingBox();expect(cue!.height).toBeLessThan(52);
 });

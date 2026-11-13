@@ -4,6 +4,13 @@ import {worlds} from '../src/world';
 import {findPath,segmentWalkable,advanceAlong,moveWithCollision,type Point} from '../src/navigation';
 import {FootstepFollower} from '../src/follow';
 import {parseSave} from '../src/state';
+import {ActorController} from '../src/actors';
+test('low frame rates preserve walking speed and suspended frames cannot teleport',()=>{
+ const floor=(p:Point)=>p.x>=0&&p.x<300&&p.y>=0&&p.y<300;
+ const run=(dt:number,count:number)=>{const actor={x:20,y:100},controller=new ActorController();controller.move(actor,{x:220,y:100},floor);for(let i=0;i<count;i++)controller.update(actor,dt,floor);return actor.x};
+ assert.ok(Math.abs(run(.1,10)-run(1/60,60))<.01);
+ assert.ok(Math.abs(run(100,1)-41)<.01);
+});
 const openFloors={room:[{x:455,y:245},{x:476,y:150},{x:192,y:235},{x:600,y:245}],garden:[{x:204,y:206},{x:352,y:220},{x:430,y:255}],forest:[{x:265,y:235},{x:370,y:245},{x:290,y:280},{x:250,y:310}],pier:[{x:222,y:283},{x:395,y:237},{x:552,y:286}]} as const;
 test('visible open floor areas are walkable beyond the old narrow center lines',()=>{for(const [zone,points] of Object.entries(openFloors)){const w=worlds[zone as keyof typeof worlds],start={x:w.spawn[0],y:w.spawn[1]};for(const p of points){assert.ok(w.walkable(p),zone+' '+JSON.stringify(p));assert.ok(findPath(start,p,w.walkable).length)}}});
 test('every path edge and every actor step stays on floor, including obstacle corners',()=>{for(const w of Object.values(worlds)){for(const item of w.items){const actor={x:w.spawn[0],y:w.spawn[1]},path=findPath(actor,{x:item.point[0],y:item.point[1]},w.walkable);for(let i=1;i<path.length;i++)assert.ok(segmentWalkable(path[i-1],path[i],w.walkable));let n=0;while(path.length&&n++<2000){const before={...actor};advanceAlong(actor,path,3.36,w.walkable);assert.ok(segmentWalkable(before,actor,w.walkable))}assert.ok(n<2000,item.id+' finishes');assert.ok(Math.hypot(actor.x-item.point[0],actor.y-item.point[1])<.1,item.id+' exact arrival')}}});

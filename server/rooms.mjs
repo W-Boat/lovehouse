@@ -37,7 +37,7 @@ export class RoomService{
  if(!rate('all',80))return fail('RATE_LIMIT','操作太快，请稍等');
  if(r.affection&&r.affection.expires<this.now()){if(r.affection.kind==='hand')r.following=false;r.affection=null;this.broadcast(r)}
  if(['quiz-invite','quiz-cancel','quiz-accept','quiz-publish','quiz-answer','quiz-next'].includes(m.type)){
-  if(!rate('quiz',8))return fail('RATE_LIMIT','答题操作太快，请稍等');
+  if(!rate('quiz',16))return fail('RATE_LIMIT','答题操作太快，请稍等');
   const reason=changeQuiz(r,p,m,this.now());
   if(reason)return fail('QUIZ',reason);
   this.broadcast(r);return;

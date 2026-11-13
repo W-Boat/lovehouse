@@ -7,7 +7,7 @@ export class ActorController{
  state:ActorState='idle';generation=0;private route:Point[]=[];private done?:()=>void;
  cancel(state:ActorState='idle'){this.generation++;this.route=[];this.done=undefined;this.state=state}
  move(actor:Point,target:Point,floor:Walkable,done?:()=>void){this.cancel('moving');this.route=findPath(actor,target,floor);if(!this.route.length){this.state='idle';return false}const generation=this.generation;this.done=()=>{if(generation===this.generation)done?.()};return true}
- update(actor:Point,dt:number,floor:Walkable,speed=84){if(this.state!=='moving'&&this.state!=='approaching')return false;const moved=advanceAlong(actor,this.route,Math.min(.04,Math.max(0,dt))*speed,floor);if(!this.route.length){this.state='idle';const done=this.done;this.done=undefined;done?.()}return moved>0}
+ update(actor:Point,dt:number,floor:Walkable,speed=84){if(this.state!=='moving'&&this.state!=='approaching')return false;const moved=advanceAlong(actor,this.route,Math.min(.25,Math.max(0,dt))*speed,floor);if(!this.route.length){this.state='idle';const done=this.done;this.done=undefined;done?.()}return moved>0}
  get moving(){return this.route.length>0}
 }
 export function sideBySide(leader:Point,follower:Point,floor:Walkable):Point|undefined{const sign=follower.x<leader.x?-1:1;for(const dx of [18*sign,-18*sign]){const p={x:leader.x+dx,y:leader.y};if(floor(p)&&segmentWalkable(leader,p,floor))return p}return undefined}

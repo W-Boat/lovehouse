@@ -138,3 +138,25 @@ input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
 #app #round-minimap{top:var(--minimap-top,148px)!important}
 #app.compact-hud .scene-activity-game,#app.compact-hud .scene-activity-arcade{width:calc(100% - 32px / var(--ui-scale,1));max-height:calc(100% - 24px / var(--ui-scale,1))}
 #app .modal-backdrop{pointer-events:none}#app .modal-backdrop .modal{pointer-events:auto}
+
+#app .hud-tools button{min-height:var(--control-size,44px);padding:calc(7px / var(--ui-scale,1))}
+#app .game-board button{min-height:var(--control-size,44px)}
+#app .game-board.board-grid{max-width:calc(480px / var(--ui-scale,1));gap:calc(4px / var(--ui-scale,1))}
+
+/* Fit puzzle grids to real touch dimensions, rather than filling the screen width. */
+#app .game-board.board-grid{width:calc(var(--cols,3) * var(--control-size,44px) + (var(--cols,3) - 1) * 4px / var(--ui-scale,1));max-width:100%}
+#app .game-board.board-grid button{font-size:calc(18px / var(--ui-scale,1));padding:calc(4px / var(--ui-scale,1));scroll-margin-block:60px}
+#app .game-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(6px / var(--ui-scale,1))}
+#app .game-controls button{font-size:calc(16px / var(--ui-scale,1));padding:calc(5px / var(--ui-scale,1)) calc(10px / var(--ui-scale,1))}
+#app .game-board.board-grid:has(.piece-tray){width:min(100%,calc(480px / var(--ui-scale,1)));grid-template-columns:repeat(3,minmax(var(--control-size,44px),1fr)) minmax(0,2.8fr);align-items:start}
+#app .game-board:has(.piece-tray) .puzzle-slot:nth-child(3n+1){grid-column:1}
+#app .game-board:has(.piece-tray) .puzzle-slot:nth-child(3n+2){grid-column:2}
+#app .game-board:has(.piece-tray) .puzzle-slot:nth-child(3n){grid-column:3}
+#app .game-board:has(.piece-tray) .puzzle-slot:nth-child(-n+3){grid-row:1}
+#app .game-board:has(.piece-tray) .puzzle-slot:nth-child(n+4):nth-child(-n+6){grid-row:2}
+#app .game-board:has(.piece-tray) .puzzle-slot:nth-child(n+7):nth-child(-n+9){grid-row:3}
+#app .game-board .piece-tray{grid-column:4;grid-row:1/span 3;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(4px / var(--ui-scale,1));padding-left:calc(8px / var(--ui-scale,1))}
+#app .game-board .piece-tray button{min-width:0;min-height:var(--control-size,44px)}
+
+#app .scene-activity-game .modal-actions{position:static}
+#app .scene-activity-game{scroll-padding-block:12px}

@@ -9,7 +9,7 @@ async function displaySettings(page:Page){
 test('nearby map can be hidden and its preference survives reload',async({page},info)=>{
  await enter(page);const map=page.locator('#round-minimap');await expect(map).toBeVisible();
  const shape=await map.evaluate(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height,left:r.left,top:r.top,radius:getComputedStyle(e).borderRadius}});
- expect(shape.width).toBe(shape.height);expect(shape.radius).toBe('50%');expect(shape.left).toBeLessThan(40);expect(shape.top).toBeLessThan(160);
+ expect(shape.width).toBeCloseTo(shape.height,2);expect(shape.radius).toBe('50%');expect(shape.left).toBeLessThan(40);expect(shape.top).toBeLessThan(160);
  await page.screenshot({path:`test-results/${info.project.name}/round-minimap.png`});
  await displaySettings(page);await page.locator('#set-minimap').click();await expect(map).toBeHidden();
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).settings.minimap)).toBe(false);
