@@ -1,10 +1,13 @@
 import type {TaoyuanField} from './online-protocol';
-import {uiCopy,htmlCopy} from '../content/ui-copy';
+import {uiCopy} from '../content/ui-copy';
 export type TaoyuanEnvelope=({kind:'field'}&TaoyuanField)|{kind:'state';save:string;route:string}|{kind:'command';route:string;index:number;text:string};
 export function openTaoyuan(options:{role:'host'|'guest'|'offline';onExit:()=>void;onMessage?:(message:TaoyuanEnvelope)=>void}){
  const panel=document.createElement('section');panel.id='taoyuan-portal';panel.style.cssText='position:fixed;inset:0;z-index:10000;background:#211e21;display:flex;flex-direction:column';
  const exit=document.createElement('button');exit.textContent=uiCopy('taoyuan.return');exit.style.cssText='min-height:48px;font:18px CottagePixel,monospace';
- const frame=document.createElement('iframe');frame.title=uiCopy('taoyuan.title');frame.src=new URL('taoyuan/index.html',document.baseURI).href;frame.style.cssText='flex:1;width:100%;border:0;background:#211e21';panel.append(exit,frame);document.body.append(panel);
+ const frame=document.createElement('iframe');frame.title=uiCopy('taoyuan.title');
+ const url=new URL('taoyuan/index.html',document.baseURI);
+ if(options.role==='guest')url.searchParams.set('lovehouse-role','guest');
+ frame.src=url.href;frame.style.cssText='flex:1;width:100%;border:0;background:#211e21';panel.append(exit,frame);document.body.append(panel);
  let connected=true;let ready=false,pending:TaoyuanEnvelope|undefined;
  const origin=new URL(frame.src).origin;
  const send=(message:unknown)=>frame.contentWindow?.postMessage({channel:'lovehouse-taoyuan',...message as object},origin);

@@ -25,7 +25,14 @@ export function installLovehouseBridge(){
   const data={route:router.currentRoute.value.fullPath,index,tag:node.tagName,inputType:typeOf(node),value:node.value.slice(0,10000),checked:node instanceof HTMLInputElement?node.checked:false};fields.set(index,data);post({kind:'field',...data});
  },true);
  const post=(payload:unknown)=>parent.postMessage({channel:'lovehouse-taoyuan',type:'event',payload},location.origin);
- const snapshot=()=>{if(role==='guest'||applying||!useGameStore().isGameStarted)return;const store=useSaveStore();if(store.saveToSlot(0)){const save=localStorage.getItem('taoyuanxiang_save_0');if(save)post({kind:'state',save,route:router.currentRoute.value.fullPath})}};
+ const snapshot=()=>{
+  const route=router.currentRoute.value.fullPath;
+  if(role!=='host'||!connected||applying||!route.startsWith('/game/')||!useGameStore().isGameStarted)return;
+  const store=useSaveStore(),slot=store.activeSlot;
+  if(slot<0||!store.saveToSlot(slot))return;
+  const save=localStorage.getItem(`taoyuanxiang_save_${slot}`);
+  if(save)post({kind:'state',save,route});
+ };
  document.addEventListener('click',event=>{if(role!=='offline'&&!connected){event.preventDefault();event.stopImmediatePropagation();return}const button=(event.target as Element).closest('button');if(!button)return;if(role==='guest'&&!applying){event.preventDefault();event.stopImmediatePropagation();if(!connected)return;fields.clear();post({kind:'command',route:router.currentRoute.value.fullPath,index:[...document.querySelectorAll('button')].indexOf(button),text:button.textContent?.trim().slice(0,200)??''});return}clearTimeout(timer);timer=window.setTimeout(snapshot,400)},true);
  window.addEventListener('message',async event=>{
   if(event.source!==parent||event.origin!==location.origin||event.data?.channel!=='lovehouse-taoyuan')return;
