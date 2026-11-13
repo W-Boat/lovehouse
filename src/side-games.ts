@@ -129,7 +129,7 @@ function openJump(host:HTMLElement,avatar:string){
  const actor=node('img','','jump-actor');actor.src=avatar;actor.alt='正在跳跃的像素小人';actor.draggable=false;
  const meter=node('div','','jump-meter'),cells=Array.from({length:16},()=>node('i'));
  meter.append(...cells);stage.append(current,next,actor);board.append(stage,meter);
- let distance=36,width=19,score=0,auto=false,busy=false,ended=false,start:number|undefined,frame=0;
+ let distance=36,width=19,currentWidth=17,score=0,auto=false,busy=false,ended=false,start:number|undefined,frame=0;
  const control=node('button','按住蓄力','primary');control.type='button';
  const reduced=save.reduced;
  const automatic=button('自动跳：关',()=>{
@@ -141,6 +141,7 @@ function openJump(host:HTMLElement,avatar:string){
  controls.append(control,automatic,restart);
  function paint(x=0,lift=0,scale=1){
   actor.style.left=(16+x)+'%';actor.style.bottom=(23+lift)+'%';actor.style.transform='translateX(-50%) scaleY('+(reduced?1:scale)+')';
+  current.style.left='16%';current.style.width=currentWidth+'%';
   next.style.left=(16+distance)+'%';next.style.width=width+'%';
   status.textContent=(ended?'踩空了 · ':'')+'分数 '+score+' · 最高 '+save.jumpBest;
  }
@@ -153,15 +154,41 @@ function openJump(host:HTMLElement,avatar:string){
    const t=Math.min(1,(now-from)/(reduced?240:550));
    paint(length*t,Math.sin(Math.PI*t)*(reduced?22:48)-(success?0:Math.max(0,t-.7)*80),1+Math.sin(Math.PI*t)*.08);
    if(t<1){requestAnimationFrame(animate);return}
-   busy=false;ended=!success;
-   if(success){
-    score+=Math.abs(length-distance)<3?2:1;
-    if(score>save.jumpBest){save.jumpBest=score;persist()}
-    distance=25+Math.random()*37;width=Math.max(10,20-score*.35);paint();control.disabled=false;
-    if(auto)window.setTimeout(()=>{if(auto&&stage.isConnected)jump(distance+2)},410);
-   }else paint(length,-28,.85);
+   if(!success){busy=false;ended=true;paint(length,-28,.85);return}
+   score+=Math.abs(length-distance)<3?2:1;
+   if(score>save.jumpBest){save.jumpBest=score;persist()}
+   settleLanding(now,length);
   };
   requestAnimationFrame(animate);
+ }
+ function settleLanding(now:number,landedAt:number){
+  const platformAt=distance,landingWidth=width;
+  const futureDistance=25+Math.random()*37;
+  const futureWidth=Math.max(10,20-score*.35);
+  const upcoming=node('div','','jump-platform');
+  upcoming.style.width=futureWidth+'%';
+  stage.insertBefore(upcoming,actor);
+  const slide=(time:number)=>{
+   if(!stage.isConnected)return;
+   const t=reduced?1:Math.min(1,(time-now)/210);
+   const eased=1-(1-t)**3;
+   const offset=platformAt*eased;
+   // Keep the feet on the landed platform while the camera catches up.
+   paint(landedAt*(1-eased),0,1-.08*Math.sin(Math.PI*t));
+   current.style.left=(16-offset)+'%';
+   next.style.left=(16+platformAt-offset)+'%';
+   upcoming.style.left=(16+platformAt+futureDistance-offset)+'%';
+   if(t<1){requestAnimationFrame(slide);return}
+   upcoming.remove();
+   currentWidth=landingWidth;
+   distance=futureDistance;
+   width=futureWidth;
+   busy=false;
+   paint();
+   control.disabled=false;
+   if(auto)window.setTimeout(()=>{if(auto&&stage.isConnected)jump(distance+2)},260);
+  };
+  requestAnimationFrame(slide);
  }
  const charge=(now:number)=>{
   if(start===undefined||!stage.isConnected)return;

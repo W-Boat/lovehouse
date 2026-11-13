@@ -34,6 +34,11 @@ test('heartbeat jump animates the actual pixel character and saves a record',asy
  await expect(actor).toHaveAttribute('src',/^data:image\/png/);
  await host.getByRole('button',{name:'自动跳：关'}).click();
  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).jumpBest)).toBeGreaterThanOrEqual(4);
+ await host.getByRole('button',{name:'自动跳：开'}).click();
+ await expect(host.getByRole('button',{name:'按住蓄力'})).toBeEnabled();
+ const landed=await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).jumpBest);
+ await page.waitForTimeout(1000);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).jumpBest)).toBe(landed);
 });
 test('heartbeat landlord deals 17 cards, calls landlord and plays a valid hint',async({page})=>{
  await enter(page);
