@@ -189,9 +189,12 @@ public final class MainActivity extends Activity {
     @Override public void onBackPressed() {
         webView.evaluateJavascript(
             "(() => { const control = document.querySelector('#taoyuan-portal > button')"
+            + " || document.querySelector('#interaction-choices .interaction-choice-close')"
             + " || document.querySelector('#modal-backdrop:not(.hidden) #close-modal:not(.hidden)')"
-            + " || document.querySelector('#dialogue:not(.hidden) #dialogue-close');"
-            + " if (!control) return false; control.click(); return true; })()",
+            + " || document.querySelector('#dialogue:not(.hidden) #dialogue-close')"
+            + " || document.querySelector('.hud-tools.expanded #tools-toggle');"
+            + " if (!control) return Boolean(document.querySelector('#modal-backdrop:not(.hidden)'));"
+            + " control.click(); return true; })()",
             handled -> { if ("false".equals(handled)) finish(); });
     }
 
