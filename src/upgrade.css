@@ -59,3 +59,5 @@ input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
 #app.compact-hud .hud-tools.expanded{grid-template-columns:repeat(4,var(--control-size,44px));width:calc(4 * var(--control-size,44px) + 56px)}
 .modal button,.dialogue-choice,.game-controls button{min-height:var(--control-size,44px)}
 #scale-confirm[hidden]{display:none}
+
+.content-update-progress{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px;padding:5px;border:3px solid #a78354;background:#302538}.content-update-progress b{height:12px;background:#65594d}.content-update-progress b.lit{background:#e2b77d;outline:none!important;box-shadow:inset 0 3px #f5d7a3,inset 0 -3px #b98761}.content-updates{border-top:2px solid #b18a5b;margin-top:16px;padding-top:16px}.content-updates input{box-sizing:border-box;width:100%}

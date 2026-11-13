@@ -30,6 +30,7 @@ public final class MainActivity extends Activity {
     private static final int CHOOSE_FILE = 1;
     private static final int SAVE_DOCUMENT = 2;
     private WebView webView;
+    private ContentUpdates updates;
     private ValueCallback<Uri[]> fileCallback;
     private byte[] pendingSave;
 
@@ -40,6 +41,9 @@ public final class MainActivity extends Activity {
             .build();
 
         webView = new WebView(this);
+        updates = new ContentUpdates(this, result -> webView.evaluateJavascript(
+            "document.dispatchEvent(new CustomEvent('cottage-update-status',{detail:" + result.toString() + "}))", null),
+            () -> { webView.clearCache(true); webView.loadUrl("https://" + HOST + "/game/index.html"); });
         webView.setBackgroundColor(0xff211e21);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
@@ -65,6 +69,8 @@ public final class MainActivity extends Activity {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
                 if (!HOST.equals(url.getHost())) return null;
+                WebResourceResponse updated = updates.intercept(url);
+                if (updated != null) return updated;
                 WebResourceResponse bundled = loader.shouldInterceptRequest(url);
                 if (bundled != null) return bundled;
                 return new WebResourceResponse("text/plain", "UTF-8", 404, "Not Found",
@@ -106,8 +112,9 @@ public final class MainActivity extends Activity {
 
     private void exportDocument(String data) {
         try {
-            if (data != null && data.length() < 200) {
+            if (data != null && data.length() < 8192) {
                 JSONObject command = new JSONObject(data);
+                if ("content-update".equals(command.optString("kind"))) { updates.command(command); return; }
                 if ("orientation".equals(command.optString("kind"))) {
                     String orientation = command.optString("value");
                     if ("portrait".equals(orientation)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -186,6 +193,11 @@ public final class MainActivity extends Activity {
             + " || document.querySelector('#dialogue:not(.hidden) #dialogue-close');"
             + " if (!control) return false; control.click(); return true; })()",
             handled -> { if ("false".equals(handled)) finish(); });
+    }
+
+    @Override protected void onDestroy() {
+        if (updates != null) updates.close();
+        super.onDestroy();
     }
 
     @Override protected void onPause() {
