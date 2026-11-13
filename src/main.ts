@@ -25,7 +25,7 @@ const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(
 const scene=new Cottage();
 let game:Phaser.Game|undefined;
 let viewport=gameViewport(window.innerWidth,window.innerHeight);
-function layoutViewport(){const width=window.visualViewport?.width??window.innerWidth,height=window.visualViewport?.height??window.innerHeight;viewport=gameViewport(width,height);const app=$('app');app.style.width=viewport.width+'px';app.style.height=viewport.height+'px';app.classList.toggle('rotated',viewport.rotated);if(game?.isBooted){game.scale.resize(viewport.width,viewport.height);scene.resizeView()}}
+function layoutViewport(){const width=window.visualViewport?.width??window.innerWidth,height=window.visualViewport?.height??window.innerHeight;viewport=gameViewport(width,height);const app=$('app');app.style.width=viewport.width+'px';app.style.height=viewport.height+'px';app.style.setProperty('--game-canvas-height',Math.max(120,Math.min(360,viewport.height-220))+'px');app.classList.toggle('rotated',viewport.rotated);app.classList.toggle('compact-hud',viewport.width<1000||viewport.height<550);if(game?.isBooted){game.scale.resize(viewport.width,viewport.height);scene.resizeView()}}
 layoutViewport();window.addEventListener('resize',layoutViewport);window.visualViewport?.addEventListener('resize',layoutViewport);
 function immersive(){const root=document.documentElement as HTMLElement&{webkitRequestFullscreen?:()=>void};void requestImmersive(root,screen.orientation as ScreenOrientation&{lock?:(orientation:string)=>Promise<void>}).then(result=>{layoutViewport();$('fullscreen').classList.toggle('active',result.fullscreen||Boolean(document.fullscreenElement))})}
 
@@ -163,7 +163,7 @@ window.addEventListener('portable-readonly',()=>toast(mainText("storage.readonly
 
 const portalButtons=new Map<string,HTMLButtonElement>();
 scene.bridge.on('portal-positions',(points:{id:string;name:string;x:number;y:number}[])=>{
- const host=$('world-signs');if(!host)return;const live=new Set(points.map(p=>p.id));for(const [id,node]of portalButtons)if(!live.has(id)){node.remove();portalButtons.delete(id)}
+ const host=$('world-signs');if(!host)return;host.hidden=!save.settings.directions;if(host.hidden)return;const live=new Set(points.map(p=>p.id));for(const [id,node]of portalButtons)if(!live.has(id)){node.remove();portalButtons.delete(id)}
  const occupied:{x:number;y:number;w:number;h:number}[]=[];
  for(const p of points){let node=portalButtons.get(p.id);if(!node){node=document.createElement('button');node.className='world-sign';node.textContent=mainText('portal.label',{name:p.name});node.setAttribute('aria-label',mainText('portal.aria',{name:p.name}));node.addEventListener('pointerdown',e=>e.stopPropagation());node.onclick=()=>{if(!modalOpen&&!dialogueOpen&&!cinematic){scene.approachById(p.id)}};host.append(node);portalButtons.set(p.id,node)}
  const w=node.offsetWidth||140,h=node.offsetHeight||44,frame=$('game-frame'),maxW=frame.clientWidth,maxH=frame.clientHeight;let x=Math.max(4,Math.min(maxW-w-4,p.x-w/2)),y=Math.max(68,Math.min(maxH-h-8,p.y-48));

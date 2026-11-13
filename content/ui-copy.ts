@@ -126,6 +126,8 @@ export const uiCopyDefaults={
  "bag.empty-category": "这一格还没有收藏。",
  "bag.portions": "剩 {count} 份",
  "bag.marshmallow": "烤棉花糖",
+ "settings.directions-on": "指路牌 · 已开启",
+ "settings.directions-off": "指路牌 · 已关闭",
  "map.travel": "一起前往入口",
  "map.route": "沿路线出发",
  "map.items-title": "这里可以做什么",

@@ -28,3 +28,27 @@ input[type=range]::-moz-range-track{height:4px;background:#a98262;border:2px sol
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:26px;margin-top:-11px;border:3px solid #604b3e;border-radius:0;background:#f2d49f;box-shadow:inset 3px 3px #fff0c6,3px 3px #342c3955}
 input[type=range]::-moz-range-thumb{box-sizing:border-box;width:22px;height:26px;border:3px solid #604b3e;border-radius:0;background:#f2d49f;box-shadow:inset 3px 3px #fff0c6,3px 3px #342c3955}
 input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
+
+#world-signs[hidden]{display:none!important}
+#app.compact-hud .hud-tools{top:max(8px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));max-width:calc(100% - 220px);flex-wrap:nowrap}
+#app.compact-hud #tools-toggle{display:block}
+#app.compact-hud .hud-tools:not(.expanded)>button:nth-child(n+5):not(#tools-toggle){display:none}
+#app.compact-hud .hud-tools.expanded{width:244px;max-width:calc(100% - 160px);max-height:calc(100% - 80px);overflow-y:auto;overscroll-behavior:contain;display:grid!important;grid-template-columns:repeat(4,44px);gap:10px;padding:12px;box-sizing:border-box;background:#302538f5;border:2px solid #a78354;align-content:start}
+#app.compact-hud .hud-tools.expanded>button{display:block}
+#app.compact-hud .hud-tools.expanded #tools-toggle{order:-1}
+#app.compact-hud .place-plaque{box-sizing:border-box;width:194px;min-width:0;max-width:calc(100% - 244px);padding:8px;left:max(12px,env(safe-area-inset-left))}
+#app.compact-hud .place-plaque b{font-size:16px}
+#app.compact-hud #round-minimap{top:90px;width:88px;height:88px}
+#app.compact-hud.calendar-on #round-minimap,.calendar-on #app.compact-hud #round-minimap{top:114px}
+.android-client .cue-action kbd{display:none}
+.android-client .interact-hint{min-height:36px;max-width:200px;padding:5px 9px;pointer-events:auto}
+.android-client .cue-name{font-size:14px;line-height:1.2}
+.android-client .cue-action{font-size:13px;line-height:1.2}
+
+.game-board canvas{box-sizing:content-box!important;width:min(100%,calc(var(--game-canvas-height,200px)*2));height:auto!important;max-height:none!important;aspect-ratio:2/1;margin-inline:auto;object-fit:fill}
+.game-board canvas.letter-canvas{width:min(100%,calc(var(--game-canvas-height,200px)*1.666667));aspect-ratio:5/3}
+#app.compact-hud .modal:has(#game-host){padding:12px 20px;max-height:calc(100% - 12px)}
+#app.compact-hud #game-host .game-board{margin:8px 0}
+#app.compact-hud #game-host .game-status{margin:6px 0;font-size:16px!important;min-height:24px}
+#app.compact-hud #game-host .game-controls{gap:6px}
+#app.compact-hud #game-host button{font-size:16px;min-height:44px}

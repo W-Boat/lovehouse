@@ -3,7 +3,7 @@ import {letterPieces,snapPaper,paperContains} from './letter-puzzle';
 import {localPoint} from './viewport';
 export type LetterHooks={board:HTMLElement;status:HTMLElement;paused:()=>boolean;level:()=>number;listen:(target:EventTarget,type:string,fn:EventListener)=>void;button:(title:string,fn:()=>void)=>unknown;solved:()=>void;points:(n:number)=>void};
 export function createLetterGame(h:LetterHooks){
- const canvas=document.createElement('canvas');canvas.width=600;canvas.height=360;canvas.style.touchAction='none';canvas.tabIndex=0;canvas.setAttribute('aria-label',getGameCopy('letter.canvas'));
+ const canvas=document.createElement('canvas');canvas.width=600;canvas.height=360;canvas.className='letter-canvas';canvas.style.touchAction='none';canvas.tabIndex=0;canvas.setAttribute('aria-label',getGameCopy('letter.canvas'));
  let pieces=letterPieces(0),selected=-1,drag=-1,pointer=-1,offset={x:0,y:0};
  const point=(e:PointerEvent)=>localPoint(e.clientX,e.clientY,canvas.getBoundingClientRect(),{width:600,height:360,rotated:document.getElementById('app')?.classList.contains('rotated')??false});
  function draw(){const g=canvas.getContext('2d')!;g.imageSmoothingEnabled=false;g.fillStyle='#403343';g.fillRect(0,0,600,360);g.strokeStyle='#dec299';g.lineWidth=2;g.setLineDash([6,5]);g.strokeRect(190,48,220,218);g.setLineDash([]);
