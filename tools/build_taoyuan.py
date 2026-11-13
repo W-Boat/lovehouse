@@ -17,6 +17,22 @@ html=html_path.read_text(encoding='utf8')
 html,removed=re.subn(r'<!--\s*统计勿删\s*-->\s*<script>.*?</script>', '',html,count=1,flags=re.S)
 if removed!=1 or 'sdk.51.la' in html:raise ValueError('Review upstream analytics block before embedding')
 html_path.write_text(html,encoding='utf8')
+# Customize only the pinned embedded menu. Preserve upstream license files.
+menu_path=work/'src/views/MainMenu.vue'
+menu=menu_path.read_text(encoding='utf8')
+menu,count=re.subn(r'\s*<Button\s+v-if="!Capacitor\.isNativePlatform\(\) && !isElectron"[^>]*>[\s\S]*?赞助作者\s*</Button>', '',menu,count=1)
+if count!=1:raise ValueError('Review upstream sponsorship entry')
+menu,count=re.subn(r'\s*<!-- 赞助作者[^>]*-->[\s\S]*?(?=\n        </div>)', '',menu,count=1)
+if count!=1:raise ValueError('Review upstream sponsorship panel')
+menu,count=re.subn(r'\s*<!-- 隐私协议弹窗 -->\s*<Transition[^>]*>[\s\S]*?</Transition>', '',menu,count=1)
+if count!=1:raise ValueError('Review upstream privacy panel')
+menu=menu.replace('@click="showPrivacy = true"','@click="showCharCreate = true"')
+menu=menu.replace("const charName = ref('')","const inheritedIdentity = new URLSearchParams(location.search)\n  const inheritedName = [...(inheritedIdentity.get('lovehouse-name') || '')].slice(0, 12).join('')\n  const inheritedGender: Gender = inheritedIdentity.get('lovehouse-gender') === 'female' ? 'female' : 'male'\n  const charName = ref(inheritedName)")
+menu=menu.replace("const charGender = ref<Gender>('male')","const charGender = ref<Gender>(inheritedGender)")
+menu=menu.replace("charName.value = ''","charName.value = inheritedName").replace("charGender.value = 'male'","charGender.value = inheritedGender")
+menu=menu.replace('maxlength="4"','maxlength="12"').replace(".slice(0, 4), charGender.value)",".slice(0, 12), charGender.value)")
+menu=menu.replace('<p class="text-xs text-muted">游戏灵感来自 Stardew Valley</p>','<p class="text-xs text-muted">桃源乡 · 生日小屋联机改编版</p><a href="./LICENSE" target="_blank" class="text-xs underline">上游署名与 CC BY-NC 4.0 许可</a>')
+menu_path.write_text(menu,encoding='utf8')
 # A guest receives a working copy. Keep it out of the player's personal slots.
 save_store=work/'src/stores/useSaveStore.ts'
 store_source=save_store.read_text(encoding='utf8')

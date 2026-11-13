@@ -3,6 +3,7 @@ package com.wboat.lovehouse;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -104,6 +105,17 @@ public final class MainActivity extends Activity {
     }
 
     private void exportDocument(String data) {
+        try {
+            if (data != null && data.length() < 200) {
+                JSONObject command = new JSONObject(data);
+                if ("orientation".equals(command.optString("kind"))) {
+                    String orientation = command.optString("value");
+                    if ("portrait".equals(orientation)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                    if ("landscape".equals(orientation)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                    return;
+                }
+            }
+        } catch (Exception ignored) { }
         if (pendingSave != null) { exportResult("busy"); return; }
         if (data == null || data.length() > 24_000_000) { exportResult("error"); return; }
         String mime = "application/json", filename = "生日小屋存档.json";

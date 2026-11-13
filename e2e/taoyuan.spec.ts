@@ -1,4 +1,9 @@
-import {expect,test} from '@playwright/test';
+import {expect,test,type Page} from '@playwright/test';
+async function enableDirections(page:Page){
+ await page.locator('#settings').click();await page.getByRole('button',{name:'操作',exact:true}).click();
+ await page.getByRole('button',{name:'指路牌 · 已关闭',exact:true}).click();await page.locator('#close-modal').click();
+}
+
 
 test('the central portal opens the packaged farm and returns control to the cottage',async({page},info)=>{
  const analyticsRequests:string[]=[];
@@ -6,11 +11,12 @@ test('the central portal opens the packaged farm and returns control to the cott
  await page.goto('/');
  await page.locator('#custom-save').click({timeout:45000});
  await expect(page.locator('body')).toHaveClass(/started/);
+ await enableDirections(page);
  await page.getByRole('button',{name:/前往.*桃源乡/}).click();
  const portal=page.locator('#taoyuan-portal');
  await expect(portal).toBeVisible({timeout:15000});
  const iframe=portal.locator('iframe');
- await expect(iframe).toHaveAttribute('src',/\/taoyuan\/index\.html$/);
+ await expect(iframe).toHaveAttribute('src',/\/taoyuan\/index\.html\?/);
  await expect(iframe.contentFrame().getByRole('button',{name:'新的旅程'})).toBeVisible({timeout:20000});
  await page.screenshot({path:`test-results/${info.project.name}/taoyuan-portal.png`});
  await portal.getByRole('button',{name:/返回生日小屋/}).click();
@@ -34,7 +40,8 @@ test('a guest tills the shared farm without overwriting a personal slot',async({
   }));
   await host.getByRole('button',{name:'创建双人房间',exact:true}).click();
   const roomInfo=host.locator('#online-room-info');
-  await expect(roomInfo).toContainText('房间 ');
+  await expect(host.locator('#online-status')).toContainText('已连接双人房间');
+  await expect(roomInfo).toHaveText(/^房间 (\S+) ·/);
   const roomId=(await roomInfo.innerText()).match(/^房间 (\S+)/)![1];
   await guest.getByLabel('房间号',{exact:true}).fill(roomId);
   await guest.getByRole('button',{name:'加入房间',exact:true}).click();
@@ -42,14 +49,15 @@ test('a guest tills the shared farm without overwriting a personal slot',async({
   await guest.evaluate(()=>localStorage.setItem('taoyuanxiang_save_0','personal-slot-marker'));
   await Promise.all([host,guest].map(async page=>{
    await page.getByRole('button',{name:'回到小屋',exact:true}).click();
-   await page.getByRole('button',{name:/前往.*桃源乡/}).click();
+   await enableDirections(page);
+ await page.getByRole('button',{name:/前往.*桃源乡/}).click();
    await expect(page.locator('#taoyuan-portal')).toBeVisible({timeout:15000});
   }));
   const hostFarm=host.frameLocator('#taoyuan-portal iframe');
   const guestFarm=guest.frameLocator('#taoyuan-portal iframe');
   await hostFarm.getByRole('button',{name:'新的旅程'}).click({timeout:20000});
-  await hostFarm.getByRole('button',{name:'同意并继续'}).click();
-  await hostFarm.getByPlaceholder('请输入你的名字').fill('小满');
+  await expect(hostFarm.getByRole('button',{name:'同意并继续'})).toHaveCount(0);
+  await expect(hostFarm.getByPlaceholder('请输入你的名字')).toHaveValue('你');
   await hostFarm.getByRole('button',{name:'下一步'}).click();
   await hostFarm.getByRole('button',{name:/桃源田庄/}).click();
   await hostFarm.getByRole('button',{name:'开始旅程'}).click();

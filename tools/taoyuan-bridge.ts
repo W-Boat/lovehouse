@@ -1,8 +1,14 @@
 import {useSaveStore} from './src/stores/useSaveStore';
 import {useGameStore} from './src/stores/useGameStore';
 import router from './src/router';
+import {watch} from 'vue';
+import {usePlayerStore} from './src/stores/usePlayerStore';
 export function installLovehouseBridge(){
  if(window.parent===window)return;
+ const query=new URLSearchParams(location.search);
+ const identity={name:[...(query.get('lovehouse-name')||'')].slice(0,12).join(''),gender:query.get('lovehouse-gender')==='female'?'female' as const:'male' as const};
+ const applyIdentity=()=>{if(identity.name&&useGameStore().isGameStarted)usePlayerStore().setIdentity(identity.name,identity.gender)};
+ watch(()=>useGameStore().isGameStarted,applyIdentity,{immediate:true});
  let role='offline',applying=false,timer=0,connected=true;
  type Field=HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement;
  const allowed=new Set(['text','number','checkbox','radio','range','email','url','tel','search','date','time','color','select-one','textarea']);
@@ -54,7 +60,7 @@ export function installLovehouseBridge(){
   if(event.data.type==='role'){role=event.data.role;readonly();snapshot();return}
   if(event.data.type==='connection'){connected=event.data.connected===true;readonly();return}
   const data=event.data.payload;if(event.data.type!=='receive'||!data)return;
-  if(role==='guest'&&data.kind==='state'&&typeof data.save==='string'&&data.save.length<2_000_000){applying=true;try{const store=useSaveStore();if(store.importSave(0,data.save)&&store.loadFromSlot(0))await router.replace(data.route.startsWith('/game')?data.route:'/game/farm')}finally{await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));for(const [index,field]of fields){if(field.route===router.currentRoute.value.fullPath)writeField(field,true);else fields.delete(index)}applying=false}}
+  if(role==='guest'&&data.kind==='state'&&typeof data.save==='string'&&data.save.length<2_000_000){applying=true;try{const store=useSaveStore();if(store.importSave(0,data.save)&&store.loadFromSlot(0)){applyIdentity();await router.replace(data.route.startsWith('/game')?data.route:'/game/farm')}}finally{await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));for(const [index,field]of fields){if(field.route===router.currentRoute.value.fullPath)writeField(field,true);else fields.delete(index)}applying=false}}
   if(role==='host'&&data.kind==='field'&&Number.isInteger(data.index)&&data.index>=0&&data.index<=1000&&connected){if(writeField(data,true)){clearTimeout(timer);timer=window.setTimeout(snapshot,400)}}
   if(role==='host'&&data.kind==='command'&&connected&&data.route===router.currentRoute.value.fullPath&&Number.isInteger(data.index)){const button=document.querySelectorAll('button')[data.index];if(button&&!button.disabled&&button.textContent?.trim().slice(0,200)===data.text)button.click()}
  });
