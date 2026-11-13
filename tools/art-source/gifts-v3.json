@@ -1,0 +1,7 @@
+{
+  "generator": "image_gen builtin",
+  "source": "exec-23051a44-c7fb-4877-a9c0-ff5049a80684.png",
+  "purpose": "Repair cross-cell visible fragments; centered complete subjects with transparent per-cell padding",
+  "replaces": "gifts-v2",
+  "export": "native source resolution, lossless WebP"
+}

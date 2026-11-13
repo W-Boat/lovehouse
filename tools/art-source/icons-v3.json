@@ -1,0 +1,7 @@
+{
+  "generator": "image_gen builtin",
+  "source": "exec-640686fd-512a-42cf-92b2-1cf21fecc999.png",
+  "purpose": "Repair cross-cell visible fragments; centered complete subjects with transparent per-cell padding",
+  "replaces": "icons-v2",
+  "export": "native source resolution, lossless WebP"
+}

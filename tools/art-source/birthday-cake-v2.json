@@ -1,0 +1,8 @@
+{
+  "generator": "image_gen builtin",
+  "source": "exec-198f91bf-607f-491d-bd00-530c6c26fd24.png",
+  "reference": "birthday-cake.png",
+  "purpose": "Clean cutout with five unlit candle wicks; flames are rendered separately and extinguished during blowing",
+  "geometry": "content/ceremony-art.json",
+  "export": "768x512 maximum; lossless WebP with exact transparent RGB preservation"
+}

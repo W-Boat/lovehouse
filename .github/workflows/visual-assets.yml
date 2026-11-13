@@ -1,0 +1,36 @@
+name: Candle and asset diagnostics
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ceremony-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow fonttools brotli
+      - run: npm ci
+      - run: npm run build
+      - run: python tools/audit_visual_assets.py
+      - run: node --import tsx --test tools/image-geometry.test.ts tools/ceremony.test.ts
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx vite build --mode e2e
+      - run: npx playwright test e2e/ceremony-assets.spec.ts --max-failures=0
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candle-and-asset-diagnostics
+          path: |
+            test-results
+            playwright-report
+            docs/visual-asset-report.json
+            docs/素材清晰度检测.md

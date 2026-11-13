@@ -1,0 +1,3146 @@
+{
+  "scope": "Decoded WebP files, reference existence, export resolution, alpha, visible source/export equality and atlas cells. Art identity and every runtime interaction still require visual acceptance.",
+  "assetCount": 142,
+  "errors": [],
+  "assets": [
+    {
+      "file": "aquarium-clean.webp",
+      "runtime": true,
+      "bytes": 2008540,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "aquarium.webp",
+      "runtime": false,
+      "bytes": 644146,
+      "size": [
+        768,
+        512
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.5,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "aurora.webp",
+      "runtime": true,
+      "bytes": 2695800,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "birthday-cake-v2.webp",
+      "runtime": true,
+      "bytes": 1058948,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 73.83,
+      "nearOpaquePercent": 23.93,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "birthday-cake.webp",
+      "runtime": false,
+      "bytes": 60852,
+      "size": [
+        384,
+        256
+      ],
+      "fullyTransparentPercent": 73.68,
+      "nearOpaquePercent": 23.88,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.25,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "boy-actions.webp",
+      "runtime": true,
+      "bytes": 762796,
+      "size": [
+        1261,
+        1247
+      ],
+      "fullyTransparentPercent": 66.32,
+      "nearOpaquePercent": 24.22,
+      "masterSize": [
+        1261,
+        1247
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        315.2,
+        311.8
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "boy-heads.webp",
+      "runtime": true,
+      "bytes": 668326,
+      "size": [
+        1261,
+        1247
+      ],
+      "fullyTransparentPercent": 63.44,
+      "nearOpaquePercent": 31.1,
+      "masterSize": [
+        1261,
+        1247
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        315.2,
+        311.8
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "boy-walk.webp",
+      "runtime": true,
+      "bytes": 725604,
+      "size": [
+        1261,
+        1247
+      ],
+      "fullyTransparentPercent": 64.6,
+      "nearOpaquePercent": 21.13,
+      "masterSize": [
+        1261,
+        1247
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        315.2,
+        311.8
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "camp.webp",
+      "runtime": true,
+      "bytes": 2162548,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "catcottage.webp",
+      "runtime": true,
+      "bytes": 2152214,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "characters.webp",
+      "runtime": true,
+      "bytes": 462102,
+      "size": [
+        1774,
+        887
+      ],
+      "fullyTransparentPercent": 73.84,
+      "nearOpaquePercent": 21.52,
+      "masterSize": [
+        1774,
+        887
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        2
+      ],
+      "frameSize": [
+        443.5,
+        443.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "chaya.webp",
+      "runtime": true,
+      "bytes": 2883732,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "cinema.webp",
+      "runtime": true,
+      "bytes": 1931356,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "coast.webp",
+      "runtime": true,
+      "bytes": 2493900,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "cottage-after.webp",
+      "runtime": true,
+      "bytes": 2102454,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "cottage.webp",
+      "runtime": true,
+      "bytes": 2244962,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "couple-actions.webp",
+      "runtime": true,
+      "bytes": 1288684,
+      "size": [
+        1448,
+        1086
+      ],
+      "fullyTransparentPercent": 41.21,
+      "nearOpaquePercent": 41.18,
+      "masterSize": [
+        1448,
+        1086
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        3
+      ],
+      "frameSize": [
+        362.0,
+        362.0
+      ],
+      "fractionalCellBoundary": false,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "favicon.webp",
+      "runtime": true,
+      "bytes": 4456,
+      "size": [
+        64,
+        64
+      ],
+      "fullyTransparentPercent": 57.01,
+      "nearOpaquePercent": 35.91,
+      "comparison": "derived asset without matching master filename"
+    },
+    {
+      "file": "ferris-clean.webp",
+      "runtime": true,
+      "bytes": 2084248,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "ferris.webp",
+      "runtime": false,
+      "bytes": 701144,
+      "size": [
+        768,
+        512
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.5,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "footbath-poses-v2.webp",
+      "runtime": true,
+      "bytes": 610518,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 71.18,
+      "nearOpaquePercent": 24.65,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        3,
+        2
+      ],
+      "frameSize": [
+        512.0,
+        512.0
+      ],
+      "fractionalCellBoundary": false,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "footbath-poses.webp",
+      "runtime": false,
+      "bytes": 202574,
+      "size": [
+        768,
+        512
+      ],
+      "fullyTransparentPercent": 68.96,
+      "nearOpaquePercent": 24.06,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.5,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "forest.webp",
+      "runtime": true,
+      "bytes": 2427668,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "furniture.webp",
+      "runtime": true,
+      "bytes": 1565708,
+      "size": [
+        1241,
+        1268
+      ],
+      "fullyTransparentPercent": 44.88,
+      "nearOpaquePercent": 39.68,
+      "masterSize": [
+        1241,
+        1268
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "gift-opening-v1.webp",
+      "runtime": true,
+      "bytes": 1249378,
+      "size": [
+        1024,
+        1024
+      ],
+      "fullyTransparentPercent": 25.59,
+      "nearOpaquePercent": 35.45,
+      "masterSize": [
+        1254,
+        1254
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.817,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        256.0,
+        256.0
+      ],
+      "fractionalCellBoundary": false,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "gifts-v2.webp",
+      "runtime": false,
+      "bytes": 60310,
+      "size": [
+        256,
+        246
+      ],
+      "fullyTransparentPercent": 51.91,
+      "nearOpaquePercent": 40.48,
+      "masterSize": [
+        1278,
+        1230
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.2,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization",
+      "grid": [
+        2,
+        2
+      ],
+      "frameSize": [
+        128.0,
+        123.0
+      ],
+      "fractionalCellBoundary": false,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "gifts-v3.webp",
+      "runtime": true,
+      "bytes": 700670,
+      "size": [
+        1254,
+        1254
+      ],
+      "fullyTransparentPercent": 67.8,
+      "nearOpaquePercent": 27.31,
+      "masterSize": [
+        1254,
+        1254
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        2,
+        2
+      ],
+      "frameSize": [
+        627.0,
+        627.0
+      ],
+      "fractionalCellBoundary": false,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "gifts.webp",
+      "runtime": true,
+      "bytes": 940598,
+      "size": [
+        1448,
+        1086
+      ],
+      "fullyTransparentPercent": 48.97,
+      "nearOpaquePercent": 43.68,
+      "masterSize": [
+        1448,
+        1086
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        3
+      ],
+      "frameSize": [
+        362.0,
+        362.0
+      ],
+      "fractionalCellBoundary": false,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "girl-actions.webp",
+      "runtime": true,
+      "bytes": 1041908,
+      "size": [
+        1254,
+        1254
+      ],
+      "fullyTransparentPercent": 50.56,
+      "nearOpaquePercent": 31.4,
+      "masterSize": [
+        1254,
+        1254
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        313.5,
+        313.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "girl-heads.webp",
+      "runtime": true,
+      "bytes": 884462,
+      "size": [
+        1254,
+        1254
+      ],
+      "fullyTransparentPercent": 52.56,
+      "nearOpaquePercent": 38.94,
+      "masterSize": [
+        1254,
+        1254
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        313.5,
+        313.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "girl-walk.webp",
+      "runtime": true,
+      "bytes": 996314,
+      "size": [
+        1254,
+        1254
+      ],
+      "fullyTransparentPercent": 56.58,
+      "nearOpaquePercent": 30.63,
+      "masterSize": [
+        1254,
+        1254
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        313.5,
+        313.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "greenhouse.webp",
+      "runtime": true,
+      "bytes": 2222116,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "gulou.webp",
+      "runtime": true,
+      "bytes": 2758304,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "haunted.webp",
+      "runtime": true,
+      "bytes": 2007826,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "hero.webp",
+      "runtime": true,
+      "bytes": 1047832,
+      "size": [
+        1254,
+        1254
+      ],
+      "fullyTransparentPercent": 42.01,
+      "nearOpaquePercent": 31.01,
+      "masterSize": [
+        1254,
+        1254
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        313.5,
+        313.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "highschool.webp",
+      "runtime": true,
+      "bytes": 2660830,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "holding-walk-v2.webp",
+      "runtime": true,
+      "bytes": 1303550,
+      "size": [
+        1247,
+        1261
+      ],
+      "fullyTransparentPercent": 47.82,
+      "nearOpaquePercent": 39.45,
+      "masterSize": [
+        1247,
+        1261
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        311.8,
+        315.2
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "holding-walk.webp",
+      "runtime": false,
+      "bytes": 535140,
+      "size": [
+        759,
+        768
+      ],
+      "fullyTransparentPercent": 45.09,
+      "nearOpaquePercent": 37.72,
+      "masterSize": [
+        1247,
+        1261
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.609,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "hotspring-v2.webp",
+      "runtime": true,
+      "bytes": 2425050,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "hotspring.webp",
+      "runtime": false,
+      "bytes": 739506,
+      "size": [
+        768,
+        512
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.5,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "icons-v2.webp",
+      "runtime": false,
+      "bytes": 67604,
+      "size": [
+        256,
+        253
+      ],
+      "fullyTransparentPercent": 50.05,
+      "nearOpaquePercent": 42.66,
+      "masterSize": [
+        1263,
+        1246
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.203,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        64.0,
+        63.2
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "icons-v3.webp",
+      "runtime": true,
+      "bytes": 697620,
+      "size": [
+        1254,
+        1254
+      ],
+      "fullyTransparentPercent": 64.58,
+      "nearOpaquePercent": 29.74,
+      "masterSize": [
+        1254,
+        1254
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        313.5,
+        313.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "interaction-props.webp",
+      "runtime": true,
+      "bytes": 1106834,
+      "size": [
+        1254,
+        1254
+      ],
+      "fullyTransparentPercent": 63.58,
+      "nearOpaquePercent": 32.92,
+      "masterSize": [
+        1254,
+        1254
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        313.5,
+        313.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "loading-cottage.webp",
+      "runtime": true,
+      "bytes": 1275808,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 39.1,
+      "nearOpaquePercent": 56.12,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "magic.webp",
+      "runtime": true,
+      "bytes": 2550926,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "market.webp",
+      "runtime": true,
+      "bytes": 2922234,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "mars.webp",
+      "runtime": true,
+      "bytes": 2345940,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "memory-v2.webp",
+      "runtime": true,
+      "bytes": 1978092,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "musicroom.webp",
+      "runtime": true,
+      "bytes": 2027520,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "pet-cat.webp",
+      "runtime": true,
+      "bytes": 62502,
+      "size": [
+        576,
+        96
+      ],
+      "fullyTransparentPercent": 52.08,
+      "nearOpaquePercent": 37.08,
+      "comparison": "normalized pet animation: independent frame export"
+    },
+    {
+      "file": "pet-firefly.webp",
+      "runtime": true,
+      "bytes": 53636,
+      "size": [
+        576,
+        96
+      ],
+      "fullyTransparentPercent": 57.08,
+      "nearOpaquePercent": 22.23,
+      "comparison": "normalized pet animation: independent frame export"
+    },
+    {
+      "file": "pet-star.webp",
+      "runtime": true,
+      "bytes": 40830,
+      "size": [
+        576,
+        96
+      ],
+      "fullyTransparentPercent": 65.3,
+      "nearOpaquePercent": 29.17,
+      "comparison": "normalized pet animation: independent frame export"
+    },
+    {
+      "file": "pier.webp",
+      "runtime": true,
+      "bytes": 1507860,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "postoffice.webp",
+      "runtime": false,
+      "bytes": 738668,
+      "size": [
+        768,
+        512
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.5,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "props.webp",
+      "runtime": true,
+      "bytes": 879058,
+      "size": [
+        1774,
+        887
+      ],
+      "fullyTransparentPercent": 55.97,
+      "nearOpaquePercent": 30.3,
+      "masterSize": [
+        1774,
+        887
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        2
+      ],
+      "frameSize": [
+        443.5,
+        443.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "season-views.webp",
+      "runtime": true,
+      "bytes": 2686674,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        3
+      ],
+      "frameSize": [
+        384.0,
+        341.3
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "file": "seasons/camp-autumn-day.webp",
+      "runtime": true,
+      "bytes": 2260344,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/camp-autumn-night.webp",
+      "runtime": true,
+      "bytes": 2140828,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/camp-spring-day.webp",
+      "runtime": true,
+      "bytes": 2301516,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/camp-spring-night.webp",
+      "runtime": true,
+      "bytes": 2216318,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/camp-summer-day.webp",
+      "runtime": true,
+      "bytes": 2358524,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/camp-summer-night.webp",
+      "runtime": true,
+      "bytes": 2286282,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/camp-winter-day.webp",
+      "runtime": true,
+      "bytes": 2367954,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/camp-winter-night.webp",
+      "runtime": true,
+      "bytes": 2335902,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/ferris-autumn-day.webp",
+      "runtime": true,
+      "bytes": 2094464,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/ferris-autumn-night.webp",
+      "runtime": true,
+      "bytes": 2102200,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/ferris-spring-day.webp",
+      "runtime": true,
+      "bytes": 1998162,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/ferris-spring-night.webp",
+      "runtime": true,
+      "bytes": 2013680,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/ferris-summer-day.webp",
+      "runtime": true,
+      "bytes": 2059260,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/ferris-summer-night.webp",
+      "runtime": true,
+      "bytes": 2067670,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/ferris-winter-day.webp",
+      "runtime": true,
+      "bytes": 2093926,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/ferris-winter-night.webp",
+      "runtime": true,
+      "bytes": 2080256,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/forest-autumn-day.webp",
+      "runtime": true,
+      "bytes": 2694410,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/forest-autumn-night.webp",
+      "runtime": true,
+      "bytes": 2502100,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/forest-spring-day.webp",
+      "runtime": true,
+      "bytes": 2574504,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/forest-spring-night.webp",
+      "runtime": true,
+      "bytes": 2511596,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/forest-summer-day.webp",
+      "runtime": true,
+      "bytes": 2746488,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/forest-summer-night.webp",
+      "runtime": true,
+      "bytes": 2566718,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/forest-winter-day.webp",
+      "runtime": true,
+      "bytes": 2672544,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/forest-winter-night.webp",
+      "runtime": true,
+      "bytes": 2707502,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/garden-autumn-day.webp",
+      "runtime": true,
+      "bytes": 2725532,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/garden-autumn-night.webp",
+      "runtime": true,
+      "bytes": 2510624,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/garden-spring-day.webp",
+      "runtime": true,
+      "bytes": 2643966,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/garden-spring-night.webp",
+      "runtime": true,
+      "bytes": 2513304,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/garden-summer-day.webp",
+      "runtime": true,
+      "bytes": 2708624,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/garden-summer-night.webp",
+      "runtime": true,
+      "bytes": 2560920,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/garden-winter-day.webp",
+      "runtime": true,
+      "bytes": 2768180,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/garden-winter-night.webp",
+      "runtime": true,
+      "bytes": 2606090,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/market-autumn-day.webp",
+      "runtime": true,
+      "bytes": 2922086,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/market-autumn-night.webp",
+      "runtime": true,
+      "bytes": 2821886,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/market-spring-day.webp",
+      "runtime": true,
+      "bytes": 2860552,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/market-spring-night.webp",
+      "runtime": true,
+      "bytes": 2804768,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/market-summer-day.webp",
+      "runtime": true,
+      "bytes": 2913030,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/market-summer-night.webp",
+      "runtime": true,
+      "bytes": 2824264,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/market-winter-day.webp",
+      "runtime": true,
+      "bytes": 2869214,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/market-winter-night.webp",
+      "runtime": true,
+      "bytes": 2856202,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/mars-autumn-day.webp",
+      "runtime": true,
+      "bytes": 2347352,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/mars-autumn-night.webp",
+      "runtime": true,
+      "bytes": 2316718,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/mars-spring-day.webp",
+      "runtime": true,
+      "bytes": 2353714,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/mars-spring-night.webp",
+      "runtime": true,
+      "bytes": 2320170,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/mars-summer-day.webp",
+      "runtime": true,
+      "bytes": 2421098,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/mars-summer-night.webp",
+      "runtime": true,
+      "bytes": 2287222,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/mars-winter-day.webp",
+      "runtime": true,
+      "bytes": 2432772,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/mars-winter-night.webp",
+      "runtime": true,
+      "bytes": 2406250,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/pier-autumn-day.webp",
+      "runtime": true,
+      "bytes": 1654938,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/pier-autumn-night.webp",
+      "runtime": true,
+      "bytes": 1504622,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/pier-spring-day.webp",
+      "runtime": true,
+      "bytes": 1705854,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/pier-spring-night.webp",
+      "runtime": true,
+      "bytes": 1546390,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/pier-summer-day.webp",
+      "runtime": true,
+      "bytes": 1747456,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/pier-summer-night.webp",
+      "runtime": true,
+      "bytes": 1529304,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/pier-winter-day.webp",
+      "runtime": true,
+      "bytes": 1811296,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/pier-winter-night.webp",
+      "runtime": true,
+      "bytes": 1664208,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/postoffice-autumn-day.webp",
+      "runtime": true,
+      "bytes": 2537158,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/postoffice-autumn-night.webp",
+      "runtime": true,
+      "bytes": 2372722,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/postoffice-spring-day.webp",
+      "runtime": true,
+      "bytes": 2640032,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/postoffice-spring-night.webp",
+      "runtime": true,
+      "bytes": 2333562,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/postoffice-summer-day.webp",
+      "runtime": true,
+      "bytes": 2678266,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/postoffice-summer-night.webp",
+      "runtime": true,
+      "bytes": 2489934,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/postoffice-winter-day.webp",
+      "runtime": true,
+      "bytes": 2551104,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/postoffice-winter-night.webp",
+      "runtime": true,
+      "bytes": 2481004,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/station-autumn-day.webp",
+      "runtime": true,
+      "bytes": 2382164,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/station-autumn-night.webp",
+      "runtime": true,
+      "bytes": 2190496,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/station-spring-day.webp",
+      "runtime": true,
+      "bytes": 2373918,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/station-spring-night.webp",
+      "runtime": true,
+      "bytes": 2331294,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/station-summer-day.webp",
+      "runtime": true,
+      "bytes": 2393758,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/station-summer-night.webp",
+      "runtime": true,
+      "bytes": 2351998,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/station-winter-day.webp",
+      "runtime": true,
+      "bytes": 2432764,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seasons/station-winter-night.webp",
+      "runtime": true,
+      "bytes": 2402390,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "seats-back.webp",
+      "runtime": true,
+      "bytes": 1136236,
+      "size": [
+        1261,
+        1247
+      ],
+      "fullyTransparentPercent": 42.67,
+      "nearOpaquePercent": 51.84,
+      "masterSize": [
+        1261,
+        1247
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        2,
+        2
+      ],
+      "frameSize": [
+        630.5,
+        623.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "shichahai.webp",
+      "runtime": true,
+      "bytes": 2743844,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "sit-transition.webp",
+      "runtime": true,
+      "bytes": 856346,
+      "size": [
+        2172,
+        724
+      ],
+      "fullyTransparentPercent": 63.21,
+      "nearOpaquePercent": 28.94,
+      "masterSize": [
+        2172,
+        724
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        6,
+        2
+      ],
+      "frameSize": [
+        362.0,
+        362.0
+      ],
+      "fractionalCellBoundary": false,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "sitting.webp",
+      "runtime": true,
+      "bytes": 457038,
+      "size": [
+        1217,
+        1293
+      ],
+      "fullyTransparentPercent": 74.18,
+      "nearOpaquePercent": 20.91,
+      "masterSize": [
+        1217,
+        1293
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        2,
+        2
+      ],
+      "frameSize": [
+        608.5,
+        646.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "station-clean.webp",
+      "runtime": true,
+      "bytes": 2265932,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "station.webp",
+      "runtime": false,
+      "bytes": 734326,
+      "size": [
+        768,
+        512
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.5,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "tanghulu.webp",
+      "runtime": true,
+      "bytes": 2442550,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "tea-pour-v1.webp",
+      "runtime": true,
+      "bytes": 1109828,
+      "size": [
+        1024,
+        1005
+      ],
+      "fullyTransparentPercent": 39.07,
+      "nearOpaquePercent": 35.69,
+      "masterSize": [
+        1266,
+        1242
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.809,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        256.0,
+        251.2
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "tianmo.webp",
+      "runtime": true,
+      "bytes": 2633308,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution"
+    },
+    {
+      "file": "weather-icons-v2.webp",
+      "runtime": true,
+      "bytes": 386562,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 71.43,
+      "nearOpaquePercent": 22.41,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        3,
+        2
+      ],
+      "frameSize": [
+        512.0,
+        512.0
+      ],
+      "fractionalCellBoundary": false,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "weather-icons.webp",
+      "runtime": false,
+      "bytes": 194258,
+      "size": [
+        768,
+        512
+      ],
+      "fullyTransparentPercent": 53.99,
+      "nearOpaquePercent": 22.14,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": false,
+      "retainedLinearResolution": 0.5,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels after preserved normalization"
+    },
+    {
+      "file": "wheel-actors.webp",
+      "runtime": true,
+      "bytes": 1358716,
+      "size": [
+        1265,
+        1243
+      ],
+      "fullyTransparentPercent": 41.68,
+      "nearOpaquePercent": 37.33,
+      "masterSize": [
+        1265,
+        1243
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        2,
+        2
+      ],
+      "frameSize": [
+        632.5,
+        621.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    },
+    {
+      "file": "window-views.webp",
+      "runtime": true,
+      "bytes": 2581894,
+      "size": [
+        1536,
+        1024
+      ],
+      "fullyTransparentPercent": 0.0,
+      "nearOpaquePercent": 100.0,
+      "masterSize": [
+        1536,
+        1024
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        3,
+        3
+      ],
+      "frameSize": [
+        512.0,
+        341.3
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "file": "world-actors.webp",
+      "runtime": true,
+      "bytes": 1364208,
+      "size": [
+        1448,
+        1086
+      ],
+      "fullyTransparentPercent": 8.0,
+      "nearOpaquePercent": 22.74,
+      "masterSize": [
+        1448,
+        1086
+      ],
+      "nativeResolutionRestored": true,
+      "retainedLinearResolution": 1.0,
+      "visiblePixelDifferences": 0,
+      "alphaPixelDifferences": 0,
+      "comparison": "exact visible pixels at native resolution",
+      "grid": [
+        4,
+        4
+      ],
+      "frameSize": [
+        362.0,
+        271.5
+      ],
+      "fractionalCellBoundary": true,
+      "emptyCells": [],
+      "fullyOpaqueCells": []
+    }
+  ]
+}
