@@ -7,11 +7,12 @@
     "LICENSE": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
     "css/APlayer.css": "724acd85581883857a991eeae4c4a8096e7db2c0b23c001028c33131c7f55f52",
     "js/APlayer.min.js": "7ca55d9e7d04ae850d5775cbe95ca1368b08c4982a8f9c46c8266a44d8555e77",
-    "js/Meting.js": "ff26a759d5ff5f1daa5504eca0a35d2f6b229e9229b3783790029f6b9a0bbb87",
+    "js/Meting.js": "f5ee61cac507c06295fe82856247f7d25a38c771ef978f33ffac9e074788771a",
     "licenses/APlayer-MIT.txt": "6296c34fc24aedd4a120213620015a4feb0b16a571f3b3f640ac200e90bfdfae",
     "licenses/MetingJS-MIT.txt": "9a38b31ee0ff382935d97db41fa1c2cf1c3dd39317f48a2deea6af30f447896f"
   },
   "modifications": [
     "Meting.js emits scoped lovehouse-player-ready events and safely handles disposal before loading finishes"
-  ]
+  ],
+  "hashEncoding": "SHA256 of Git repository file bytes (LF line endings)"
 }
