@@ -124,6 +124,8 @@ export const uiCopyDefaults={
  "bag.category.snack": "零食",
  "bag.category.gear": "装扮",
  "bag.empty-category": "这一格还没有收藏。",
+ "bag.portions": "剩 {count} 份",
+ "bag.marshmallow": "烤棉花糖",
  "map.travel": "一起前往入口",
  "map.route": "沿路线出发",
  "map.items-title": "这里可以做什么",

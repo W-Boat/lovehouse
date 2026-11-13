@@ -5,14 +5,14 @@ import {installRoundMinimap} from './round-minimap';
 import {renderCalendarPanel,updateCalendarPanel} from './calendar-ui';
 import {calendarSnapshot,clockLabel,weekdayName,seasonNames,weatherNames,periodNames,type CalendarSnapshot} from './calendar';
 import type {Cottage} from './scene';
-import {save,persist,grantItem,placeItem,importSave} from './state';
+import {save,persist,grantItem,placeItem,importSave,isSnack,type Snack} from './state';
 import {worlds,routeBetween,type Zone,type Item} from './world';
 import {birthdayConfig as config} from '../content/birthday-config';
 import {assetUrl,textureFiles} from './assets';
 import {music} from './audio';
-export type UIContext={scene:Cottage;open:(html:string,kind?:string)=>void;close:()=>void;toast:(s:string)=>void;travel:(zone:Zone)=>void;enter:()=>void;photo:()=>void;act:(kind:string)=>void;showGift:(id:string)=>void;canUse?:()=>boolean};
+export type UIContext={scene:Cottage;open:(html:string,kind?:string)=>void;close:()=>void;toast:(s:string)=>void;travel:(zone:Zone)=>void;enter:()=>void;photo:()=>void;act:(kind:string)=>void;showGift:(id:string)=>void;shareSnack:(id:Snack)=>void;canUse?:()=>boolean};
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));const $=(id:string)=>document.getElementById(id)!;
-export const itemNames:Record<string,string>={'quiz-star':uiCopy('quiz.prize-star'),'quiz-heart':uiCopy('quiz.prize-heart'),'quiz-ribbon':uiCopy('quiz.prize-ribbon'),flower:'一朵花',shell:'小海螺',postcard:'明信片',doll:'红发小娃娃',lantern:'营灯',crystal:'魔法晶石',ribbon:'幽灵丝带',ticket:'电影票根',token:'乘车纪念章',film:'回忆胶片','mars-stone':'火星小石头',...Object.fromEntries(config.gifts.map(g=>[g.id,g.name]))};
+export const itemNames:Record<string,string>={marshmallow:uiCopy('bag.marshmallow'),'quiz-star':uiCopy('quiz.prize-star'),'quiz-heart':uiCopy('quiz.prize-heart'),'quiz-ribbon':uiCopy('quiz.prize-ribbon'),flower:'一朵花',shell:'小海螺',postcard:'明信片',doll:'红发小娃娃',lantern:'营灯',crystal:'魔法晶石',ribbon:'幽灵丝带',ticket:'电影票根',token:'乘车纪念章',film:'回忆胶片','mars-stone':'火星小石头',...Object.fromEntries(config.gifts.map(g=>[g.id,g.name]))};
 export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let unlocked=false;let minimap:ReturnType<typeof installRoundMinimap>|undefined;const on=(id:string,fn:()=>void)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{if(ctx.canUse&&!ctx.canUse())return;fn()}};
  const button=(label:string,id:string,cls='secondary')=>`<button class="${cls}" id="${id}">${esc(label)}</button>`;
  const thumbnail=(key:string,size=40)=>{if(!scene.textures.exists(key))return '';const source=scene.textures.get(key).getSourceImage() as HTMLCanvasElement,c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d')!;g.imageSmoothingEnabled=false;const r=Math.min(size/source.width,size/source.height);g.drawImage(source,(size-source.width*r)/2,(size-source.height*r)/2,source.width*r,source.height*r);return c.toDataURL('image/png')};
@@ -43,7 +43,7 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
    return `<button class="world-node ${current?'current':''} ${visited?'visited':''}" id="zone-${id}" aria-pressed="${id===z}">
     <img loading="lazy" src="${assetUrl(textureFiles[entry.texture as keyof typeof textureFiles])}" alt="">
     ${current?`<span class="map-avatars"><img src="${scene.avatar('girl')}" alt="${esc(save.names.girl)}"><img src="${scene.avatar('boy')}" alt="${esc(save.names.boy)}"></span>`:''}
-    <b>${esc(entry.name)}</b><small>${esc(uiCopy(status))}</small>${mapProgress(id)}
+    <b>${esc(entry.name)}</b><small>${esc(isSnack(id)?formatCopy('bag.portions',{count:save.snackPortions[id]}):uiCopy(status))}</small>${mapProgress(id)}
    </button>`;
   }).join('');
   const gifts=z==='room'?config.gifts:[];
@@ -83,12 +83,12 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
  function bag(slot?:Item,category:BagCategory='all'){
   const allowed=['flower','shell','postcard','doll','lantern'];
   const gear=gearSlots.filter(id=>save.inventory.includes(id));
-  const categoryOf=(id:string):BagCategory=>gear.some(piece=>piece===id)?'gear':['chestnuts','chocolate','marshmallow'].includes(id)?'snack':'keepsake';
+  const categoryOf=(id:string):BagCategory=>gear.some(piece=>piece===id)?'gear':isSnack(id)?'snack':'keepsake';
   const items=save.inventory.filter(id=>category==='all'||categoryOf(id)===category);
   const tabs=bagCategories.map(id=>`<button id="bag-filter-${id}" class="${id===category?'primary':'secondary'}" aria-pressed="${id===category}">${esc(uiCopy(`bag.category.${id}`))}</button>`).join('');
   const slots=items.map(id=>{
    const worn=gear.find(piece=>piece===id);
-   const texture=scene.textures.exists('gift-'+id)?'gift-'+id:id==='shell'?'prop-5':id==='lantern'?'prop-0':'ui-letter';
+   const texture=scene.textures.exists('gift-'+id)?'gift-'+id:id==='shell'?'prop-5':id==='lantern'?'prop-0':id==='marshmallow'?'gift-chestnuts':'ui-letter';
    const status=Object.values(save.placements).includes(id)?'bag.placed':worn&&save[worn]?'bag.equipped':'bag.collected';
    return `<button class="bag-item" id="bag-${id}"><img class="bag-art" src="${thumbnail(texture)}" alt=""><b>${esc(itemNames[id]??id)}</b><small>${esc(uiCopy(status))}</small></button>`;
   }).join('');
@@ -108,6 +108,7 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
    }
    const wearable=gear.find(piece=>piece===id);
    if(wearable){save[wearable]=!save[wearable];persist();scene.refresh();bag(undefined,category);return}
+   if(id==='marshmallow'){ctx.shareSnack(id);return}
    if(config.gifts.some(gift=>gift.id===id)){ctx.showGift(id);return}
    toast(uiCopy('bag.place-hint'));
   });
