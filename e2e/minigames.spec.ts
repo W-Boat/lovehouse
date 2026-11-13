@@ -92,3 +92,51 @@ test('all twelve games permit retry, pause, resume and exit without receiving a 
   await start(page,id);const host=page.locator('#game-host');await host.getByRole('button',{name:'重新开始',exact:true}).click();await host.getByRole('button',{name:'暂停',exact:true}).click();await expect(host.locator('.game-board')).toHaveClass(/paused/);await host.getByRole('button',{name:'继续',exact:true}).click();await expect(host.locator('.game-board')).not.toHaveClass(/paused/);await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toBeHidden();expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes(value),id)).toBe(false);
  }
 });
+
+
+test.describe('phone touch controls',()=>{
+ test.use({viewport:{width:390,height:844},hasTouch:true});
+
+ test('all twelve games expose pause, retry and exit in the rotated phone viewport',async({page})=>{
+  test.setTimeout(150000);
+  await enter(page);
+  for(const id of ['moon','keychain','chestnuts','earphones','band','doll','chocolate','letter','notes','hat','labubu','mystery']){
+   await start(page,id);
+   const game=page.locator('#game-host'), board=game.locator('.game-board');
+   await game.getByRole('button',{name:'暂停',exact:true}).tap();
+   await expect(board).toHaveClass(/paused/);
+   await game.getByRole('button',{name:'继续',exact:true}).tap();
+   await expect(board).not.toHaveClass(/paused/);
+   await game.getByRole('button',{name:'重新开始',exact:true}).tap();
+   await game.getByRole('button',{name:'先退出',exact:true}).tap();
+   await expect(game).toHaveCount(0);
+  }
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened)).toEqual([]);
+ });
+
+ test('claw uses touch coordinates and the drop button through all three rounds',async({page})=>{
+  test.setTimeout(90000);
+  await enter(page);
+  await start(page,'doll');
+  const game=page.locator('#game-host'), canvas=game.locator('canvas');
+  const drop=game.getByRole('button',{name:'落爪 / 放下',exact:true});
+  async function aim(x:number){
+   await canvas.scrollIntoViewIfNeeded();
+   const point=await canvas.evaluate((node:HTMLCanvasElement,x)=>{
+    const bounds=node.getBoundingClientRect(),fraction=x/node.width;
+    return document.getElementById('app')?.classList.contains('rotated')
+     ? {x:bounds.left+bounds.width/2,y:bounds.top+bounds.height*fraction}
+     : {x:bounds.left+bounds.width*fraction,y:bounds.top+bounds.height/2};
+   },x);
+   await page.touchscreen.tap(point.x,point.y);
+  }
+  for(const target of [300,400,220]){
+   await aim(target);
+   await drop.tap();
+   await expect(game.locator('.game-status')).toContainText('抓到了',{timeout:10000});
+   await aim(70);
+   await drop.tap();
+  }
+  await won(page,'doll');
+ });
+});
