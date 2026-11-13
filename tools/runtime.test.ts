@@ -1,3 +1,4 @@
+import * as appearanceColors from '../src/appearance-colors';
 import * as wearableArt from '../src/wearable-art';
 import * as calendar from '../src/calendar';
 import * as atlas from '../src/atlas';
@@ -22,7 +23,7 @@ function loadScene(){
  const code=transformSync(readFileSync('src/scene.ts','utf8'),{loader:'ts',format:'cjs',target:'es2022'}).code;
  const output={exports:{} as any};
  class Scene{sys={};}
- const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:defaults(),persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./calendar':calendar,'./wearable-art':wearableArt,'./seat-layers':{SeatLayers:class{rebuild(){};update(){}}},'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./outdoor-environment':{OutdoorEnvironment:class{update(){}}},'./assets':{textureFiles,additionalTextureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
+ const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:defaults(),persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./online-pets':{OnlinePets:class{update(){}}},'./calendar':calendar,'./wearable-art':wearableArt,'./place-effects':{PlaceEffects:class{trigger(){return false};update(){};rebuild(){}}},'./seat-layers':{SeatLayers:class{rebuild(){};update(){}}},'./appearance-colors':appearanceColors,'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./outdoor-environment':{OutdoorEnvironment:class{update(){}}},'./assets':{textureFiles,additionalTextureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
  vm.runInNewContext(code,{module:output,exports:output.exports,require:(id:string)=>{if(!(id in dependencies))throw new Error(id);return dependencies[id]}});
  return new output.exports.Cottage();
 }
@@ -103,7 +104,7 @@ test('drawn sitting transition keeps aspect ratio and reverses frames on rising'
 test('network seating retains every legacy seat for both roles without moving the remote actor',()=>{
  for(const role of ['host','guest'])for(const zone of Object.keys(world.worlds) as world.Zone[]){
   const sample=loadScene();for(const item of world.worlds[zone].items){if(!sample.legacySeats[item.id]&&!layouts.seatDefinition(zone,item.id))continue;
-   const scene=loadScene(),w=world.worlds[zone];scene.zone=zone;scene.player=fakeObject(...w.spawn);scene.boy=fakeObject(...w.boy);scene.textures={get:()=>({getSourceImage:()=>({width:40,height:64})})};scene.onlineWorld={active:true,role,local:role==='host'?scene.player:scene.boy,cancelFollowing(){}};
+   const scene=loadScene(),w=world.worlds[zone];scene.zone=zone;scene.player=fakeObject(...w.spawn);scene.boy=fakeObject(...w.boy);scene.textures={get:()=>({getSourceImage:()=>({width:40,height:64})})};scene.onlineWorld={active:true,role,local:role==='host'?scene.player:scene.boy,cancelFollowing(){},cancelAffection(){}};
    const remote=role==='host'?scene.boy:scene.player,original={x:remote.x,y:remote.y};scene.sit(item.id);assert.equal(scene.seated,item.id,role+':'+item.id);assert.ok(scene.onlineSeat,role+':'+item.id);assert.deepEqual({x:remote.x,y:remote.y},original);scene.stand();assert.equal(scene.onlineSeat.standing,true);
   }
  }

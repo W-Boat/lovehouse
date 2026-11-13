@@ -37,7 +37,7 @@ export const worlds:Record<Zone,World>={
  {id:'rain-awning',name:'屋檐下的雨滴',action:'听雨',x:390,y:202,point:[390,242]},
  {id:'game-wish',name:'散落的星星邮票',action:'玩一局',x:480,y:310,point:[480,310]},
  {id:'postal-return',name:'回月光海岸',action:'沿巷返回',x:320,y:400,point:[320,380],prop:7,to:'garden'}]},
- greenhouse:{name:'玻璃花房',caption:'把明年的花，也种在今晚',texture:'greenhouse',spawn:[320,370],boy:[345,370],walkable:p=>p.x>80&&p.x<560&&p.y>150&&p.y<400,items:[{id:'greenhouse-seat',name:'花房软椅',action:'依偎坐下',x:140,y:125,point:[150,165]},{id:'seed',name:'写给明年的种子',action:'种下心愿',x:320,y:110,point:[320,165]},{id:'game-pairs',name:'花瓣配对',action:'玩一局',x:440,y:265,point:[440,290]},{id:'greenhouse-return',name:'回海岸',action:'回去',x:320,y:397,point:[320,380],to:'garden'}]},
+ greenhouse:{name:'玻璃花房',caption:'把明年的花，也种在今晚',texture:'greenhouse',spawn:[320,370],boy:[345,370],walkable:p=>p.x>80&&p.x<560&&p.y>150&&p.y<400,items:[{id:'greenhouse-water',name:'花床旁的浇水壶',action:'给花浇点水',kind:'event',x:440,y:120,point:[440,180]},{id:'greenhouse-seat',name:'花房软椅',action:'依偎坐下',x:140,y:125,point:[150,165]},{id:'seed',name:'写给明年的种子',action:'种下心愿',x:320,y:110,point:[320,165]},{id:'game-pairs',name:'花瓣配对',action:'玩一局',x:440,y:265,point:[440,290]},{id:'greenhouse-return',name:'回海岸',action:'回去',x:320,y:397,point:[320,380],to:'garden'}]},
  memory:{name:'回忆放映室',caption:'普通的日子，也值得反复播放',texture:'room-after',spawn:[320,353],boy:[363,338],walkable:roomWalkable,items:[{id:'memory-seat',name:'回忆沙发',action:'坐下听故事',x:77,y:284,point:[214,320]},{id:'future',name:'给未来的一句话',action:'写下来',x:197,y:320,point:[220,324]},{id:'game-sequence',name:'记忆放映机',action:'玩一局',x:490,y:180,point:[474,246]},{id:'memory-return',name:'回到小屋',action:'回去',x:320,y:393,point:[320,379],to:'room'}]},
  room:{name:'温暖的小屋',caption:'壁炉暖着，今晚不用赶路',texture:'room',spawn:[320,353],boy:[363,338],walkable:roomWalkable,items:[
  {id:'taoyuan-portal',name:'通往桃源乡的门',action:'一起去田庄',x:320,y:282,point:[320,318]},
@@ -136,3 +136,5 @@ export function routeBetween(from:Zone,to:Zone):Zone[]{const queue:Zone[][]=[[fr
 for(const w of Object.values(worlds))for(const item of w.items)if(!w.walkable({x:item.point[0],y:item.point[1]})){const safe=nearestWalkable({x:item.point[0],y:item.point[1]},w.walkable,160);if(safe)item.point=[safe.x,safe.y]}
 
 for(const [zone,w]of Object.entries(worlds) as [Zone,World][]){let n=0;while(w.items.filter(i=>!i.to).length<6){const p=nearestWalkable({x:w.spawn[0]-40+n*45,y:w.spawn[1]-30},w.walkable,80);if(!p)break;w.items.push({id:zone+'-small-note-'+n,name:n?'替你留的一盏灯':'今日的小纸条',action:n?'点灯':'写一句话',x:p.x,y:p.y,point:[p.x,p.y],kind:'event'});n++}}
+
+worlds.greenhouse.items.push({id:'greenhouse-vent',name:'花房的通风天窗',action:'打开或关上天窗',x:495,y:95,point:[495,185],kind:'event'});

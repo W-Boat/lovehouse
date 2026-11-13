@@ -20,8 +20,8 @@ export class OutdoorEnvironment{
   this.day=scene.add.image(0,0,'room').setOrigin(0).setDisplaySize(640,426.667).setDepth(.03).setVisible(false);
  }
  update(){
-  const snap=this.scene.calendarState,files=seasonalFiles(this.scene.zone,snap.season);
-  const request=snap.enabled&&files?`${this.scene.zone}:${snap.season}`:'';
+  const snap=this.scene.calendarState,season=snap.enabled?snap.season:'autumn',files=seasonalFiles(this.scene.zone,season);
+  const request=files?`${this.scene.zone}:${season}`:'';
   this.requested=request;
   if(!request){this.night.setVisible(false);this.day.setVisible(false);this.displayed='';return}
   const pair=this.loaded.get(request);

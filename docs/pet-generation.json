@@ -1,0 +1,15 @@
+{
+  "tool": "built-in image_gen",
+  "date": "2026-11-13",
+  "prompts": {
+    "firefly": "Original pixel art game pet animation sprite strip. a tiny adorable golden firefly fairy with two translucent mint wings and a glowing amber abdomen, insect body. ONE species only, ONE horizontal row of EXACTLY SIX equal square frames, generous fully transparent margins around EACH frame. Frame1 idle, frame2 wings rise, frame3 wings spread, frame4 wings lower, frame5 delighted eyes and tiny cheek blush, frame6 return idle. Same identity, body size, feet baseline and center across all frames. Crisp warm 16-bit pixel clusters, dark brown outlines, soft pastel birthday cottage RPG palette matching the reference character style; no character included. No background, no text, no grid, no panels, no ground shadow, no halo haze beyond actual sprite. 6:1 aspect sprite strip. Genuine transparent alpha.",
+    "star": "Original pixel art game pet animation sprite strip. a tiny floating five pointed yellow star sprite with a cute face, warm cream highlights. ONE species only, ONE horizontal row of EXACTLY SIX equal square frames, generous fully transparent margins around EACH frame. Frame1 idle, frame2 wings rise, frame3 wings spread, frame4 wings lower, frame5 delighted eyes and tiny cheek blush, frame6 return idle. Same identity, body size, feet baseline and center across all frames. Crisp warm 16-bit pixel clusters, dark brown outlines, soft pastel birthday cottage RPG palette matching the reference character style; no character included. No background, no text, no grid, no panels, no ground shadow, no halo haze beyond actual sprite. 6:1 aspect sprite strip. Genuine transparent alpha.",
+    "cat": "Original pixel art game pet animation sprite strip. a tiny white and blush pink winged cat fairy with cat ears and a curled tail. ONE species only, ONE horizontal row of EXACTLY SIX equal square frames, generous fully transparent margins around EACH frame. Frame1 idle, frame2 wings rise, frame3 wings spread, frame4 wings lower, frame5 delighted eyes and tiny cheek blush, frame6 return idle. Same identity, body size, feet baseline and center across all frames. Crisp warm 16-bit pixel clusters, dark brown outlines, soft pastel birthday cottage RPG palette matching the reference character style; no character included. No background, no text, no grid, no panels, no ground shadow, no halo haze beyond actual sprite. 6:1 aspect sprite strip. Genuine transparent alpha."
+  },
+  "assets": [
+    "pet-firefly",
+    "pet-star",
+    "pet-cat"
+  ],
+  "processing": "Each generated PNG is preserved. Six fixed cells cropped to a common alpha bounding box, fitted to 96px cells with nearest-neighbour and exported lossless transparent WebP. Originals 2160x720; runtime strips576x96. Visual inspection confirmed six identities/frames, separate wings and no opaque background. In-game screenshot pending CI; not locally deployed."
+}

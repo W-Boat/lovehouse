@@ -1,4 +1,7 @@
 name: Lovehouse builds
+concurrency:
+  group: lovehouse-${{ github.ref }}
+  cancel-in-progress: true
 on:
   push:
     branches: [main]

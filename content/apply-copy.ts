@@ -14,3 +14,6 @@ export {personal};
 for(const [id,film]of Object.entries(films))film.shots.forEach((shot,i)=>{shot.line=texts['film.'+id+'.'+i]??shot.line});
 
 config.keychainLines=config.keychainLines.map((v,i)=>texts['keychain.'+i]??v);
+
+// UI copy resolves the same personal.texts dictionary through uiCopy(id);
+// changing labels never changes DOM IDs, action keys or settings tab routing.

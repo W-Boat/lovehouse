@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import personal from '../content/personal.json';import {uiCopy,uiCopyDefaults} from '../content/ui-copy';
+test('semantic UI copy IDs resolve personalized text while IDs remain independent of wording',()=>{const texts=personal.texts as Record<string,string>,key='ui.wardrobe.save',before=texts[key];try{texts[key]='收好今天的模样';assert.equal(uiCopy('wardrobe.save'),'收好今天的模样');assert.equal(uiCopy('settings.export'),texts['ui.settings.export']??uiCopyDefaults['settings.export']);assert.ok(Object.keys(uiCopyDefaults).every(k=>/^[a-z.-]+$/.test(k)))}finally{if(before===undefined)delete texts[key];else texts[key]=before}});

@@ -1,0 +1,70 @@
+import {letterPieces} from '../src/letter-puzzle';
+import {solveGiftPuzzle} from '../tools/solve-gift-puzzle';
+import {test,expect,type Page} from '@playwright/test';
+import {birthdayConfig} from '../content/birthday-config';
+async function enter(page:Page){await page.goto('/');await expect(page.locator('#custom-save')).toBeVisible({timeout:45000});await page.locator('#custom-save').click()}
+async function start(page:Page,id:string){await page.evaluate(value=>(window as any).__cottage.bridge.emit('interact',value),id);await expect(page.locator('#game-host')).toBeVisible()}
+async function won(page:Page,id:string){await expect(page.locator('#game-host')).toHaveCount(0);expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).games[value].status,id)).toBe('won');expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.filter((x:string)=>x===value).length,id)).toBe(1)}
+test('moon rotation, sentence fragments, notes, stitches and chocolate complete through real inputs',async({page})=>{
+ test.setTimeout(180000);await enter(page);
+ for(const id of ['moon','keychain','notes','hat','chocolate']){
+  await start(page,id);
+  for(let level=0;level<3;level++){
+   const host=page.locator('#game-host'),board=host.locator('.game-board');
+   if(id==='moon')for(let i=0;i<9;i++){const piece=board.locator(`[data-piece="${i}"]`);let rotation=(i+level)%4;do{await piece.click();rotation=(rotation+1)%4}while(rotation!==0);await board.locator(`[data-target="${i}"]`).click()}
+   if(id==='keychain'){const chars=[...birthdayConfig.keychainLines[level]],mid=Math.ceil(chars.length/2);for(const text of [chars.slice(0,mid).join(''),chars.slice(mid).join('')||'。'])await board.getByRole('button',{name:text,exact:true}).click()}
+   if(id==='notes'){await board.getByRole('button').nth(0).click();await board.getByRole('button').nth(3).click();await board.getByRole('button').nth(1).click();await board.getByRole('button').nth(2).click();await host.getByRole('button',{name:'检查顺序',exact:true}).click()}
+   if(id==='hat')for(let i=0;i<9;i++)await board.locator('button.lit').click();
+   if(id==='chocolate')for(const cell of (level===0?[0,2,8,10]:level===1?[0,4,8,12]:[0,2,4,6,8,10,12,14]))await board.getByRole('button').nth(cell).click();
+  }
+  await won(page,id);await page.locator('#close-modal').click();
+ }
+});
+test('rhythm requires actual notes on all three rounds',async({page})=>{
+ test.setTimeout(120000);await enter(page);await start(page,'earphones');
+ // Repeated short presses still require genuine note-window hits; no callbacks or state injection.
+ const until=Date.now()+65000;while(Date.now()<until&&await page.locator('#game-host').count()){
+  for(const key of ['a','s','d'])await page.keyboard.press(key);await page.waitForTimeout(65);
+ }
+ await won(page,'earphones');
+});
+test('pause blocks chocolate placement and retry starts a fresh board',async({page})=>{
+ await enter(page);await start(page,'chocolate');const host=page.locator('#game-host');await host.getByRole('button',{name:'暂停',exact:true}).click();await host.locator('.game-board button').nth(0).click({force:true});await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'继续',exact:true}).click();await host.locator('.game-board button').nth(0).click();await expect(host.locator('.game-board')).toContainText('甜');await host.getByRole('button',{name:'重新开始',exact:true}).click();await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toHaveCount(0);expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes('chocolate'))).toBe(false);
+});
+
+test('route planning, push boxes and two-character switches solve all three distinct layouts',async({page})=>{
+ test.setTimeout(180000);await enter(page);
+ for(const id of ['band','labubu','mystery'] as const){await start(page,id);for(let level=0;level<3;level++){let side=0;for(const step of solveGiftPuzzle(id,level)){if(step.side!==side){await page.getByRole('button',{name:'切换角色',exact:true}).click();side=step.side}await page.locator('#game-host .game-board button').nth(step.target).click()}}await won(page,id);await page.locator('#close-modal').click()}
+});
+
+test('letter scraps rotate and drag into all three envelopes',async({page})=>{
+ test.setTimeout(120000);await enter(page);await start(page,'letter');
+ for(let level=0;level<3;level++)for(const piece of letterPieces(level)){
+  const canvas=page.locator('#game-host canvas');await page.getByRole('button',{name:'选下一片',exact:true}).click();await canvas.focus();for(let i=piece.rotation;i%4!==0;i++)await page.keyboard.press('r');
+  const box=(await canvas.boundingBox())!;const pos=(x:number,y:number)=>({x:box.x+x/600*box.width,y:box.y+y/360*box.height});const from=pos(piece.x,piece.y),to=pos(piece.target.x,piece.target.y);
+  await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:10});await page.mouse.up();
+ }
+ await won(page,'letter');
+});
+test('claw catches and transports the doll using the real canvas and space key',async({page})=>{
+ test.setTimeout(60000);await enter(page);await start(page,'doll');
+ for(const x of [300,400,220]){
+  const canvas=page.locator('#game-host canvas'),box=(await canvas.boundingBox())!;await page.mouse.move(box.x+x/600*box.width,box.y+box.height/2);await page.keyboard.press('Space');await expect(page.locator('.game-status')).toContainText('抓到了',{timeout:10000});await page.waitForTimeout(1600);await page.mouse.move(box.x+70/600*box.width,box.y+box.height/2);await page.keyboard.press('Space');
+ }
+ await won(page,'doll');
+});
+test('catch falling chestnuts by tracking visible pixels, through three rounds',async({page})=>{
+ test.setTimeout(150000);await enter(page);await start(page,'chestnuts');const deadline=Date.now()+120000;
+ while(Date.now()<deadline&&await page.locator('#game-host').count()){
+  const canvas=page.locator('#game-host canvas');const target=await canvas.evaluate((c:HTMLCanvasElement)=>{const g=c.getContext('2d')!,d=g.getImageData(0,0,600,260).data;for(let y=258;y>=0;y-=2)for(let x=2;x<598;x+=2){const i=(y*600+x)*4;if(d[i]===189&&d[i+1]===130&&d[i+2]===84)return{x,y}}return null});
+  if(target){const box=(await canvas.boundingBox())!;await page.mouse.move(box.x+(target.x+5)/600*box.width,box.y+box.height*.92)}await page.waitForTimeout(40);
+ }
+ await won(page,'chestnuts');
+});
+
+test('all twelve games permit retry, pause, resume and exit without receiving a gift',async({page})=>{
+ test.setTimeout(120000);await enter(page);
+ for(const id of ['moon','keychain','chestnuts','earphones','band','doll','chocolate','letter','notes','hat','labubu','mystery']){
+  await start(page,id);const host=page.locator('#game-host');await host.getByRole('button',{name:'重新开始',exact:true}).click();await host.getByRole('button',{name:'暂停',exact:true}).click();await expect(host.locator('.game-board')).toHaveClass(/paused/);await host.getByRole('button',{name:'继续',exact:true}).click();await expect(host.locator('.game-board')).not.toHaveClass(/paused/);await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toHaveCount(0);expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes(value),id)).toBe(false);
+ }
+});

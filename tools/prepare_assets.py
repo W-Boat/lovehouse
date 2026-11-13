@@ -9,6 +9,7 @@ for p in list(assets.glob('*.png')):
  dest=source/p.name
  if not dest.exists():p.replace(dest)
 for p in source.glob('*.png'):
+ if p.stem.startswith('pet-'):continue # normalized 6x96 animation strips are prepared separately
  # Seasonal backgrounds are generated individually. Four-up comparison sheets
  # remain in the source archive and must never become game backgrounds.
  if p.stem.startswith('outdoor-'):

@@ -13,14 +13,14 @@ export function installRoundMinimap(scene:Cottage,openWorld:()=>void){
  function picture(key:string,x:number,y:number,size:number){if(!scene.textures.exists(key))return;const source=scene.textures.get(key).getSourceImage() as HTMLImageElement;const r=size/Math.max(source.width,source.height);g.drawImage(source,x-source.width*r/2,y-source.height*r/2,source.width*r,source.height*r)}
  function draw(time:number){
   frame=requestAnimationFrame(draw);if(time-last<100||button.hidden||!scene.entered||document.hidden)return;last=time;
-  const p=scene.player;if(!p)return;const dx=p.x-previousGirl.x,dy=p.y-previousGirl.y;if(Math.hypot(dx,dy)>.5)direction={x:dx,y:dy};previousGirl={x:p.x,y:p.y};
+  const p=scene.controlledActor;if(!p)return;const dx=p.x-previousGirl.x,dy=p.y-previousGirl.y;if(Math.hypot(dx,dy)>.5)direction={x:dx,y:dy};previousGirl={x:p.x,y:p.y};
   const scale=.65,pos=(x:number,y:number)=>({x:96+(x-p.x)*scale,y:96+(y-p.y)*scale});
   g.clearRect(0,0,192,192);g.save();g.beginPath();g.arc(96,96,88,0,Math.PI*2);g.clip();g.imageSmoothingEnabled=false;g.fillStyle='#383b40';g.fillRect(0,0,192,192);
   const world=worlds[scene.zone],back=pos(0,0);scene.drawEnvironment(g,back.x,back.y,640*scale,426.667*scale);
   g.fillStyle='#231c3540';g.fillRect(0,0,192,192);
   for(const item of world.items){const point=pos(item.x,item.y);if(Math.hypot(point.x-96,point.y-96)>77)continue;g.fillStyle='#f5dfb8ee';g.beginPath();g.arc(point.x,point.y,9,0,Math.PI*2);g.fill();picture(minimapIcon(item),point.x,point.y,13)}
-  const buddy=pos(scene.boy.x,scene.boy.y),boy=scene.poseSource('boy',0);if(boy){const r=25/Math.max(boy.width,boy.height);g.drawImage(boy,buddy.x-boy.width*r/2,buddy.y-boy.height*r, boy.width*r,boy.height*r)}
-  g.fillStyle='#f9d7a2';g.beginPath();g.arc(96,96,14,0,Math.PI*2);g.fill();const source=scene.poseSource('girl',0);if(source){const r=26/Math.max(source.width,source.height);g.drawImage(source,96-source.width*r/2,96-source.height*r/2,source.width*r,source.height*r)}
+  const other=p===scene.player?scene.boy:scene.player,buddy=pos(other.x,other.y),boy=other.visible?other.texture.getSourceImage() as HTMLCanvasElement:undefined;if(boy){const r=25/Math.max(boy.width,boy.height);g.drawImage(boy,buddy.x-boy.width*r/2,buddy.y-boy.height*r, boy.width*r,boy.height*r)}
+  g.fillStyle='#f9d7a2';g.beginPath();g.arc(96,96,14,0,Math.PI*2);g.fill();const source=p.texture.getSourceImage() as HTMLCanvasElement;if(source){const r=26/Math.max(source.width,source.height);g.drawImage(source,96-source.width*r/2,96-source.height*r/2,source.width*r,source.height*r)}
   const a=Math.atan2(direction.y,direction.x);g.save();g.translate(96,96);g.rotate(a);g.fillStyle='#fff6ce';g.beginPath();g.moveTo(24,0);g.lineTo(16,-5);g.lineTo(16,5);g.closePath();g.fill();g.restore();g.restore();
   g.strokeStyle='#65462f';g.lineWidth=8;g.beginPath();g.arc(96,96,90,0,Math.PI*2);g.stroke();g.strokeStyle='#e5bb7f';g.lineWidth=3;g.beginPath();g.arc(96,96,86,0,Math.PI*2);g.stroke();
  }

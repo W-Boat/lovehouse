@@ -80,3 +80,8 @@ for(const w of Object.values(worlds))for(const i of w.items)if(!i.to&&!places[i.
 for(const props of Object.values(furnishings))for(const p of props){if(p.hips){places[p.id]={text:'软垫铺好了，旁边的空位是留给你的。',choice:'一起坐下',response:'现在不用去别处，再陪你坐一会儿。',sit:p.id};restingLines[p.id]='灯还亮着，身边也有人。'}else if(!p.floor&&!places[p.id])places[p.id]={text:p.name+'就在手边。',choice:'和你一起看看',response:'小小的日常，今天也一起记住了。'}}
 
 for(const p of backgroundSeats){places[p.id]={text:'椅背和软垫都准备好了。旁边的位置，也留给你。',choice:p.id==='hotspring-seat'?'脱掉鞋，泡泡脚':'坐下来歇一会儿',response:'不赶路了，在这里陪你。',sit:p.id};restingLines[p.id]=p.id==='hotspring-seat'?'温热的水刚刚好，脚也终于暖起来了。':'不急，再陪你坐一会儿。'}
+
+places['greenhouse-water']={text:'喷壶里的水晒得温温的。只浇根旁边，花瓣就不会被打湿。',choice:'给花床浇一点水',response:'水慢慢渗进土里，下一次开花，再一起来看。'};
+
+places['greenhouse-vent']={text:'天窗的铜扣就在手边。开一点缝，让花房透透气吧。',choice:'打开或关上天窗',response:'窗扇轻轻动了一下。风从叶子间穿过去，花房不再闷着。'};
+places['greenhouse-seat']={text:'软椅旁边留着两杯水，花房的风很轻。',choice:'并肩坐着看花',response:'不急着出门，先在花香里歇一会儿。',sit:'greenhouse-seat'};
