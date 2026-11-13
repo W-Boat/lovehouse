@@ -12,3 +12,11 @@
 @media(max-width:600px){.calendar-panel{grid-template-columns:minmax(0,1fr)}#app.rotated .calendar-panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Optional nearby map. World map remains the route and fast-travel view. */
 #round-minimap{position:absolute;left:max(14px,env(safe-area-inset-left));top:88px;width:132px;height:132px;border:0;border-radius:50%;padding:0;background:transparent;box-shadow:2px 4px 0 #20192377;pointer-events:auto;touch-action:manipulation;z-index:3}#round-minimap canvas{display:block;width:100%;height:100%;image-rendering:pixelated;border-radius:50%}#round-minimap[hidden]{display:none!important}#round-minimap:focus-visible{outline:3px solid #fff1c2;outline-offset:3px}.calendar-on #round-minimap{top:108px}@media(max-height:550px){#round-minimap{top:76px;width:96px;height:96px}.calendar-on #round-minimap{top:94px}}@media(max-height:350px){#round-minimap{width:76px;height:76px;top:68px}.calendar-on #round-minimap{top:88px}}
+
+.world-node .map-collection{color:#59392e;font-size:14px}
+.world-node[aria-pressed=true]{box-shadow:inset 0 -3px #96604b}
+#progress .pixel-icon{width:16px;height:16px;vertical-align:middle}
+#ceremony-music .pixel-icon{width:22px;height:22px;vertical-align:middle}
+#ceremony-music.muted .pixel-icon{opacity:.46}
+
+.bag-filters{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px}

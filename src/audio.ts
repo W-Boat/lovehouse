@@ -11,7 +11,7 @@ export function sound(note=783){if(!active||save.settings.sfxVolume===0)return;h
 export async function music(userGesture=false){
  if(userGesture){
   active=true;
-  try{context??=new AudioContext();void context.resume().catch(()=>{})}catch{}
+  try{context??=new AudioContext();if(context.state!=='running')void context.resume().then(refreshWind,()=>{})}catch{}
  }
  if(!active)return;
  refreshWind();
