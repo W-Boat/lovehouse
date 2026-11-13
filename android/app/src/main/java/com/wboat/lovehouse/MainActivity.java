@@ -7,6 +7,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.ValueCallback;
+import android.webkit.JavascriptInterface;
+import android.util.Base64;
+import org.json.JSONObject;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -44,17 +47,18 @@ public final class MainActivity extends Activity {
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             WebViewCompat.addWebMessageListener(webView, "CottageSave",
                 Collections.singleton("https://" + HOST), (view, message, origin, isMainFrame, reply) -> {
-                    if (!isMainFrame || pendingSave != null) return;
-                    String data = message.getData();
-                    if (data == null || data.length() > 2_000_000) return;
-                    pendingSave = data.getBytes(StandardCharsets.UTF_8);
-                    Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT)
-                        .addCategory(Intent.CATEGORY_OPENABLE)
-                        .setType("application/json")
-                        .putExtra(Intent.EXTRA_TITLE, "生日小屋存档.json");
-                    try { startActivityForResult(save, SAVE_DOCUMENT); }
-                    catch (ActivityNotFoundException ignored) { pendingSave = null; }
+                    if (isMainFrame) exportDocument(message.getData());
                 });
+        }
+        else {
+            webView.addJavascriptInterface(new Object() {
+                @JavascriptInterface public void postMessage(String data) {
+                    runOnUiThread(() -> {
+                        Uri current = Uri.parse(webView.getUrl() == null ? "" : webView.getUrl());
+                        if ("https".equals(current.getScheme()) && HOST.equals(current.getHost())) exportDocument(data);
+                    });
+                }
+            }, "CottageSave");
         }
         webView.setWebViewClient(new WebViewClient() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
@@ -94,6 +98,40 @@ public final class MainActivity extends Activity {
         webView.loadUrl("https://" + HOST + "/game/index.html");
     }
 
+    private void exportResult(String result) {
+        webView.evaluateJavascript("document.dispatchEvent(new CustomEvent('cottage-export-result',{detail:"
+            + JSONObject.quote(result) + "}))", null);
+    }
+
+    private void exportDocument(String data) {
+        if (pendingSave != null) { exportResult("busy"); return; }
+        if (data == null || data.length() > 24_000_000) { exportResult("error"); return; }
+        String mime = "application/json", filename = "生日小屋存档.json";
+        try {
+            JSONObject payload = new JSONObject(data);
+            if ("image".equals(payload.optString("kind"))) {
+                String image = payload.getString("data");
+                String prefix = "data:image/png;base64,";
+                if (!image.startsWith(prefix)) throw new IllegalArgumentException("PNG required");
+                pendingSave = Base64.decode(image.substring(prefix.length()), Base64.DEFAULT);
+                byte[] signature = {(byte)137,80,78,71,13,10,26,10};
+                if (pendingSave.length < signature.length) throw new IllegalArgumentException("Invalid PNG");
+                for (int i=0;i<signature.length;i++) if (pendingSave[i]!=signature[i]) throw new IllegalArgumentException("Invalid PNG");
+                mime = "image/png"; filename = "生日小屋合影.png";
+            } else {
+                if (data.length() > 2_000_000 || !payload.has("version")) throw new IllegalArgumentException("Invalid save");
+                pendingSave = data.getBytes(StandardCharsets.UTF_8);
+            }
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE).setType(mime)
+                .putExtra(Intent.EXTRA_TITLE, filename);
+            startActivityForResult(intent, SAVE_DOCUMENT);
+        } catch (Exception error) {
+            pendingSave = null; exportResult("error");
+            android.widget.Toast.makeText(this, "未能打开导出，请重试", android.widget.Toast.LENGTH_LONG).show();
+        }
+    }
+
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == SAVE_DOCUMENT) {
@@ -103,10 +141,12 @@ public final class MainActivity extends Activity {
                 try (OutputStream output = getContentResolver().openOutputStream(data.getData())) {
                     if (output == null) throw new IOException("No output stream");
                     output.write(save);
+                    exportResult("saved");
                 } catch (IOException | SecurityException error) {
-                    android.widget.Toast.makeText(this, "未能写入存档文件", android.widget.Toast.LENGTH_LONG).show();
+                    exportResult("error");
+                    android.widget.Toast.makeText(this, "未能写入文件", android.widget.Toast.LENGTH_LONG).show();
                 }
-            }
+            } else { exportResult("cancelled"); }
             return;
         }
         if (requestCode != CHOOSE_FILE || fileCallback == null) return;
