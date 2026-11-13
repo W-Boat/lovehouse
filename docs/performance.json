@@ -22,11 +22,11 @@
     "window-views",
     "weather-icons"
   ],
-  "fixedFontBytes": 43788,
+  "fixedFontBytes": 44024,
   "loaderBytes": 122934,
-  "compressedEntryBytes": 452353,
-  "fontCssBytes": 91670,
-  "estimatedCoreWithHttpCompressionBytes": 4877519,
+  "compressedEntryBytes": 461362,
+  "fontCssBytes": 91679,
+  "estimatedCoreWithHttpCompressionBytes": 4886773,
   "estimateNotes": "Static byte estimate. HTTP compression depends on the selected host; not a measured network transfer. Excludes delayed music, adjacent-scene prefetch and optional name-font chunks.",
   "mobilePhysicalDeviceTest": "not performed; browser emulation does not substitute for devices",
   "fps": "not measured on physical devices"

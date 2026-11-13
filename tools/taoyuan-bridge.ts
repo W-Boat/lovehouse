@@ -1,7 +1,7 @@
 import {useSaveStore} from './src/stores/useSaveStore';
 import {useGameStore} from './src/stores/useGameStore';
 import router from './src/router';
-import {watch} from 'vue';
+import {nextTick,watch} from 'vue';
 import {usePlayerStore} from './src/stores/usePlayerStore';
 export function installLovehouseBridge(){
  if(window.parent===window)return;
@@ -9,7 +9,8 @@ export function installLovehouseBridge(){
  const identity={name:[...(query.get('lovehouse-name')||'')].slice(0,12).join(''),gender:query.get('lovehouse-gender')==='female'?'female' as const:'male' as const};
  const applyIdentity=()=>{if(identity.name&&useGameStore().isGameStarted)usePlayerStore().setIdentity(identity.name,identity.gender)};
  watch(()=>useGameStore().isGameStarted,applyIdentity,{immediate:true});
- let role='offline',applying=false,timer=0,connected=true;
+ let role='offline',applyingFields=false,timer=0,connected=true;
+ let queuedState:{save:string;route:string}|undefined,loadingState=false;
  type Field=HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement;
  const allowed=new Set(['text','number','checkbox','radio','range','email','url','tel','search','date','time','color','select-one','textarea']);
  const controls=()=>[...document.querySelectorAll<Field>('input,textarea,select')];
@@ -26,14 +27,14 @@ export function installLovehouseBridge(){
   if(dispatch){node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}))}return true;
  }
  for(const eventType of ['input','change'])document.addEventListener(eventType,event=>{
-  const node=event.target;if(role!=='guest'||applying||!connected||!(node instanceof HTMLInputElement||node instanceof HTMLTextAreaElement||node instanceof HTMLSelectElement)||!valid(node))return;
+  const node=event.target;if(role!=='guest'||(applyingFields&&!event.isTrusted)||!connected||!(node instanceof HTMLInputElement||node instanceof HTMLTextAreaElement||node instanceof HTMLSelectElement)||!valid(node))return;
   const index=controls().indexOf(node);if(index<0||index>1000)return;
   const data={route:router.currentRoute.value.fullPath,index,tag:node.tagName,inputType:typeOf(node),value:node.value.slice(0,10000),checked:node instanceof HTMLInputElement?node.checked:false};fields.set(index,data);post({kind:'field',...data});
  },true);
  const post=(payload:unknown)=>parent.postMessage({channel:'lovehouse-taoyuan',type:'event',payload},location.origin);
  const snapshot=()=>{
   const route=router.currentRoute.value.fullPath;
-  if(role!=='host'||!connected||applying||!route.startsWith('/game/')||!useGameStore().isGameStarted)return;
+  if(role!=='host'||!connected||!route.startsWith('/game/')||!useGameStore().isGameStarted)return;
   const store=useSaveStore(),slot=store.activeSlot;
   if(slot<0||!store.saveToSlot(slot))return;
   const save=localStorage.getItem(`taoyuanxiang_save_${slot}`);
@@ -48,19 +49,45 @@ export function installLovehouseBridge(){
    // on the host so the guest can use the resulting controls in both panels.
    const inspectPlot=button.classList.contains('farm-plot');
    if(!inspectPlot){event.preventDefault();event.stopImmediatePropagation()}
-   if(applying)return;
    fields.clear();
    post({kind:'command',route:router.currentRoute.value.fullPath,index:[...document.querySelectorAll('button')].indexOf(button),text:button.textContent?.trim().slice(0,200)??''});
    return;
   }
   clearTimeout(timer);timer=window.setTimeout(snapshot,400);
  },true);
+ // Apply snapshots in arrival order and coalesce those that arrive during navigation.
+ // User clicks still reach the host while the guest view receives its working copy.
+ async function applyGuestStates(){
+  loadingState=true;
+  try{
+   while(queuedState){
+    const state=queuedState;queuedState=undefined;
+    const store=useSaveStore();
+    if(!store.importSave(0,state.save)||!store.loadFromSlot(0))continue;
+    applyIdentity();
+    const route=typeof state.route==='string'&&state.route.startsWith('/game')?state.route:'/game/farm';
+    if(route!==router.currentRoute.value.fullPath)await router.replace(route);
+    await nextTick();
+    applyingFields=true;
+    try{
+     for(const [index,field]of fields){
+      if(field.route===router.currentRoute.value.fullPath)writeField(field,true);
+      else fields.delete(index);
+     }
+    }finally{applyingFields=false}
+   }
+  }finally{loadingState=false}
+ }
  window.addEventListener('message',async event=>{
   if(event.source!==parent||event.origin!==location.origin||event.data?.channel!=='lovehouse-taoyuan')return;
   if(event.data.type==='role'){role=event.data.role;readonly();snapshot();return}
   if(event.data.type==='connection'){connected=event.data.connected===true;readonly();return}
   const data=event.data.payload;if(event.data.type!=='receive'||!data)return;
-  if(role==='guest'&&data.kind==='state'&&typeof data.save==='string'&&data.save.length<2_000_000){applying=true;try{const store=useSaveStore();if(store.importSave(0,data.save)&&store.loadFromSlot(0)){applyIdentity();await router.replace(data.route.startsWith('/game')?data.route:'/game/farm')}}finally{await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));for(const [index,field]of fields){if(field.route===router.currentRoute.value.fullPath)writeField(field,true);else fields.delete(index)}applying=false}}
+  if(role==='guest'&&data.kind==='state'&&typeof data.save==='string'&&data.save.length<=2_000_000){
+   queuedState={save:data.save,route:data.route};
+   if(!loadingState)void applyGuestStates();
+   return;
+  }
   if(role==='host'&&data.kind==='field'&&Number.isInteger(data.index)&&data.index>=0&&data.index<=1000&&connected){if(writeField(data,true)){clearTimeout(timer);timer=window.setTimeout(snapshot,400)}}
   if(role==='host'&&data.kind==='command'&&connected&&data.route===router.currentRoute.value.fullPath&&Number.isInteger(data.index)){const button=document.querySelectorAll('button')[data.index];if(button&&!button.disabled&&button.textContent?.trim().slice(0,200)===data.text)button.click()}
  });
