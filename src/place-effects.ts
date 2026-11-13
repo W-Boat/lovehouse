@@ -14,7 +14,14 @@ export class PlaceEffects{
  constructor(private scene:Cottage){this.zone=scene.zone;this.ink=scene.add.graphics().setDepth(8.6)}
  rebuild(){for(const prop of this.props.values())prop.destroy();this.props.clear();this.active.clear();this.ink.clear();this.zone=this.scene.zone}
  trigger(id:string){const kind=placeEvents[this.scene.zone]?.[id],item=this.scene.getItem(id);if(!kind||!item)return false;
-  if(this.zone!==this.scene.zone)this.rebuild();if(illustratedEffects.has(kind)&&this.scene.prepareInteractionArt&&!this.artRequest)this.artRequest=this.scene.prepareInteractionArt().catch(()=>{this.artRequest=undefined});this.toggled.set(this.zone+':'+id,!this.toggled.get(this.zone+':'+id));this.active.set(id,{kind,x:item.x,y:item.y,age:0});return true;
+  if(this.zone!==this.scene.zone)this.rebuild();if(illustratedEffects.has(kind)&&this.scene.prepareInteractionArt&&!this.artRequest)this.artRequest=this.scene.prepareInteractionArt().catch(()=>{this.artRequest=undefined});this.toggled.set(this.zone+':'+id,!this.toggled.get(this.zone+':'+id));
+  let {x,y}=item;
+  const camera=this.scene.cameras?.main,view=camera?.worldView;
+  if(illustratedEffects.has(kind)&&view){
+   x=Math.max(view.left+28,Math.min(view.right-28,x));
+   y=Math.max(view.top+52+96/camera.zoom,Math.min(view.bottom-12,y));
+  }
+  this.active.set(id,{kind,x,y,age:0});return true;
  }
  update(delta:number){if(this.zone!==this.scene.zone)this.rebuild();const g=this.ink;g.clear();for(const [id,e]of this.active){e.age+=Math.max(0,Math.min(delta,100))/1000;if(e.age>7){this.active.delete(id);this.props.get(id)?.destroy();this.props.delete(id);continue}const t=save.reduced?2:e.age,p=Math.min(1,t/2),x=e.x,y=e.y,alpha=Math.min(1,(7-e.age)/1.2);g.setAlpha(alpha);
  if(illustratedEffects.has(e.kind)&&this.scene.textures?.exists('effect-'+e.kind)){
