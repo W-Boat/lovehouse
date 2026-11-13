@@ -9,7 +9,7 @@ tree = ast.parse((root/'tools/prepare_assets.py').read_text(encoding='utf-8-sig'
 sizes = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'sizes' for t in node.targets))
 runtime = set(re.findall(r"['\"]([^'\"]+\.webp)['\"]", (root/'src/assets.ts').read_text(encoding='utf8')))
 runtime|={'loading-cottage.webp','favicon.webp','pet-cat.webp','pet-firefly.webp','pet-star.webp'}
-normalized_animations={'gift-opening-v1','tea-pour-v1'}
+normalized_animations={'ferris-platform-v1','wearables-v1','gift-opening-v1','tea-pour-v1'}
 grids = {'icons-v3':(4,4),'gifts-v3':(2,2),'hero':(4,4),'characters':(4,2),'gifts':(4,3),'props':(4,2),'sitting':(2,2),'girl-actions':(4,4),'boy-actions':(4,4),'girl-walk':(4,4),'boy-walk':(4,4),'icons-v2':(4,4),'gifts-v2':(2,2),'girl-heads':(4,4),'boy-heads':(4,4),'world-actors':(4,4),'wheel-actors':(2,2),'couple-actions':(4,3),'holding-walk-v2':(4,4),'footbath-poses-v2':(3,2),'seats-back':(2,2),'weather-icons-v2':(3,2),'season-views':(4,3),'window-views':(3,3),'interaction-props':(4,4),'gift-opening-v1':(4,4),'tea-pour-v1':(4,4),'sit-transition':(6,2)}
 records, errors = [], []
 for path in sorted(assets.rglob('*.webp')):

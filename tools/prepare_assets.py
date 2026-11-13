@@ -8,10 +8,10 @@ assets=root/'public/assets';art_stamp=assets/'art-version.txt';rebuild_all=not a
 for p in list(assets.glob('*.png')):
  dest=source/p.name
  if not dest.exists():p.replace(dest)
-sizes={'birthday-cake-v2':(768,512),'gift-opening-v1':(1024,1024),'tea-pour-v1':(1024,1024),'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(1024,1024),'boy-walk':(1024,1024),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
+sizes={'wearables-v1':(256,128),'birthday-cake-v2':(768,512),'gift-opening-v1':(1024,1024),'tea-pour-v1':(1024,1024),'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(1024,1024),'boy-walk':(1024,1024),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
 # Restore original resolution for the FINAL selected sources; retain normalized animations.
 active_stems={Path(name).stem for name in re.findall(r"['\"]([^'\"]+\.webp)['\"]",(root/'src/assets.ts').read_text(encoding='utf8'))}|{'loading-cottage'}
-normalized_animations={'gift-opening-v1','tea-pour-v1'}
+normalized_animations={'wearables-v1','gift-opening-v1','tea-pour-v1'}
 cache_path=assets/'art-content-cache.json'
 try:art_cache=json.loads(cache_path.read_text())
 except (OSError,ValueError):art_cache={}
@@ -38,6 +38,15 @@ for p in source.glob('*.png'):
   continue
  if p.stem not in active_stems:continue # retain old exports for provenance, never restore obsolete variants
  dest=assets/(p.stem+'.webp')
+ if p.stem=='ferris-platform-v1':
+  recipe='trim-alpha30-lossless-768-v1'
+  if needs_export(p,dest,recipe):
+   im=Image.open(p).convert('RGBA')
+   im=im.crop(im.getchannel('A').point(lambda a:255 if a>30 else 0).getbbox())
+   im.thumbnail((768,220),Image.Resampling.LANCZOS)
+   im.save(dest,'WEBP',lossless=True,method=6)
+  record_export(p,dest,recipe)
+  continue
  target_size=(768,768) if p.stem=='interaction-props' else sizes.get(p.stem,(768,512))
  native=p.stem not in normalized_animations
  recipe=('native-alpha64-v3'if p.stem=='interaction-props'else'lossless-rgba-native-v2')if native else'normalized-animation-nearest-v1-'+str(target_size)

@@ -3,13 +3,13 @@ import type {Cottage} from './scene';
 import {worlds} from './world';
 import {save} from './state';
 import {setAmbience} from './audio';
-import {films,filmMoment,concertSection,rideProgress,type FilmId} from '../content/films';
+import {films,filmMoment,concertSection,type FilmId} from '../content/films';
 import personal from '../content/personal.json';
 /** Original frame-based shorts. Playback never moves the actors in the live world. */
 export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>void,projection?:HTMLElement){
  let disposed=false,paused=false,ended=false,time=0,last=0,raf=0,affection=false;
- const concert=id==='concert',ride=id==='ferris',filmId=(id in films?id:'meet') as FilmId,spec=films[filmId],duration=concert?90:ride?60:spec.duration;
- const controls=document.createElement('div');controls.className='modal-actions';const title=document.createElement('h2');title.id='modal-title';title.textContent=concert?uiCopy('theater.concert-title'):ride?uiCopy('theater.ride-title'):spec.title;
+ const concert=id==='concert',filmId=(id in films?id:'meet') as FilmId,spec=films[filmId],duration=concert?90:spec.duration;
+ const controls=document.createElement('div');controls.className='modal-actions';const title=document.createElement('h2');title.id='modal-title';title.textContent=concert?uiCopy('theater.concert-title'):spec.title;
  const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;canvas.className='film-canvas';canvas.setAttribute('role','img');canvas.setAttribute('aria-label',formatCopy('theater.canvas-label',{title:title.textContent}));if(projection){title.removeAttribute('id');host.replaceChildren(title,controls);projection.append(canvas)}else host.replaceChildren(title,canvas,controls);
  const controller=new AbortController();const button=(label:string,run:()=>void)=>{const b=document.createElement('button');b.className='secondary';b.textContent=label;b.addEventListener('click',run,{signal:controller.signal});controls.append(b);return b};
  const pause=button(uiCopy('theater.pause'),()=>{
@@ -28,8 +28,8 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
   if(document.hidden){cancelAnimationFrame(raf);raf=0}
   else if(!paused)schedule();
  },{signal:controller.signal});
- if(ride)button(uiCopy('theater.shoulder'),()=>affection=!affection);if(concert)button(uiCopy('theater.cheer'),()=>affection=!affection);setAmbience(concert?'mars':'cinema');
- const photos:HTMLImageElement[]=[];for(const path of personal.memoryPhotos as string[]){const img=new Image();img.src=new URL('../'+path,import.meta.url).href;photos.push(img)}
+ if(concert)button(uiCopy('theater.cheer'),()=>affection=!affection);setAmbience(concert?'mars':'cinema');
+ const photos:HTMLImageElement[]=[];for(const path of personal.memoryPhotos as string[]){const img=new Image();img.src=/^https:\/\//.test(path)?path:new URL('../'+path,import.meta.url).href;photos.push(img)}
  const g=canvas.getContext('2d')!;g.imageSmoothingEnabled=false;
  const smooth=(v:number)=>{const x=Math.max(0,Math.min(1,v));return x*x*(3-2*x)};
  const texture=(key:string)=>scene.textures.exists(key)?scene.textures.get(key).getSourceImage() as HTMLCanvasElement:undefined;
@@ -70,13 +70,6 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
   actor('girl',355,430,affection?15:12);actor('boy',408,430,affection?15:0);for(let i=0;i<32;i++){g.fillStyle=i%2?'#ff8fbc':'#fff0b6';g.fillRect(35+i*28,505+Math.sin(motion*(climax?3:1.5)+i)*8,4,18)}
   caption(section==='countdown'?formatCopy('theater.countdown',{seconds:Math.max(1,6-Math.floor(time))}):section==='opening'?uiCopy('theater.concert.opening'):section==='verse'?uiCopy('theater.concert.verse'):section==='climax'?uiCopy('theater.concert.climax'):section==='bow'?uiCopy('theater.concert.bow'):uiCopy('theater.concert.curtain'));
  };
- const showRide=()=>{background('ferris');const progress=save.reduced?.5:rideProgress(time),angle=Math.PI/2+Math.PI*2*progress,cx=480,cy=245,r=175;
-  g.strokeStyle='#f0ce8e';g.lineWidth=6;g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);g.stroke();for(let i=0;i<8;i++){const a=angle+i*Math.PI/4;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);g.stroke()}
-  g.beginPath();g.moveTo(400,444);g.lineTo(cx,cy);g.lineTo(560,444);g.stroke();const x=cx+Math.cos(angle)*r,y=cy+Math.sin(angle)*r;
-  // Cabin stays upright while the wheel turns; sill occludes seated lower legs.
-  g.fillStyle='#49323f';g.fillRect(x-62,y-60,124,100);actor('girl',x-24,y+20,affection?10:4,70);actor('boy',x+23,y+20,4,70);g.fillStyle='#b66f83';g.fillRect(x-66,y+7,132,35);g.strokeStyle='#ffe7bb';g.lineWidth=5;g.strokeRect(x-66,y-62,132,104);
-  caption(time<5?uiCopy('theater.ride.board'):time<25?uiCopy('theater.ride.rise'):time<35?uiCopy('theater.ride.top'):time<55?uiCopy('theater.ride.return'):uiCopy('theater.ride.arrive'));
- };
  function schedule(){
   if(!disposed&&!raf&&!document.hidden)raf=requestAnimationFrame(tick);
  }
@@ -86,7 +79,7 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
   if(!paused&&last)time=Math.min(duration,time+Math.max(0,now-last)/1000);
   last=now;
   g.fillStyle='#151a2b';g.fillRect(0,0,960,540);
-  if(concert)showConcert();else if(ride)showRide();else film();
+  if(concert)showConcert();else film();
   if(time>=duration){
    ended=true;paused=true;pause.disabled=true;
    pause.textContent=uiCopy('theater.completed');

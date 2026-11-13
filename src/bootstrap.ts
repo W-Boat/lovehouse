@@ -15,4 +15,4 @@ window.addEventListener('unhandledrejection',showFailure);
 let timeout=window.setTimeout(showFailure,45000);
 document.addEventListener('cottage-load-progress',()=>{clearTimeout(timeout);timeout=window.setTimeout(showFailure,45000)});
 document.addEventListener('cottage-ready',()=>{clearTimeout(timeout);pixelProgress(1);document.body.dataset.gameReady='true';document.body.dataset.bootState='ready'});
-void import('./main').catch(showFailure);
+void import('./cloud-content').then(module=>module.syncCloudContent()).catch(()=>{}).then(()=>import('./main')).catch(showFailure);

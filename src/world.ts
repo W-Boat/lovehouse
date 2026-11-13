@@ -1,8 +1,9 @@
+import type {GiftId} from '../content/birthday-config';
 import {furnishings,backgroundSeats} from './layouts';
 import {roomWalkable,gardenWalkable,type Point,inside,inPolygon,type Polygon,segmentWalkable,nearestWalkable,type Walkable} from './navigation';
-export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora'|'shichahai'|'gulou'|'chaya'|'tianmo'|'tanghulu'|'catcottage'|'highschool'|'musicroom';
-export type Item={id:string;name:string;x:number;y:number;point:[number,number];action?:string;kind?:'place'|'collect'|'slot'|'event';collect?:string;prop?:number;texture?:string;to?:Zone};
-export type World={name:string;caption:string;texture:string;spawn:[number,number];boy:[number,number];items:Item[];walkable:(point:Point)=>boolean};
+export type Zone=`cloud-${string}`|'room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora'|'shichahai'|'gulou'|'chaya'|'tianmo'|'tanghulu'|'catcottage'|'highschool'|'musicroom';
+export type Item={id:string;name:string;x:number;y:number;point:[number,number];action?:string;kind?:'place'|'collect'|'slot'|'event';collect?:string;prop?:number;texture?:string;to?:Zone;practiceGame?:GiftId; webPortal?:string; externalGame?:string};
+export type World={name:string;caption:string;texture:string;backgroundUrl?:string;spawn:[number,number];boy:[number,number];items:Item[];walkable:(point:Point)=>boolean};
 // Broad walkable floor regions match the painted clearing/deck instead of invisible center lines.
 const forestGround:Polygon=[[293,417],[338,417],[337,355],[350,315],[390,289],[438,269],[482,246],[516,221],[510,202],[490,193],[468,205],[444,218],[408,222],[379,208],[354,190],[348,155],[334,133],[305,133],[290,157],[282,191],[256,211],[230,219],[204,214],[181,200],[156,189],[134,200],[139,218],[167,236],[195,246],[219,259],[240,278],[253,291],[229,287],[210,293],[210,316],[242,337],[282,337],[294,365]];
 export const forestWalkable=(p:Point)=>inPolygon(p,forestGround)&&!inside(p,{x:294,y:94,w:51,h:36},4)&&!inside(p,{x:505,y:165,w:65,h:31},4)&&!inside(p,{x:170,y:280,w:36,h:27},3);
@@ -96,7 +97,7 @@ worlds.haunted=newRoom('幽灵来做客','别怕，它只是想一起过生日',
 worlds.cinema=newRoom('两个人的电影院','电影会散场，今晚可以慢慢来','cinema','memory',[
  spot('cinema-seat','双人红绒座',106,163,'坐下选片'),spot('movie','只放给你看的电影',320,153,'选择影片'),spot('popcorn','两人份爆米花',530,239,'分一半'),spot('projector','还热着的放映机',493,245,'开机'),spot('movie-note','片尾的一句话',386,315,'写片尾留言'),spot('ticket','我们的电影票根',173,310,'收藏','collect','ticket')]);
 worlds.ferris=newRoom('海边摩天轮','慢慢升高，也慢慢靠近','ferris','garden',[
- spot('ferris-seat','候车软椅',112,190,'靠肩等一会'),spot('ferris-ride','只属于我们的车厢',320,232,'一起乘坐'),spot('ferris-wish','最高处的小愿望',390,286,'许愿'),spot('ferris-photo','拍下一点心动',232,287,'合影'),spot('ferris-lights','游乐园的灯海',473,245,'点亮灯海'),spot('ferris-token','小小乘车纪念章',490,328,'收藏','collect','token')]);
+ spot('ferris-seat','候车软椅',112,190,'靠肩等一会'),spot('ferris-ride','只属于我们的车厢',320,316,'一起乘坐'),spot('ferris-wish','最高处的小愿望',390,286,'许愿'),spot('ferris-photo','拍下一点心动',232,287,'合影'),spot('ferris-lights','游乐园的灯海',473,245,'点亮灯海'),spot('ferris-token','小小乘车纪念章',490,328,'收藏','collect','token')]);
 worlds.mars=newRoom('火星演唱会','把今晚，唱给宇宙听','mars','station',[
  spot('mars-seat','月岩双人座',68,149,'坐下等开场'),spot('concert','火星主舞台',320,160,'观看演出'),spot('lightstick','属于你的应援棒',468,275,'举起应援棒'),spot('mars-dance','月球重力舞步',230,286,'跳一段'),spot('mars-message','写在星球上的话',390,310,'留句话'),spot('mars-stone','带一点星光回家',495,329,'收藏','collect','mars-stone')]);
 worlds.memory={...newRoom('回忆放映室','让平凡的一天，也拥有片尾字幕','memory','room',[
@@ -211,6 +212,7 @@ for(const [zone,rect]of [['memory',{x:75,y:202,w:142,h:32}],['magic',{x:80,y:184
 for(const seat of backgroundSeats){if(worlds[seat.zone].items.some(i=>i.id===seat.id))continue;worlds[seat.zone].items.push({...spot(seat.id,seat.name,(seat.hips[0]+seat.hips[2])/2,(seat.hips[1]+seat.hips[3])/2,'一起坐下'),kind:'event'})}
 // Central furniture is part of navigation and interaction, rather than an ornamental overlay.
 for(const [zone,props]of Object.entries(furnishings)){
+ if(!props)continue;
  const w=worlds[zone as Zone],floor=w.walkable;
  w.walkable=p=>floor(p)&&!props.some(o=>o.solid&&inside(p,o.solid,7));
  for(const prop of props){if(prop.floor)continue;let item=w.items.find(i=>i.id===prop.id);const point:[number,number]=[prop.x,prop.y+33];

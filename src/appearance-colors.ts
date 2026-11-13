@@ -2,13 +2,36 @@ export type AppearanceColors={color:number;skin:number;outfit:number};
 const hairColors=[[146,117,111],[91,55,39],[44,39,41],[161,64,57],[213,180,120],[185,124,147]];
 const skinColors=[[255,215,187],[234,187,147],[193,136,95],[141,89,64]];
 const outfitColors=[[116,160,187],[197,125,148],[230,220,192]];
+/** The girl's sprites have cool pink highlights, particularly on hands and knees.
+ * Grow a skin mask from light peach colors into their immediate rosy edges. */
+function girlSkinMask(pixels:Uint8ClampedArray,width:number,height:number,left:number,right:number,head:boolean){
+ const first=Math.floor(left*width),last=Math.ceil(right*width);
+ const mask=new Uint8Array(width*height),seeds:number[]=[];
+ for(let y=Math.floor(height*(head?.36:.34));y<height;y++)for(let x=first;x<last;x++){
+  const i=y*width+x,n=i*4,r=pixels[n],g=pixels[n+1],b=pixels[n+2];
+  const red=r-g,warm=g-b;
+  if(pixels[n+3]<64||r<145||red<14||red>100||warm<0||warm>45||red<1.42*warm)continue;
+  mask[i]=1;
+  if(r>=216&&g>=153&&red>=21&&red<=67&&warm>=4){mask[i]=2;seeds.push(i)}
+ }
+ // One neighboring pixel carries the antialiased edge without recoloring the fringe or satchel.
+ for(const i of seeds){
+  const x=i%width;
+  for(const next of [x>first?i-1:-1,x+1<last?i+1:-1,i-width,i+width]){
+   if(mask[next]!==1)continue;
+   mask[next]=2;
+  }
+ }
+ return mask;
+}
 /** Recolor regions and source palette together; never change alpha or near-black ink. */
 export function recolorAppearance(pixels:Uint8ClampedArray,width:number,height:number,who:'girl'|'boy',a:AppearanceColors,base=''){
  const pair=base.startsWith('pair-')||base.startsWith('holding-'),left=pair?(who==='girl'?0:.53):0,right=pair?(who==='girl'?.53:1):1;
+ const girlMask=who==='girl'&&a.skin>0?girlSkinMask(pixels,width,height,left,right,base.startsWith('head-')):undefined;
  for(let y=0;y<height;y++)for(let x=Math.floor(left*width);x<Math.ceil(right*width);x++){
   const n=(y*width+x)*4,r=pixels[n],g=pixels[n+1],b=pixels[n+2],ny=y/height,nx=(x/width-left)/(right-left);
-  if(pixels[n+3]<100||Math.max(r,g,b)<66)continue;
-  const skin=r>g*1.12&&g>b*1.05&&r>160&&g>90&&r-g<100;
+  if(pixels[n+3]<(girlMask?64:100)||Math.max(r,g,b)<66)continue;
+  const skin=girlMask?girlMask[y*width+x]===2:r>g*1.04&&g>b*1.035&&r>158&&g>106&&r-g<74&&g-b<65;
   const torso=ny>.51&&ny<.77&&nx>.25&&nx<.75;
   const blue=b>r*1.05&&b>g*.98,green=g>r*1.02&&g>b*.9;
   // The boy's vest is brown/olive, unlike the girl's blue shirt. Limit it to

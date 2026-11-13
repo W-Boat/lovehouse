@@ -1,7 +1,7 @@
 import {uiCopy,formatCopy} from '../content/ui-copy';
 import {persist} from './state';
 
-type UpdateStatus={phase:string;message:string;progress:number;version:number;url:string;availableVersion:number};
+type UpdateStatus={phase:string;message:string;progress:number;version:number;url:string;availableVersion:number;canRetry?:boolean};
 type UpdateCommand={action:'status'|'ready'|'check'|'install'|'rollback';url?:string};
 let latest:UpdateStatus|undefined,host:HTMLElement|undefined,listening=false;
 
@@ -55,7 +55,7 @@ function paint(){
  if(!input.value&&status?.url&&document.activeElement!==input)input.value=status.url;
  input.disabled=busy;
  (get('check') as HTMLButtonElement).disabled=busy;
- (get('install') as HTMLButtonElement).disabled=status?.phase!=='available';
+ (get('install') as HTMLButtonElement).disabled=status?.phase!=='available'&&!status?.canRetry;
  (get('rollback') as HTMLButtonElement).disabled=busy;
  const value=Math.max(0,Math.min(100,status?.progress??0));
  get('progress').setAttribute('aria-valuenow',String(value));

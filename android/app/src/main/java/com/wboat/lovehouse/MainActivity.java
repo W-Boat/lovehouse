@@ -137,6 +137,12 @@ public final class MainActivity extends Activity {
                 if (pendingSave.length < signature.length) throw new IllegalArgumentException("Invalid PNG");
                 for (int i=0;i<signature.length;i++) if (pendingSave[i]!=signature[i]) throw new IllegalArgumentException("Invalid PNG");
                 mime = "image/png"; filename = "生日小屋合影.png";
+            } else if ("taoyuan-save".equals(payload.optString("kind"))) {
+                String save = payload.getString("data");
+                if (save.isEmpty() || save.length() > 2_000_000) throw new IllegalArgumentException("Invalid Taoyuan save");
+                pendingSave = save.getBytes(StandardCharsets.UTF_8);
+                mime = "application/octet-stream";
+                filename = "桃源乡存档.tyx";
             } else {
                 if (data.length() > 2_000_000 || !payload.has("version")) throw new IllegalArgumentException("Invalid save");
                 pendingSave = data.getBytes(StandardCharsets.UTF_8);
@@ -188,7 +194,7 @@ public final class MainActivity extends Activity {
 
     @Override public void onBackPressed() {
         webView.evaluateJavascript(
-            "(() => { const control = document.querySelector('#taoyuan-portal > button')"
+            "(() => { const control = document.querySelector('#taoyuan-portal .taoyuan-toolbar > button')"
             + " || document.querySelector('.stellar-close')"
             + " || document.querySelector('.scene-activity-close')"
             + " || document.querySelector('#interaction-choices .interaction-choice-close')"

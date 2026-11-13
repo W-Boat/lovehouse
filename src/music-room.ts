@@ -1,6 +1,7 @@
 import type {Cottage} from './scene';
 import {save,persist} from './state';
-import {parseMusicConfig,validMusicTrack} from './music-config';
+import {defaultMusicConfig,parseMusicConfig,validMusicTrack} from './music-config';
+import {cloudMusicRoom} from './cloud-content';
 import {createHeoEngine,type HeoPlayer} from './heo-engine';
 import {setExternalMusic} from './audio';
 type Context={scene:Cottage;open:(html:string,kind?:string)=>void;close:()=>void;toast:(text:string)=>void;photo:()=>void;note:()=>void};
@@ -54,8 +55,9 @@ export function installMusicRoom(ctx:Context){
    }
    frame=requestAnimationFrame(paint);
   };frame=requestAnimationFrame(paint);
-  try{const cleanup=await createHeoEngine(save.musicRoom,p=>{if(mine!==generation){p.destroy();return}player=p;player.volume(save.settings.musicVolume,false);player.on('listswitch',trackChanged);player.on('error',()=>status('这首暂时播不了，可以换一首或切到离线唱片。'));trackChanged();if(requestPlay){requestPlay=false;status('唱片准备好了，点播放就可以落针。')}},status);if(mine!==generation)cleanup();else disposeEngine=cleanup}catch(error){if(mine===generation)status(error instanceof Error?error.message:'唱片暂未准备好，请重新进房间试试。')}
+  try{const cleanup=await createHeoEngine(currentConfig(),p=>{if(mine!==generation){p.destroy();return}player=p;player.volume(save.settings.musicVolume,false);player.on('listswitch',trackChanged);player.on('error',()=>status('这首暂时播不了，可以换一首或切到离线唱片。'));trackChanged();if(requestPlay){requestPlay=false;status('唱片准备好了，点播放就可以落针。')}},status);if(mine!==generation)cleanup();else disposeEngine=cleanup}catch(error){if(mine===generation)status(error instanceof Error?error.message:'唱片暂未准备好，请重新进房间试试。')}
  }
+ const currentConfig=()=>save.musicRoomSource==='local'?save.musicRoom:cloudMusicRoom??defaultMusicConfig();
  function playlist(){
   if(!player){configure();return}
   const tracks=player.list.audios;
@@ -64,16 +66,17 @@ export function installMusicRoom(ctx:Context){
   document.getElementById('record-config')!.onclick=configure;
  }
  function configure(){
-  const c=save.musicRoom;
-  ctx.open(`<h2 id="modal-title">唱片与歌单</h2><p>使用 HeoMusic 的 APlayer / Meting 内核。在线歌单和网络直链需要联网；内置两张唱片随客户端保存。</p><label>播放来源<select id="record-mode"><option value="offline" ${c.mode==='offline'?'selected':''}>内置唱片 / 自选音源</option><option value="online" ${c.mode==='online'?'selected':''}>HeoMusic 在线歌单</option></select></label><label>音乐平台<select id="record-server">${['tencent','netease','kugou'].map(v=>`<option value="${v}" ${v===c.server?'selected':''}>${{tencent:'QQ 音乐',netease:'网易云音乐',kugou:'酷狗音乐'}[v]}</option>`).join('')}</select></label><label>歌单或专辑 ID<input id="record-id" value="${esc(c.id)}" maxlength="64"></label><label>内容类型<select id="record-type">${['playlist','album','song'].map(v=>`<option value="${v}" ${v===c.type?'selected':''}>${{playlist:'歌单',album:'专辑',song:'单曲'}[v]}</option>`).join('')}</select></label><label>Meting API（可配置自有服务）<input id="record-api" value="${esc(c.api)}"></label><details><summary>自选直链歌曲 JSON</summary><p>每首填写 name、artist、url、cover、lrc；歌词为 LRC 文件地址。只收录有权使用的音源；留空不伪造歌词。</p><textarea id="record-local" rows="7">${esc(JSON.stringify(c.localTracks,null,2))}</textarea></details><div class="modal-actions"><button class="primary" id="record-save">保存并换唱片</button><button class="secondary" id="record-offline">恢复两张离线唱片</button></div>`,'music-settings');
+  const c=currentConfig();
+  ctx.open(`<h2 id="modal-title">唱片与歌单</h2><p>使用 HeoMusic 的 APlayer / Meting 内核。在线歌单和网络直链需要联网；内置两张唱片随客户端保存。</p><label>播放来源<select id="record-mode"><option value="offline" ${c.mode==='offline'?'selected':''}>内置唱片 / 自选音源</option><option value="online" ${c.mode==='online'?'selected':''}>HeoMusic 在线歌单</option></select></label><label>音乐平台<select id="record-server">${['tencent','netease','kugou'].map(v=>`<option value="${v}" ${v===c.server?'selected':''}>${{tencent:'QQ 音乐',netease:'网易云音乐',kugou:'酷狗音乐'}[v]}</option>`).join('')}</select></label><label>歌单或专辑 ID<input id="record-id" value="${esc(c.id)}" maxlength="64"></label><label>内容类型<select id="record-type">${['playlist','album','song'].map(v=>`<option value="${v}" ${v===c.type?'selected':''}>${{playlist:'歌单',album:'专辑',song:'单曲'}[v]}</option>`).join('')}</select></label><label>Meting API（可配置自有服务）<input id="record-api" value="${esc(c.api)}"></label><details><summary>自选直链歌曲 JSON</summary><p>每首填写 name、artist、url、cover、lrc；歌词为 LRC 文件地址。只收录有权使用的音源；留空不伪造歌词。</p><textarea id="record-local" rows="7">${esc(JSON.stringify(c.localTracks,null,2))}</textarea></details><div class="modal-actions"><button class="primary" id="record-save">保存并换唱片</button><button class="secondary" id="record-offline">恢复两张离线唱片</button><button class="secondary" id="record-cloud">跟随发布歌单</button></div>`,'music-settings');
   document.getElementById('record-save')!.onclick=()=>{try{
    const value=(id:string)=>(document.getElementById(id) as HTMLInputElement).value;
    const tracks=JSON.parse(value('record-local'));if(!Array.isArray(tracks)||!tracks.length||tracks.length>60||!tracks.every(validMusicTrack))throw Error('请填写 1–60 张唱片，并检查每首的音源、封面和歌词地址。');
    const candidate={mode:value('record-mode'),server:value('record-server'),id:value('record-id').trim(),type:value('record-type'),api:value('record-api').trim(),localTracks:tracks};
    const parsed=parseMusicConfig(candidate);if(parsed.id!==candidate.id||parsed.api!==candidate.api||parsed.localTracks.length!==Math.min(60,tracks.length))throw Error('请检查歌单 ID、HTTPS API 和歌曲地址。');
-   save.musicRoom=parsed;persist();ctx.close();void start();ctx.toast('新唱片放好了。');
+   save.musicRoom=parsed;save.musicRoomSource='local';persist();ctx.close();void start();ctx.toast('新唱片放好了。');
   }catch(error){ctx.toast(error instanceof Error?error.message:'歌单格式没有填对。')}};
-  document.getElementById('record-offline')!.onclick=()=>{save.musicRoom=parseMusicConfig({mode:'offline'});persist();ctx.close();void start()};
+  document.getElementById('record-cloud')!.onclick=()=>{save.musicRoom=defaultMusicConfig();save.musicRoomSource='cloud';persist();ctx.close();void start()};
+  document.getElementById('record-offline')!.onclick=()=>{save.musicRoom=defaultMusicConfig();save.musicRoomSource='local';persist();ctx.close();void start()};
  }
  scene.bridge.on('zone',()=>{if(scene.zone==='musicroom')void start();else if(layer)stop()});
  document.addEventListener('visibilitychange',()=>{if(document.hidden)player?.pause()});

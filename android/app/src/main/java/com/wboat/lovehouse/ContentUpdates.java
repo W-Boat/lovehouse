@@ -35,6 +35,7 @@ final class ContentUpdates {
     private final long bundledVersion;
     private volatile JSONObject candidate;
     private volatile URL candidateUrl;
+    private volatile URL candidateBlobs;
     private volatile JSONObject status;
     private volatile String servingVersion;
 
@@ -66,6 +67,8 @@ final class ContentUpdates {
             result.put("version", Math.max(bundledVersion, activeVersion()));
             result.put("url", preferences.getString("url", ""));
             result.put("availableVersion", candidate == null ? 0 : candidate.optLong("version"));
+            result.put("canRetry", "error".equals(phase) && candidate != null
+                && candidate.optLong("version") > Math.max(bundledVersion, activeVersion()));
         } catch (Exception ignored) { }
         status = result;
         main.post(() -> { if (!activity.isDestroyed()) listener.accept(result); });
@@ -75,12 +78,15 @@ final class ContentUpdates {
         String action = message.optString("action");
         if ("status".equals(action)) { listener.accept(status); return; }
         if ("ready".equals(action)) {
-            preferences.edit().putBoolean("trial", false).commit();
+            String confirmed = servingVersion;
             worker.execute(() -> {
-                String active = preferences.getString("active", ""), previous = preferences.getString("previous", "");
+                String current = preferences.getString("active", "");
+                if (!current.equals(confirmed)) return;
+                preferences.edit().putBoolean("trial", false).commit();
+                String previous = preferences.getString("previous", "");
                 File[] versions = root.listFiles();
                 if (versions != null) for (File version : versions) {
-                    if (version.getName().matches("[0-9]+") && !version.getName().equals(active) && !version.getName().equals(previous)) {
+                    if (version.getName().matches("[0-9]+") && !version.getName().equals(current) && !version.getName().equals(previous)) {
                         try { remove(version); } catch (Exception ignored) { }
                     }
                 }
@@ -114,12 +120,17 @@ final class ContentUpdates {
                     JSONObject files = manifest.getJSONObject("files");
                     if (!files.has("index.html") || files.length() > 4096) throw new IOException("资源清单不完整");
                     candidateUrl = secureUrl(new URL(url, manifest.getString("archive")).toString());
+                    candidateBlobs = "blobs/".equals(manifest.optString("blobDirectory"))
+                        ? secureUrl(new URL(url, "blobs/").toString()) : null;
                     candidate = manifest;
                     publish("available", "发现新资源，可下载并重启小屋", 0);
                 } else if ("install".equals(action)) {
                     if (candidate == null) throw new IOException("请先检查更新");
-                    install(candidate, candidateUrl);
+                    if (candidate.optLong("version") <= Math.max(bundledVersion, activeVersion()))
+                        throw new IOException("当前已是最新资源");
+                    install(candidate, candidateUrl, candidateBlobs);
                 } else if ("rollback".equals(action)) {
+                    candidate = null;
                     restore(); publish("restored", "已恢复上一份离线资源", 100); main.post(this::reloadContent);
                 } else throw new IOException("不支持的更新操作");
             } catch (Exception error) {
@@ -164,59 +175,127 @@ final class ContentUpdates {
         } finally { connection.disconnect(); }
     }
 
-    private void install(JSONObject manifest, URL url) throws Exception {
+    private void stageDelta(JSONObject files, File staging, URL blobs) throws Exception {
+        String active = preferences.getString("active", "");
+        File base = active.matches("[0-9]+") ? new File(root, active) : null;
+        byte[] buffer = new byte[65536];
+        long expanded = 0;
+        int done = 0;
+        Map<String, File> stagedByHash = new HashMap<>();
+        for (Iterator<String> names = files.keys(); names.hasNext();) {
+            String name = names.next();
+            File destination = safeFile(staging, name);
+            JSONObject metadata = files.getJSONObject(name);
+            long size = metadata.getLong("bytes");
+            String hash = metadata.getString("sha256");
+            if (size < 0 || size > 200_000_000 || !hash.matches("[a-f0-9]{64}") || (expanded += size) > 700_000_000)
+                throw new IOException("增量资源清单无效");
+            destination.getParentFile().mkdirs();
+            boolean reused = false;
+            File identical = stagedByHash.get(hash);
+            if (identical != null) {
+                try (InputStream input = new FileInputStream(identical)) {
+                    reused = copyVerified(input, destination, size, hash, buffer);
+                }
+            }
+            if (!reused && base != null) {
+                try (InputStream input = new FileInputStream(safeFile(base, name))) {
+                    reused = copyVerified(input, destination, size, hash, buffer);
+                } catch (FileNotFoundException ignored) { }
+            }
+            if (!reused) {
+                InputStream bundled = null;
+                try { bundled = activity.getAssets().open(name); } catch (FileNotFoundException ignored) { }
+                if (bundled != null) {
+                    try (InputStream input = bundled) { reused = copyVerified(input, destination, size, hash, buffer); }
+                }
+            }
+            if (!reused) {
+                HttpsURLConnection connection = connect(new URL(blobs, hash));
+                try (InputStream input = connection.getInputStream()) {
+                    if (!copyVerified(input, destination, size, hash, buffer)) throw new IOException("增量资源校验失败");
+                } finally { connection.disconnect(); }
+            }
+            stagedByHash.put(hash, destination);
+            publish("downloading", "正在同步变更的资源", ++done * 100 / files.length());
+        }
+    }
+
+    private boolean copyVerified(InputStream input, File file, long size, String hash, byte[] buffer) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (OutputStream output = new FileOutputStream(file)) {
+            long total = 0;
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("更新已取消");
+                total += read;
+                if (total > size) return false;
+                digest.update(buffer, 0, read);
+                output.write(buffer, 0, read);
+            }
+            return total == size && hash.equals(hex(digest.digest()));
+        }
+    }
+
+    private void install(JSONObject manifest, URL url, URL blobs) throws Exception {
         root.mkdirs();
         File archive = new File(root, "download.zip"), staging = new File(root, "staging");
         remove(staging); staging.mkdirs();
         long expected = manifest.getLong("archiveBytes");
         if (expected < 1 || expected > 300_000_000) throw new IOException("资源包大小不支持");
-        HttpsURLConnection connection = connect(url);
+        HttpsURLConnection connection = null;
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            try (InputStream input = connection.getInputStream(); OutputStream output = new FileOutputStream(archive)) {
-                byte[] buffer = new byte[65536]; long total = 0; int read, prior = -1;
-                while ((read = input.read(buffer)) != -1) {
-                    if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("下载已取消");
-                    total += read;
-                    if (total > expected) throw new IOException("资源包大小与清单不符");
-                    digest.update(buffer, 0, read); output.write(buffer, 0, read);
-                    int progress = (int) (total * 100 / expected);
-                    if (progress != prior) { publish("downloading", "正在下载资源", progress); prior = progress; }
-                }
-                if (total != expected || !hex(digest.digest()).equals(manifest.getString("archiveSha256"))) throw new IOException("资源包校验失败");
-            }
             JSONObject files = manifest.getJSONObject("files");
-            Set<String> found = new HashSet<>(); long expanded = 0;
-            try (ZipInputStream zip = new ZipInputStream(new FileInputStream(archive))) {
-                ZipEntry entry;
-                while ((entry = zip.getNextEntry()) != null) {
-                    String name = entry.getName();
-                    File file = safeFile(staging, name);
-                    if (entry.isDirectory()) { file.mkdirs(); continue; }
-                    if (!files.has(name) || !found.add(name)) throw new IOException("资源文件与清单不符");
-                    JSONObject metadata = files.getJSONObject(name);
-                    long size = metadata.getLong("bytes"), written = 0;
-                    if (size < 0 || size > 200_000_000) throw new IOException("资源文件过大");
-                    file.getParentFile().mkdirs(); MessageDigest hash = MessageDigest.getInstance("SHA-256");
-                    try (OutputStream output = new FileOutputStream(file)) {
-                        byte[] buffer = new byte[65536]; int read;
-                        while ((read = zip.read(buffer)) != -1) {
-                            if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("解压已取消");
-                            written += read; expanded += read;
-                            if (written > size || expanded > 700_000_000) throw new IOException("解压资源大小不符");
-                            hash.update(buffer, 0, read); output.write(buffer, 0, read);
-                        }
+            if (blobs != null) {
+                stageDelta(files, staging, blobs);
+            } else {
+                connection = connect(url);
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                try (InputStream input = connection.getInputStream(); OutputStream output = new FileOutputStream(archive)) {
+                    byte[] buffer = new byte[65536]; long total = 0; int read, prior = -1;
+                    while ((read = input.read(buffer)) != -1) {
+                        if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("下载已取消");
+                        total += read;
+                        if (total > expected) throw new IOException("资源包大小与清单不符");
+                        digest.update(buffer, 0, read); output.write(buffer, 0, read);
+                        int progress = (int) (total * 100 / expected);
+                        if (progress != prior) { publish("downloading", "正在下载资源", progress); prior = progress; }
                     }
-                    if (written != size || !hex(hash.digest()).equals(metadata.getString("sha256"))) throw new IOException("资源文件校验失败");
+                    if (total != expected || !hex(digest.digest()).equals(manifest.getString("archiveSha256"))) throw new IOException("资源包校验失败");
                 }
+                Set<String> found = new HashSet<>(); long expanded = 0;
+                try (ZipInputStream zip = new ZipInputStream(new FileInputStream(archive))) {
+                    ZipEntry entry;
+                    while ((entry = zip.getNextEntry()) != null) {
+                        String name = entry.getName();
+                        File file = safeFile(staging, name);
+                        if (entry.isDirectory()) { file.mkdirs(); continue; }
+                        if (!files.has(name) || !found.add(name)) throw new IOException("资源文件与清单不符");
+                        JSONObject metadata = files.getJSONObject(name);
+                        long size = metadata.getLong("bytes"), written = 0;
+                        if (size < 0 || size > 200_000_000) throw new IOException("资源文件过大");
+                        file.getParentFile().mkdirs(); MessageDigest hash = MessageDigest.getInstance("SHA-256");
+                        try (OutputStream output = new FileOutputStream(file)) {
+                            byte[] buffer = new byte[65536]; int read;
+                            while ((read = zip.read(buffer)) != -1) {
+                                if (Thread.currentThread().isInterrupted()) throw new InterruptedIOException("解压已取消");
+                                written += read; expanded += read;
+                                if (written > size || expanded > 700_000_000) throw new IOException("解压资源大小不符");
+                                hash.update(buffer, 0, read); output.write(buffer, 0, read);
+                            }
+                        }
+                        if (written != size || !hex(hash.digest()).equals(metadata.getString("sha256"))) throw new IOException("资源文件校验失败");
+                    }
+                }
+                if (found.size() != files.length()) throw new IOException("资源文件缺失");
             }
-            if (found.size() != files.length()) throw new IOException("资源文件缺失");
             try (OutputStream out = new FileOutputStream(new File(staging, ".verified.json"))) { out.write(manifest.toString().getBytes(StandardCharsets.UTF_8)); }
             File destination = new File(root, String.valueOf(manifest.getLong("version")));
             remove(destination);
             if (!staging.renameTo(destination)) throw new IOException("无法保存新资源");
             String previous = preferences.getString("active", "");
             if (!preferences.edit().putString("previous", previous).putString("active", destination.getName()).putBoolean("trial", true).commit()) throw new IOException("无法切换资源版本");
+            candidate = null;
             publish("installed", "资源已校验，正在重新进入小屋", 100);
             main.post(() -> {
                 reloadContent();
@@ -226,7 +305,7 @@ final class ContentUpdates {
                     }
                 }, 120000);
             });
-        } finally { connection.disconnect(); archive.delete(); remove(staging); }
+        } finally { if (connection != null) connection.disconnect(); archive.delete(); remove(staging); }
     }
 
     private File safeFile(File directory, String name) throws Exception {

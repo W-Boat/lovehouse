@@ -13,6 +13,8 @@ permissions:
 concurrency:
   group: lovehouse-android-${{ github.ref }}
   cancel-in-progress: true
+env:
+  LOVEHOUSE_CONTENT_SERVER: ${{ vars.LOVEHOUSE_CONTENT_SERVER }}
 jobs:
   apk:
     runs-on: ubuntu-latest

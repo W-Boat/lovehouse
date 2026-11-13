@@ -89,6 +89,11 @@
     "recipe": "lossless-rgba-native-v2",
     "source": "8267305c1e36a379a7080218eb5ed33367d805d12cc5e69e8452654acaefcb47"
   },
+  "ferris-platform-v1.png": {
+    "output": "7744449bef371836d9d54064a02ab37185ca0f587c9abec81acad79829ef1a2e",
+    "recipe": "trim-alpha30-lossless-768-v1",
+    "source": "428718a42e71f460fc95d3983d0da8418f63738729a149dc6593737c2030e905"
+  },
   "ferris.png": {
     "output": "441bff1d39e4fa1a16545a65a45054dad78f90ac4a8097d3a1c9cc9e4f169de8",
     "recipe": "lossless-rgba-nearest-v1-(768, 512)",
@@ -663,6 +668,11 @@
     "output": "12989c91d06efe313aefebbf1bd9ce24ccd3ee01e26fe5a1149dd0bade62c826",
     "recipe": "lossless-rgba-native-v2",
     "source": "1f54e041a87cd5ab4ff02ee11ad93b3a3eeb446b2c9f554741640b7eae16b029"
+  },
+  "wearables-v1.png": {
+    "output": "f9323eaa1a6d95253b494e361cdc66b967f2d5eccaba473f73ff5ffcde1910ae",
+    "recipe": "normalized-animation-nearest-v1-(256, 128)",
+    "source": "63c5272c23a8fd228b4b84c6ea6111e331b9a4ca0e1a0d3db86fb1a9e524a685"
   },
   "weather-icons-v2.png": {
     "output": "7053ef162570da7e3cc7c300e2941e29ed7cd456aab2d4619d2baebeaf9a001e",

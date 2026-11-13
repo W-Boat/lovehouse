@@ -28,6 +28,8 @@ def create_package(build, output, version, key, certificate):
     archive = output / 'lovehouse-content.zip'
     staging = archive.with_suffix('.zip.stage')
     files = {}
+    blobs = output / 'blobs'
+    blobs.mkdir(exist_ok=True)
     try:
         with ZipFile(staging, 'w', compression=ZIP_DEFLATED, compresslevel=6) as package:
             for path in sorted(build.rglob('*')):
@@ -42,6 +44,11 @@ def create_package(build, output, version, key, certificate):
                     raise ValueError('Hidden files are not update resources')
                 data = path.read_bytes()
                 files[relative] = {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+                blob = blobs / files[relative]['sha256']
+                if not blob.is_file() or blob.read_bytes() != data:
+                    temp_blob = blob.with_suffix('.stage')
+                    temp_blob.write_bytes(data)
+                    os.replace(temp_blob, blob)
                 entry = ZipInfo(relative, date_time=(1980, 1, 1, 0, 0, 0))
                 entry.compress_type = ZIP_DEFLATED
                 entry.external_attr = 0o100644 << 16
@@ -61,6 +68,7 @@ def create_package(build, output, version, key, certificate):
         'archiveSha256': archive_hash,
         'certificateSha256': certificate.fingerprint(hashes.SHA256()).hex(),
         'files': files,
+        'blobDirectory': 'blobs/',
     }
     payload = json.dumps(manifest, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
     signature = key.sign(payload, padding.PKCS1v15(), hashes.SHA256())

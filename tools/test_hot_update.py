@@ -50,6 +50,27 @@ class ResourcePackageTests(unittest.TestCase):
                     self.assertEqual(len(data), metadata['bytes'])
                     self.assertEqual(hashlib.sha256(data).hexdigest(), metadata['sha256'])
 
+    def test_delta_blobs_are_addressed_by_content_and_deduplicated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            build = Path(directory) / 'build'
+            output = Path(directory) / 'output'
+            build.mkdir()
+            (build / 'index.html').write_bytes(b'entry')
+            (build / 'one.txt').write_bytes(b'shared')
+            (build / 'two.txt').write_bytes(b'shared')
+            first = create_package(build, output, 1, self.key, self.cert)
+            self.assertEqual(first['blobDirectory'], 'blobs/')
+            self.assertEqual(len(list((output / 'blobs').iterdir())), 2)
+            (build / 'index.html').write_bytes(b'updated entry')
+            (build / 'two.txt').unlink()
+            second = create_package(build, output, 2, self.key, self.cert)
+            missing = {item['sha256'] for item in second['files'].values()} - {
+                item['sha256'] for item in first['files'].values()
+            }
+            self.assertEqual(len(missing), 1)
+            self.assertEqual((output / 'blobs' / missing.pop()).read_bytes(), b'updated entry')
+            self.assertNotIn('two.txt', second['files'])
+
     def test_output_inside_resources_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             build = Path(directory)

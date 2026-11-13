@@ -13,6 +13,8 @@ on:
         default: false
 permissions:
   contents: read
+env:
+  LOVEHOUSE_CONTENT_SERVER: ${{ vars.LOVEHOUSE_CONTENT_SERVER }}
 jobs:
   web:
     if: ${{ !inputs.windows_only }}
@@ -46,6 +48,28 @@ jobs:
             docs
             文案.md
             需替换内容.md
+  publisher:
+    if: ${{ !inputs.windows_only }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+      - run: npm ci --prefix admin
+      - run: npm run build --prefix admin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lovehouse-publisher
+          path: |
+            admin/dist
+            tools/cloud-*.mjs
+            content/cloud-*.mjs
+            docs/云端内容配置.md
+            docs/发布后台操作手册.md
+            docs/发布Agent操作手册.md
   windows:
     runs-on: windows-latest
     steps:

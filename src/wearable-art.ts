@@ -10,6 +10,6 @@ export function drawEarphones(g:CanvasRenderingContext2D,source:CanvasImageSourc
 }
 export function drawHat(g:CanvasRenderingContext2D,source:CanvasImageSource & {width:number;height:number},head:HeadAnchor){
  g.imageSmoothingEnabled=false;
- const width=head.width*1.02,height=width*source.height/source.width;
- g.drawImage(source,head.x-width/2,head.top-height*.27,width,height);
+ const width=head.width*.86,height=width*source.height/source.width;
+ g.drawImage(source,head.x-width/2,head.top-height*.53,width,height);
 }

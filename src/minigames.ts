@@ -24,13 +24,13 @@ export const giftGames:Record<GiftId,MinigameDefinition>={
 let currentDispose:(()=>void)|undefined;
 export function disposeGame(){currentDispose?.();currentDispose=undefined}
 const el=<K extends keyof HTMLElementTagNameMap>(tag:K,text='',cls='')=>{const e=document.createElement(tag);e.textContent=text;e.className=cls;return e};
-export function launchGiftGame(id:GiftId,host:HTMLElement,finish:(r:GameResult)=>void,artUrl=''){
+export function launchGiftGame(id:GiftId,host:HTMLElement,finish:(r:GameResult)=>void,artUrl='',recordProgress=true){
  disposeGame();const def=giftGames[id];let disposed=false,paused=false,score=0,level=0,won=false;const controller=new AbortController(),timers=new Set<number>();let frame=0;let restart:()=>void=()=>{},onPauseChange:()=>void=()=>{};
  host.replaceChildren();host.append(el('div',getGameCopy('common.eyebrow'),'subheading'),el('h2',def.title));const instruction=el('p',def.rule),status=el('p','','game-status'),board=el('div','','game-board'),controls=el('div','','game-controls'),footer=el('div','','modal-actions');host.append(instruction,status,board,controls,footer);
  const listen=(target:EventTarget,type:string,fn:EventListener)=>target.addEventListener(type,fn,{signal:controller.signal});
  const btn=(label:string,fn:()=>void,parent:HTMLElement=controls)=>{const b=el('button',label,'secondary');listen(b,'click',()=>{if(paused&&parent!==footer)return;fn()});parent.append(b);return b};
  const cleanup=()=>{if(disposed)return;disposed=true;controller.abort();cancelAnimationFrame(frame);timers.forEach(clearTimeout);board.querySelectorAll('canvas').forEach(c=>c.remove())};currentDispose=cleanup;
- const done=(result:GameResult)=>{if(disposed||won)return;won=true;if(result.status!=='exit'){save.games[id]={status:result.status,score:Math.round(result.score)};persist()}cleanup();finish(result)};
+ const done=(result:GameResult)=>{if(disposed||won)return;won=true;if(recordProgress&&result.status!=='exit'){save.games[id]={status:result.status,score:Math.round(result.score)};persist()}cleanup();finish(result)};
  const success=()=>{score+=100;level++;if(level<3){status.textContent=getGameCopy('common.next');restart()}else done({status:'won',score})};
  btn(getGameCopy('common.pause'),()=>{paused=!paused;onPauseChange();pause.textContent=paused?getGameCopy('common.resume'):getGameCopy('common.pause');board.classList.toggle('paused',paused)},footer);const pause=footer.lastElementChild as HTMLButtonElement;
  let optionsPaused=false;const options=el('div','','game-options');options.hidden=true;host.insertBefore(options,footer);

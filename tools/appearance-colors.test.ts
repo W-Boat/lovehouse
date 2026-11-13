@@ -11,3 +11,24 @@ test('head replacement can preserve disconnected raised hands and their ink',()=
  const saved=captureRaisedHands(p,w,h,12);assert.ok(saved.length>=10);const cleared=new Uint8ClampedArray(p.length);restoreRaisedHands(cleared,saved);
  assert.deepEqual([...cleared.slice((9*w+2)*4,(9*w+2)*4+4)],[248,205,175,255]);assert.equal(cleared[(5*w+10)*4+3],0);assert.equal(cleared[8*w*4+3],255);
 });
+
+test('dark skin covers cool peach highlights and adjacent shadows while retaining clothing, hair and alpha',()=>{
+ const width=10,height=12, pixels=new Uint8ClampedArray(width*height*4);
+ const swatches=[
+  [5,1,[251,224,216,255]], // pale streak in the fringe
+  [3,6,[255,250,248,255]], // shirt highlight
+  [4,6,[251,224,218,255]], // hand highlight
+  [5,6,[249,210,206,255]], // cooler hand midtone
+  [6,6,[187,135,132,180]], // softer boundary
+  [5,7,[32,14,18,255]],   // ink
+  [5,9,[249,221,214,255]], // leg highlight
+  [6,9,[248,217,210,255]], // adjacent leg midtone
+ ] as const;
+ for(const [x,y,rgba] of swatches)pixels.set(rgba,(y*width+x)*4);
+ recolorAppearance(pixels,width,height,'girl',{color:0,skin:3,outfit:0},'girl-pose-4');
+ for(const [index,[x,y,rgba]] of swatches.entries()){
+  const actual=[...pixels.slice((y*width+x)*4,(y*width+x)*4+4)];
+  if([0,1,5].includes(index))assert.deepEqual(actual,[...rgba]);
+  else{assert.ok(actual[0]<170);assert.equal(actual[3],rgba[3])}
+ }
+});

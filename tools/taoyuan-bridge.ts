@@ -80,6 +80,14 @@ export function installLovehouseBridge(){
  }
  window.addEventListener('message',async event=>{
   if(event.source!==parent||event.origin!==location.origin||event.data?.channel!=='lovehouse-taoyuan')return;
+  if(event.data.type==='export-save'){
+   const store=useSaveStore(),slot=store.activeSlot;
+   if(slot>=0&&useGameStore().isGameStarted)store.saveToSlot(slot);
+   const key=(role==='guest'?'lovehouse_taoyuan_guest_':'taoyuanxiang_save_')+slot;
+   const save=slot>=0?localStorage.getItem(key):null;
+   parent.postMessage({channel:'lovehouse-taoyuan',type:'export-result',save},location.origin);
+   return;
+  }
   if(event.data.type==='role'){role=event.data.role;readonly();snapshot();return}
   if(event.data.type==='connection'){connected=event.data.connected===true;readonly();return}
   const data=event.data.payload;if(event.data.type!=='receive'||!data)return;

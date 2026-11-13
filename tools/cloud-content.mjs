@@ -1,0 +1,294 @@
+import {validateCloudScenes} from '../content/cloud-scenes.mjs';
+import {validatePortalUrl} from '../content/cloud-portal-url.mjs';
+import {validateCloudInteractions,validateGiftGames} from '../content/cloud-interactions.mjs';
+import {validateCloudMedia} from '../content/cloud-media.mjs';
+import {validateCloudPlaylist} from '../content/cloud-playlist.mjs';
+import {createHash, randomUUID, timingSafeEqual} from 'node:crypto';
+import {createServer} from 'node:http';
+import {readFile, rename, rm, stat, writeFile} from 'node:fs/promises';
+import {basename} from 'node:path';
+import {createAssetStore,isAssetId,prepareAsset,readAssetBody,usesAsset,assetLimit} from './cloud-assets.mjs';
+import {pathToFileURL} from 'node:url';
+
+const limit = 1_000_000;
+const builtInZones = new Set('room garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora shichahai gulou chaya tianmo tanghulu catcottage highschool musicroom'.split(' '));
+const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames']);
+const jsonHeaders = {'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff'};
+
+function insideFloor([x,y],[[left,top],[right,bottom]]) {
+ return x>=left && x<=right && y>=top && y<=bottom;
+}
+
+export function prepareSnapshot(input) {
+ if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error('Expected a configuration object');
+ for (const key of Object.keys(input)) if (!publishFields.has(key)) throw Error('Unknown configuration field: ' + key);
+ const texts = input.texts ?? {};
+ if (typeof texts !== 'object' || Array.isArray(texts) || Object.entries(texts).length > 4000) throw Error('Invalid texts');
+ for (const [key,value] of Object.entries(texts)) {
+  if (!/^[a-z0-9][a-z0-9.-]{0,180}$/i.test(key) || typeof value !== 'string' || value.length > 20000) throw Error('Invalid text key or value: ' + key);
+ }
+ const portals = input.portals ?? [];
+ if (!Array.isArray(portals) || portals.length > 2) throw Error('Expected at most two portals');
+ for (const portal of portals) {
+  if (!portal || typeof portal.label !== 'string' || !portal.label.trim() || portal.label.length > 32) throw Error('Invalid portal label');
+ }
+ const scenes = validateCloudScenes(input.scenes);
+ const sceneFloors = new Map();
+ for (const scene of scenes ?? []) {
+  if (!builtInZones.has(scene.parent)) throw Error('Unknown parent scene: ' + scene.parent);
+  if (!insideFloor(scene.spawn,scene.floor) || !insideFloor(scene.exit,scene.floor)) throw Error('Spawn or exit outside floor: ' + scene.id);
+  sceneFloors.set(scene.id,scene.floor);
+ }
+ const interactions = validateCloudInteractions(input.interactions);
+ for (const item of interactions ?? []) {
+  const floor = sceneFloors.get(item.zone);
+  if (!floor && !builtInZones.has(item.zone)) throw Error('Unknown interaction scene: ' + item.zone);
+  if (floor && !insideFloor(item.point,floor)) throw Error('Interaction point outside floor: ' + item.id);
+ }
+ const body = {
+  schema: 1,
+  texts: Object.fromEntries(Object.entries(texts).sort(([a],[b]) => a.localeCompare(b,'en'))),
+  portals: portals.map(({label,url})=>({label,url:validatePortalUrl(url)})),
+  musicRoom: validateCloudPlaylist(input.musicRoom),
+  media: validateCloudMedia(input.media),
+  interactions,
+  scenes,
+  giftGames: validateGiftGames(input.giftGames),
+ };
+ const revision = createHash('sha256').update(JSON.stringify(body)).digest('hex');
+ const json = JSON.stringify({...body,revision});
+ if (Buffer.byteLength(json) > limit) throw Error('Snapshot exceeds 1 MB');
+ return {revision,json};
+}
+
+async function saveSnapshot(output,json) {
+ const staged = output + '.' + randomUUID() + '.part';
+ try {
+  await writeFile(staged,json,{flag:'wx'});
+  await rename(staged,output);
+ } finally {
+  await rm(staged,{force:true});
+ }
+}
+
+function sendJson(response,status,body) {
+ response.writeHead(status,jsonHeaders).end(JSON.stringify(body));
+}
+
+function authenticated(header,token) {
+ if (!token || typeof header !== 'string' || !header.startsWith('Bearer ')) return false;
+ const supplied = Buffer.from(header.slice(7));
+ const expected = Buffer.from(token);
+ return supplied.length === expected.length && timingSafeEqual(supplied,expected);
+}
+
+async function readJson(request) {
+ if (request.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') throw Error('Expected application/json');
+ const chunks = [];
+ let bytes = 0;
+ for await (const chunk of request.iterator({destroyOnReturn:false})) {
+  bytes += chunk.length;
+  if (bytes > limit) {
+   request.resume();
+   throw Error('Configuration exceeds 1 MB');
+  }
+  chunks.push(chunk);
+ }
+ return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+}
+
+const assetTypes = new Map([['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8'],['svg','image/svg+xml'],['png','image/png'],['webp','image/webp'],['woff2','font/woff2']]);
+const adminDir = new URL('../admin/dist/',import.meta.url);
+
+export function createContentHandler({file,token,publicPrefix=''}) {
+ if(!/^(?:\/[a-zA-Z0-9_-]+)*$/.test(publicPrefix))throw Error('Invalid LOVEHOUSE_PUBLIC_PREFIX');
+ const publicAsset=asset=>({...asset,path:publicPrefix+asset.path});
+ const assets=createAssetStore(file+'.assets');
+ let pendingWrite=Promise.resolve();
+ const serialize=operation=>{
+  const result=pendingWrite.then(operation);
+  pendingWrite=result.catch(()=>{});
+  return result;
+ };
+ const publish=(json,expected)=>serialize(async ()=>{
+   if (expected !== undefined) {
+    let current='';
+    try { current=JSON.parse(await readFile(file,'utf8')).revision }
+    catch (error) { if (error.code!=='ENOENT') throw error }
+    if (expected!==`"${current}"`) return false;
+   }
+   await saveSnapshot(file,json);
+   return true;
+ });
+ return async (request,response)=>{
+  let url;
+  try { url = new URL(request.url,'http://localhost') }
+  catch { sendJson(response,400,{error:'Invalid request URL'}); return }
+  const {pathname} = url;
+  if (request.method==='GET' && pathname==='/content.json') {
+   const headers = {...jsonHeaders,'Access-Control-Allow-Origin':'*','Cache-Control':'no-cache'};
+   try {
+    const json = await readFile(file,'utf8');
+    const {revision} = JSON.parse(json);
+    const etag = '"' + revision + '"';
+    if (url.searchParams.get('revision')===revision || request.headers['if-none-match']===etag) {
+     response.writeHead(304,{...headers,ETag:etag}).end();
+    } else response.writeHead(200,{...headers,ETag:etag}).end(json);
+   } catch {
+    response.writeHead(503,headers).end();
+   }
+   return;
+  }
+  if ((request.method==='GET'||request.method==='HEAD') && pathname.startsWith('/media/')) {
+   const id=pathname.slice('/media/'.length);
+   if(isAssetId(id)){
+    try {
+     const data=await assets.read(id);
+     if(data){
+      const total=data.bytes.length;
+      const headers={
+       'Content-Type':data.mime,'Cache-Control':'public, max-age=300','Accept-Ranges':'bytes',
+       'Access-Control-Allow-Origin':'*','X-Content-Type-Options':'nosniff',
+       'Content-Security-Policy':"default-src 'none'; sandbox",
+      };
+      const range=request.headers.range;
+      let body=data.bytes,status=200;
+      if(range!==undefined){
+       const match=/^bytes=(\d*)-(\d*)$/.exec(range);
+       const start=match?.[1]?Number(match[1]):Math.max(0,total-Number(match?.[2]));
+       const end=match?.[1]&&match[2]?Math.min(total-1,Number(match[2])):total-1;
+       if(!match||(!match[1]&&!match[2])||!Number.isSafeInteger(start)||start>end||start>=total){
+        response.writeHead(416,{...headers,'Content-Range':'bytes */'+total}).end();
+        return;
+       }
+       body=body.subarray(start,end+1);
+       headers['Content-Range']='bytes '+start+'-'+end+'/'+total;
+       status=206;
+      }
+      response.writeHead(status,{...headers,'Content-Length':body.length}).end(request.method==='HEAD'?undefined:body);
+      return;
+     }
+    } catch(error) {if(error.code!=='ENOENT'){sendJson(response,500,{error:'Unable to read asset'});return}}
+   }
+   sendJson(response,404,{error:'Asset not found'});
+   return;
+  }
+  if (pathname.startsWith('/admin/api/')) {
+   if (!token) { sendJson(response,503,{error:'Publisher authentication is not configured'}); return }
+   if (!authenticated(request.headers.authorization,token)) { sendJson(response,401,{error:'Invalid publisher token'}); return }
+   if (pathname==='/admin/api/assets' && request.method==='GET') {
+    try {sendJson(response,200,{assets:(await assets.list()).map(publicAsset)})}
+    catch {sendJson(response,500,{error:'Unable to list assets'})}
+    return;
+   }
+   if (pathname==='/admin/api/assets' && request.method==='POST') {
+    let data,asset;
+    try {
+     const name=decodeURIComponent(request.headers['x-asset-name']??'');
+     data=await readAssetBody(request);
+     asset=prepareAsset(name,data);
+    } catch(error) {sendJson(response,400,{error:error.message});return}
+    try {sendJson(response,201,{asset:publicAsset(await serialize(()=>assets.save(asset,data)))})}
+    catch {sendJson(response,500,{error:'Unable to store asset'})}
+    return;
+   }
+   if (pathname.startsWith('/admin/api/assets/') && request.method==='DELETE') {
+    const id=pathname.slice('/admin/api/assets/'.length);
+    if (!isAssetId(id)) {sendJson(response,404,{error:'Asset not found'});return}
+    try {
+     const status=await serialize(async ()=>{
+      let snapshot;
+      try {snapshot=JSON.parse(await readFile(file,'utf8'))}
+      catch(error) {if(error.code!=='ENOENT')throw error}
+      if(usesAsset(snapshot,id,publicPrefix))return 409;
+      return await assets.remove(id)?200:404;
+     });
+     sendJson(response,status,status===200?{deleted:id}:{error:status===409?'Asset is still used by the published configuration':'Asset not found'});
+    } catch {sendJson(response,500,{error:'Unable to remove asset'})}
+    return;
+   }
+   if (request.method==='GET' && pathname==='/admin/api/snapshot') {
+    try { sendJson(response,200,JSON.parse(await readFile(file,'utf8'))) }
+    catch (error) {
+     if (error.code==='ENOENT') sendJson(response,200,{});
+     else sendJson(response,500,{error:'Unable to read current snapshot'});
+    }
+    return;
+   }
+   if (request.method==='POST' && ['/admin/api/check','/admin/api/publish'].includes(pathname)) {
+    let snapshot;
+    try { snapshot = prepareSnapshot(await readJson(request)) }
+    catch (error) { sendJson(response,400,{error:error.message}); return }
+    if (pathname.endsWith('/publish')) {
+     const expected=request.headers['if-match'];
+     if (expected!==undefined && !/^"(?:[a-f0-9]{64})?"$/.test(expected)) {
+      sendJson(response,400,{error:'Invalid expected revision'});
+      return;
+     }
+     try {
+      if (!await publish(snapshot.json,expected)) {
+       sendJson(response,412,{error:'The published configuration changed. Reload it before publishing again.'});
+       return;
+      }
+     }
+     catch { sendJson(response,500,{error:'Unable to save snapshot'}); return }
+    }
+    sendJson(response,200,{revision:snapshot.revision});
+    return;
+   }
+  }
+  if (request.method==='GET' && pathname==='/admin') {
+   response.writeHead(308,{Location:'/admin/'}).end();
+   return;
+  }
+  if (request.method==='GET' && (pathname==='/admin/' || /^\/admin\/assets\/[\w.-]+$/.test(pathname))) {
+   const asset = pathname==='/admin/' ? 'index.html' : pathname.slice('/admin/'.length);
+   const mime = assetTypes.get(asset.split('.').at(-1));
+   if (mime) {
+    try {
+     const contents = await readFile(new URL(asset,adminDir));
+     response.writeHead(200,{
+      'Content-Type':mime,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
+      'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+     }).end(contents);
+     return;
+    } catch {}
+   }
+  }
+  sendJson(response,404,{error:'Not found'});
+ };
+}
+
+async function main([command,file='content.json',output='content.json']) {
+ if (command==='check' || command==='publish') {
+  const snapshot = prepareSnapshot(JSON.parse((await readFile(file,'utf8')).replace(/^\uFEFF/,'')));
+  if (command==='publish') await saveSnapshot(output,snapshot.json);
+  console.log(JSON.stringify(command==='publish'?{revision:snapshot.revision,output}:{revision:snapshot.revision}));
+ } else if (command==='upload') {
+  const token=process.env.LOVEHOUSE_ADMIN_TOKEN;
+  if(!token)throw Error('Set LOVEHOUSE_ADMIN_TOKEN before uploading');
+  const base=new URL(validatePortalUrl(output));
+  if(base.search||base.hash)throw Error('Publisher address must be a base URL');
+  base.pathname=base.pathname.replace(/\/?$/,'/');
+  const name=basename(file);
+  const info=await stat(file);
+  if(!info.isFile()||info.size>assetLimit)throw Error('Expected a file up to 16 MiB');
+  const bytes=await readFile(file);
+  const expected=prepareAsset(name,bytes);
+  const response=await fetch(new URL('admin/api/assets',base),{
+   method:'POST',redirect:'error',signal:AbortSignal.timeout(90_000),headers:{Authorization:'Bearer '+token,'X-Asset-Name':encodeURIComponent(name)},body:bytes,
+  });
+  const data=await response.json();
+  if(!response.ok)throw Error(data.error??'Asset upload failed');
+  if(data.asset?.id!==expected.id||data.asset.path!==new URL(expected.path.slice(1),base).pathname)throw Error('Unexpected asset upload response');
+  console.log(JSON.stringify({asset:{...data.asset,url:new URL(data.asset.path,base).href}}));
+ } else if (command==='serve') {
+  const port = Number(process.env.PORT || 8789);
+  const host = process.env.HOST || '127.0.0.1';
+  createServer(createContentHandler({file,token:process.env.LOVEHOUSE_ADMIN_TOKEN,publicPrefix:process.env.LOVEHOUSE_PUBLIC_PREFIX})).listen(port,host,()=>console.log(JSON.stringify({host,port,path:'/content.json'})));
+ } else throw Error('Usage: node tools/cloud-content.mjs check INPUT | publish INPUT OUTPUT | serve SNAPSHOT | upload FILE HTTPS_ORIGIN');
+}
+if (process.argv[1] && pathToFileURL(process.argv[1]).href===import.meta.url) {
+ try { await main(process.argv.slice(2)) }
+ catch (error) { console.error(JSON.stringify({error:error.message})); process.exitCode=2 }
+}

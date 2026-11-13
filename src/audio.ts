@@ -4,7 +4,7 @@ let active=false,zone='room',current:HTMLAudioElement|undefined,currentTrack='',
 const url=(name:string)=>new URL('../audio/'+name,import.meta.url).href;
 const sounds=new Map<number,HTMLAudioElement>();
 const retiring=new Set<HTMLAudioElement>();
-let musicGeneration=0,ducked=false,externalMusic=false,campusRadio=false;
+let failedConcertSource='',musicGeneration=0,ducked=false,externalMusic=false,campusRadio=false;
 export function toggleCampusRadio(){campusRadio=!campusRadio;void music(true)}
 export function setExternalMusic(enabled:boolean){externalMusic=enabled;if(enabled)pauseMusic();else void music()}
 const musicLevel=()=>save.settings.musicVolume*(ducked?.45:1);
@@ -18,7 +18,7 @@ export async function music(userGesture=false){
  if(!active)return;
  refreshWind();
  if(externalMusic||!save.music||document.hidden){pauseMusic();return}
- const override=zone==='mars'&&personal.concertAudio;
+ const override=zone==='mars'&&personal.concertAudio!==failedConcertSource&&personal.concertAudio;
  const track=override||((['cinema','memory','mars'].includes(zone)||zone==='highschool'&&campusRadio)?'childhood':'moonlight');
  if(current&&track===currentTrack){
   if(!retiring.size)current.volume=musicLevel();
@@ -30,11 +30,14 @@ export async function music(userGesture=false){
  retiring.clear();
  if(previous)retiring.add(previous);
  const generation=++musicGeneration;
- const fresh=new Audio(override?new URL('../'+override,import.meta.url).href:url(track+'.m4a'));
+ const fresh=new Audio(override?(/^https:\/\//.test(override)?override:new URL('../'+override,import.meta.url).href):url(track+'.m4a'));
  current=fresh;currentTrack=track;fresh.loop=true;fresh.volume=0;
  const previousVolume=previous?.volume??0;
  try{await fresh.play()}catch{
-  if(generation===musicGeneration){previous?.pause();retiring.clear()}
+  if(generation===musicGeneration){
+   previous?.pause();retiring.clear();
+   if(override&&fresh.error){failedConcertSource=override;current=undefined;currentTrack='';void music()}
+  }
   return;
  }
  if(generation!==musicGeneration)return;
@@ -55,7 +58,7 @@ function pauseMusic(){
  for(const audio of retiring)audio.pause();
  retiring.clear();
 }
-export function setAmbience(next:string){if(next!==zone)campusRadio=false;zone=next;void music()}
+export function setAmbience(next:string){if(next!==zone){campusRadio=false;failedConcertSource=''}zone=next;void music()}
 export function duckAudio(duck:boolean){
  ducked=duck;
  if(current&&!retiring.size)current.volume=musicLevel();

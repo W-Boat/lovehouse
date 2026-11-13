@@ -177,3 +177,22 @@ input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
 .record-track-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.record-track-list button{text-align:left;min-width:0}.record-track-list small{display:block;opacity:.7}
 
 #ceremony #ceremony-canvas{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:fill}
+
+#settings-body button[aria-pressed=true]{background:#594137;color:#fff0cc;border-color:#936951;box-shadow:inset 0 -3px #372923}
+#settings-body input[type=range],#settings-body input[type=range]::-webkit-slider-thumb{-webkit-tap-highlight-color:transparent}
+#settings-body input[type=range]:focus:not(:focus-visible){outline:none}
+.game-hud .wish-shortcut{position:absolute;right:14px;top:76px;z-index:6;width:auto;min-width:64px;height:44px;background:#594137;color:#fff0cc;font-size:16px}
+#taoyuan-portal .taoyuan-return{align-self:flex-start;margin:5px 8px;padding:4px 12px;min-height:32px;background:#342b38;color:#fff0cc;border:2px solid #a77954;font:13px CottagePixel,monospace}
+.portal-destinations{display:grid;gap:12px}.portal-destinations button:disabled{opacity:.6}
+
+body[data-cloud-offline=true] .game-hud::before{content:'离线';position:absolute;left:8px;top:4px;color:#fff0cc;background:#342b38;border:1px solid #986c58;padding:2px 4px;font-size:10px;z-index:9;pointer-events:none}
+
+.taoyuan-toolbar{display:flex;justify-content:space-between;background:#211e21}
+
+.scene-activity-external-game{width:min(920px,94%);max-width:94%;height:84%;max-height:84%;padding:32px 8px 8px}
+#external-game-host{height:100%;min-height:0}
+#external-game-host iframe{display:block;width:100%;height:100%;border:0;background:#1a1624}
+
+.scene-activity-external-game:has(.external-game-controls){padding-bottom:54px}
+.external-game-controls{position:absolute;right:8px;bottom:5px;display:flex;gap:6px}
+.external-game-controls button{min-height:44px}

@@ -1,3 +1,5 @@
+import {uiCopy} from '../content/ui-copy';
+import {cloudPortals,cloudGiftGames} from './cloud-content';
 import {installMusicRoom} from './music-room';
 import {validDpi,stickVector} from './display';
 import {installRewards} from './rewards';
@@ -26,6 +28,7 @@ import {PixelCeremony} from './celebration';
 import {installUI} from './ui';
 import {launchGiftGame,disposeGame} from './minigames';
 import {playCinema} from './theater';
+import {films} from '../content/films';
 import {places,restingLines} from '../content/places';
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 const scene=new Cottage();
@@ -50,10 +53,10 @@ function action(id:string,fn:()=>void){const element=document.getElementById(id)
 function art(id:GiftId,parent:HTMLElement,size=150){const source=scene.textures.get('gift-'+id).getSourceImage() as HTMLCanvasElement;const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d')!;ctx.imageSmoothingEnabled=false;const ratio=Math.min((size-12)/source.width,(size-12)/source.height);const w=source.width*ratio,h=source.height*ratio;ctx.drawImage(source,(size-w)/2,(size-h)/2,w,h);parent.prepend(canvas)}
 function giftArt(gift:Gift){const container=document.querySelector<HTMLElement>('.gift-art');if(container)art(gift.id,container)}
 function openGift(gift:Gift,bypass=false){if(!bypass&&!save.cheat&&!save.opened.includes(gift.id)&&!save.games[gift.id]&&!(gift.id==='mystery'&&config.mysteryBoxUnlockMode==='afterCake'&&!save.celebrated)){startGiftGame(gift.id,()=>openGift(gift));return}if(openingGift)return;if(!bypass&&!save.cheat&&gift.id==='mystery'&&config.mysteryBoxUnlockMode==='afterCake'&&!save.celebrated){toast(mainText("gift.secret-locked"));return}if(save.opened.includes(gift.id)){showGift(gift);scene.animateGift(gift.id);return}openingGift=true;scene.stop();scene.blocked=true;sound(659);void scene.playObjectAnimation(gift.id,'gift-opening-v1').catch(()=>toast('动画暂未载入，礼物已为你保留。')).finally(()=>{if(!save.opened.includes(gift.id))save.opened.push(gift.id);if((bypass||save.cheat)&&!save.games[gift.id])save.games[gift.id]={status:'skipped',score:0};if(gift.id==='chestnuts'||gift.id==='chocolate')restockSnack(gift.id);else grantItem(gift.id);openingGift=false;scene.blocked=false;scene.refresh();updateHUD();sound(1046);showGift(gift)})}
-const snackSeats:Record<Zone,string>={room:'sofa',garden:'bench',forest:'picnic',pier:'pier-bench',greenhouse:'greenhouse-seat',memory:'memory-seat',station:'station-seat',postoffice:'postal-seat',aquarium:'aquarium-seat',camp:'camp-seat',magic:'magic-seat',haunted:'haunted-seat',cinema:'cinema-seat',ferris:'ferris-seat',mars:'mars-seat',hotspring:'hotspring-seat',market:'market-seat',aurora:'aurora-seat',shichahai:'shichahai-seat',gulou:'gulou-seat',chaya:'chaya-seat',tianmo:'tianmo-seat',tanghulu:'tanghulu-seat',catcottage:'catcottage-seat',highschool:'school-seat',musicroom:'music-seat'};
+const snackSeats:Partial<Record<Zone,string>>={room:'sofa',garden:'bench',forest:'picnic',pier:'pier-bench',greenhouse:'greenhouse-seat',memory:'memory-seat',station:'station-seat',postoffice:'postal-seat',aquarium:'aquarium-seat',camp:'camp-seat',magic:'magic-seat',haunted:'haunted-seat',cinema:'cinema-seat',ferris:'ferris-seat',mars:'mars-seat',hotspring:'hotspring-seat',market:'market-seat',aurora:'aurora-seat',shichahai:'shichahai-seat',gulou:'gulou-seat',chaya:'chaya-seat',tianmo:'tianmo-seat',tanghulu:'tanghulu-seat',catcottage:'catcottage-seat',highschool:'school-seat',musicroom:'music-seat'};
 function shareSnack(id:Snack){
  if(!save.snackPortions[id]){toast(mainText('food.empty'));return}
- const seat=scene.getItem(snackSeats[scene.zone]);
+ const seat=scene.getItem(snackSeats[scene.zone]??'');
  if(!seat)return;
  closeModal();
  scene.approach(seat,()=>{
@@ -72,11 +75,21 @@ function showGift(gift:Gift){
  if(gift.id==='chestnuts'||gift.id==='chocolate')buttons=`<button class="primary" id="gift-special">${mainHtml('food.share')}</button>`+buttons;
  if(gift.id==='doll')buttons=`<button class="primary" id="gift-special">${mainHtml("doll.touch")}</button>`+buttons;
  if(gift.id==='keychain')buttons=`<button class="primary" id="gift-special">${mainHtml("keychain.shake")}</button>`+buttons;
- if(gift.id==='labubu'){message=config.labubuReveal.text;note=config.labubuReveal.image?'':mainText("labubu.pending")}
- if(gift.id==='mystery'){message=config.mysteryBoxReveal.text;note=mainText("gift.reveal-help")}
+ if(gift.id==='labubu'){message=[message,config.labubuReveal.text].filter(Boolean).join('\n\n');note=config.labubuReveal.image?'':mainText("labubu.pending")}
+ if(gift.id==='mystery'){message=[message,config.mysteryBoxReveal.text].filter(Boolean).join('\n\n');note=mainText("gift.reveal-help")}
  showModal(`<div class="subheading">${mainHtml("gift.opened-eyebrow")}</div><div class="gift-art"></div><h2 id="modal-title">${esc(gift.name)}</h2><div class="subheading">${esc(gift.subtitle)}</div><div class="gift-message">${esc(message)}</div>${gift.variant?`<small class="config-placeholder">${esc(gift.variant)}</small>`:''}${note?`<small class="config-placeholder">${esc(note)}</small>`:''}<div class="modal-actions">${buttons}</div>`,'gift');
- giftArt(gift);if(gift.id==='moon'&&config.birthDateForMoon&&config.moonImage){const img=new Image();img.src=mediaUrl(config.moonImage);img.alt=mainText("moon.image-alt");img.style.cssText='max-width:110px;max-height:110px;position:relative';document.querySelector('.gift-art')!.replaceChildren(img)}
- const reveal=gift.id==='labubu'?config.labubuReveal.image:gift.id==='mystery'?config.mysteryBoxReveal.image:'';if(reveal){const img=new Image();img.src=mediaUrl(reveal);img.alt=mainText("gift.image-alt");img.style.cssText='max-height:120px;max-width:180px;position:relative';document.querySelector('.gift-art')!.replaceChildren(img)}
+ giftArt(gift);
+ function replaceGiftArt(path:string,alt:string,maxWidth:number,maxHeight:number){
+  const art=document.querySelector('.gift-art');
+  if(!art)return;
+  const image=new Image();
+  image.alt=alt;
+  Object.assign(image.style,{maxWidth:maxWidth+'px',maxHeight:maxHeight+'px',position:'relative'});
+  image.onload=()=>{if(art.isConnected)art.replaceChildren(image)};
+  image.src=mediaUrl(path);
+ }
+ if(gift.id==='moon'&&config.birthDateForMoon&&config.moonImage)replaceGiftArt(config.moonImage,mainText("moon.image-alt"),110,110);
+ const reveal=gift.id==='labubu'?config.labubuReveal.image:gift.id==='mystery'?config.mysteryBoxReveal.image:'';if(reveal)replaceGiftArt(reveal,mainText("gift.image-alt"),180,120);
  appendReplay(gift.id);action('gift-close',closeModal);action('gift-special',()=>{if(gift.id==='hat'){save.hat=!save.hat;persist();scene.refresh();showGift(gift);toast(save.hat?mainText("hat.equipped"):mainText("hat.stored"))}else if(gift.id==='band'){save.band=!save.band;persist();scene.refresh();showGift(gift);toast(mainText("band.equipped"))}else if(gift.id==='earphones'){save.earphones=!save.earphones;persist();scene.refresh();showGift(gift)}else if(gift.id==='chestnuts'||gift.id==='chocolate'){shareSnack(gift.id)}else{const art=document.querySelector<HTMLElement>('.gift-art');art?.classList.add('gift-touched');window.setTimeout(()=>art?.classList.remove('gift-touched'),650);if(scene.zone==='room')scene.animateGift(gift.id);sound();toast(gift.id==='doll'?mainText("doll.response"):mainText("keychain.response"))}})
 }
 function showLetter(){showModal(`<div class="subheading">${mainHtml('letter.eyebrow')}</div><h2 id="modal-title">${mainHtml('letter.title',{name:config.girlName})}</h2><div class="letter-body" tabindex="0">${esc(config.letterText)}</div><div class="modal-actions"><button class="secondary" id="letter-close">${mainHtml("letter.close")}</button></div>`,'letter');action('letter-close',closeModal)}
@@ -103,7 +116,7 @@ function talk(){
 function placeDialogue(id:string){const content=places[id];if(!content)return;scene.remember(id);if(id==='marshmallow')restockSnack('marshmallow');if(id==='cabinet')for(const snack of ['chestnuts','chocolate'] as const)if(save.opened.includes(snack))restockSnack(snack);if(id==='chime')sound(1046);if(id==='shell'||id==='ocean-echo')sound(587);if(content.sit)scene.sit(content.sit);quietLine(content.response)}
 
 function interact(id:string){
- if(modalOpen||dialogueOpen||cinematic)return;if(sceneActivity&&sceneActivity.kind!=='workshop')return;if(musicRoom.interact(id))return;if(id==='taoyuan-portal'){enterTaoyuan();return}if(id.startsWith('game-')){const kind=id.slice(5);startGiftGame(({pairs:'chocolate',rhythm:'earphones',catch:'chestnuts',sequence:'notes',wish:'moon',ribbon:'hat'} as Record<string,GiftId>)[kind]??'notes');return}if(['chair-left','chair-right','greenhouse-seat','memory-seat'].includes(id)){scene.sit(id);return}if(id==='record'){scene.affection('dance');quietLine(mainText("record.jammed"));return}if(id==='seed'||id==='future'){writeFuture(undefined,undefined,undefined,()=>scene.remember(id));return}if(id==='aquarium-wish'){writeFuture('birthday-aquarium-note',mainText("aquarium.note-title"),mainText("aquarium.note-saved"));return}if(id==='post-letter'){writeFuture('birthday-postcard',mainText("postcard.title"),mainText("postcard.saved"));return}const gift=config.gifts.find(g=>g.id===id);if(gift){openGift(gift);return}const item=scene.getItem(id);if(item?.kind==='collect'){enhancements.collect(item);return}if(item?.kind==='slot'){enhancements.bag(item);return}if(['movie','memory-projector','concert','ferris-ride'].includes(id)){openTheater(id);return}if(id.includes('-small-note-0')||['movie-note','mars-message'].includes(id)){writeFuture('birthday-'+id,mainText("moment.title"),mainText("moment.saved"));return}
+ if(modalOpen||dialogueOpen||cinematic)return;if(sceneActivity&&sceneActivity.kind!=='workshop')return;if(musicRoom.interact(id))return;if(id==='taoyuan-portal'){choosePortal();return}if(id.startsWith('game-')){const kind=id.slice(5);startGiftGame(({pairs:'chocolate',rhythm:'earphones',catch:'chestnuts',sequence:'notes',wish:'moon',ribbon:'hat'} as Record<string,GiftId>)[kind]??'notes');return}if(['chair-left','chair-right','greenhouse-seat','memory-seat'].includes(id)){scene.sit(id);return}if(id==='record'){scene.affection('dance');quietLine(mainText("record.jammed"));return}if(id==='seed'||id==='future'){writeFuture(undefined,undefined,undefined,()=>scene.remember(id));return}if(id==='aquarium-wish'){writeFuture('birthday-aquarium-note',mainText("aquarium.note-title"),mainText("aquarium.note-saved"));return}if(id==='post-letter'){writeFuture('birthday-postcard',mainText("postcard.title"),mainText("postcard.saved"));return}const gift=config.gifts.find(g=>g.id===id);if(gift){openGift(gift);return}const item=scene.getItem(id);if(item?.externalGame){openExternalGame(item.name,item.externalGame);return}if(item?.webPortal){scene.remember(id);openPortalPage(item.name,item.webPortal,places[id]?.response);return}if(item?.practiceGame){startGiftGame(item.practiceGame,()=>placeDialogue(id),false);return}if(item?.kind==='collect'){enhancements.collect(item);return}if(item?.kind==='slot'){enhancements.bag(item);return}if(id==='ferris-ride'){openFerris();return}if(['movie','memory-projector','concert'].includes(id)){openTheater(id);return}if(id.includes('-small-note-0')||['movie-note','mars-message'].includes(id)){writeFuture('birthday-'+id,mainText("moment.title"),mainText("moment.saved"));return}
  if(item?.to){travel(item.to);return}
  if(id.startsWith('sugar-')&&id!=='sugar-photo'){scene.remember(id);openWorkshopAt(id);return}
  if(id==='heartbeat-cards'||id==='heartbeat-jump'){
@@ -120,7 +133,7 @@ function interact(id:string){
 if(id==='cake')wish();else if(id==='boy')talk();else if(places[id])placeDialogue(id);else if(['sofa','swing','bench','sea'].includes(id))scene.sit(id);
 }
 function travel(zone:Zone){
- if(!ready||!started||openingGift||cinematic||zone===scene.zone)return;closeSceneActivity();if(dialogueOpen)closeDialogue();if(modalOpen)closeModal();cinematic=true;
+ if(!ready||!started||openingGift||cinematic||zone===scene.zone)return;if(worlds[zone].backgroundUrl&&scene.onlineWorld?.active){toast(uiCopy('map.cloud-solo'));return}closeSceneActivity();if(dialogueOpen)closeDialogue();if(modalOpen)closeModal();cinematic=true;
  void scene.transitionTo(zone,()=>{cinematic=false;updateHUD();$('location-toast').textContent='✦ '+worlds[zone].name+' ✦';$('location-toast').classList.add('show');window.setTimeout(()=>$('location-toast').classList.remove('show'),2400)});
 }
 function showNearby(item?:Item){
@@ -228,14 +241,27 @@ function openWorkshopAt(station:string){
   activity.dispose=workshopVisit.dispose;
  }else workshopVisit.arrive(station);
 }
-function startGiftGame(id:GiftId,done?:()=>void){
+function startGiftGame(id:GiftId,done?:()=>void,recordProgress=true){
+ const external=recordProgress?cloudGiftGames[id]:undefined;
+ if(external){
+  const gift=config.gifts.find(g=>g.id===id)!;
+  openExternalGame(gift.name,external,status=>{
+   save.games[id]={status,score:status==='won'?100:0};
+   persist();
+   done?.();
+  },()=>startBuiltInGiftGame(id,done,recordProgress));
+  return;
+ }
+ startBuiltInGiftGame(id,done,recordProgress);
+}
+function startBuiltInGiftGame(id:GiftId,done:(()=>void)|undefined,recordProgress:boolean){
  const gift=config.gifts.find(g=>g.id===id);
  const activity=mountSceneActivity('game-host','game',gift?.name??'');
  launchGiftGame(id,activity.host,result=>{
   if(sceneActivity!==activity)return;
   closeSceneActivity();
   if(result.status!=='exit')done?.();
- },(scene.textures.get('gift-'+id).getSourceImage() as HTMLCanvasElement).toDataURL());
+ },(scene.textures.get('gift-'+id).getSourceImage() as HTMLCanvasElement).toDataURL(),recordProgress);
 }
 function appendReplay(id:GiftId){
  const button=document.createElement('button');button.className='secondary';
@@ -243,12 +269,23 @@ function appendReplay(id:GiftId){
  button.onclick=()=>startGiftGame(id,()=>showGift(config.gifts.find(g=>g.id===id)!));
  $('modal-content').append(button);
 }
+function openFerris(){
+ const activity=mountSceneActivity('film-host','film',uiCopy('theater.ride-title'));
+ activity.host.textContent=uiCopy('theater.ride.board');
+ const leave=scene.rideFerris(()=>{
+  closeSceneActivity();
+  scene.remember('ferris-ride');
+  quietLine(uiCopy('theater.ride.arrive'));
+ });
+ if(!leave){closeSceneActivity();quietLine(uiCopy('theater.ride-unavailable'));return}
+ activity.dispose=leave;
+}
 function openTheater(id:string){
  const activity=mountSceneActivity('film-host','film',mainText('cinema.pick'));
- if(id!=='movie'){void screenFilm(id==='concert'?'concert':id==='ferris-ride'?'ferris':'meet',activity);return}
+ if(id!=='movie'){void screenFilm(id==='concert'?'concert':'meet',activity);return}
  for(const title of ['meet','travel','birthday'] as const){
   const choice=document.createElement('button');choice.className='secondary';
-  choice.textContent=mainText(title==='meet'?'cinema.meet':title==='travel'?'cinema.travel':'cinema.birthday');choice.onclick=()=>void screenFilm(title,activity);
+  choice.textContent=films[title].title;choice.onclick=()=>void screenFilm(title,activity);
   activity.host.append(choice);
  }
 }
@@ -300,6 +337,49 @@ onlineGame=installOnlineGame({
  getSnapshot:online.getSnapshot,
  getPlayerId:online.getPlayerId,
 });
+function choosePortal(){
+ showModal('<h2 id="modal-title">小屋传送门</h2><div class="portal-destinations"><button class="primary" id="portal-ideal">理想箱</button>'+Array.from({length:2},(_,i)=>cloudPortals[i]?'<button class="secondary" id="cloud-portal-'+i+'">'+esc(cloudPortals[i].label)+'</button>':'<button class="secondary" disabled>敬请期待</button>').join('')+'</div>','portal');
+ action('portal-ideal',()=>{closeModal();enterTaoyuan()});
+ cloudPortals.forEach((portal,i)=>action('cloud-portal-'+i,()=>openPortalPage(portal.label,portal.url)));
+}
+function openExternalGame(label:string,url:string,finish?:(status:'won'|'skipped')=>void,fallback?:()=>void){
+ const activity=mountSceneActivity('external-game-host','arcade',label);
+ activity.element.classList.add('scene-activity-external-game');
+ const frame=document.createElement('iframe');
+ frame.title=label;
+ frame.setAttribute('sandbox','allow-scripts');
+ frame.referrerPolicy='no-referrer';
+ frame.src=url;
+ activity.host.append(frame);
+ if(!finish)return;
+ const controls=document.createElement('div');
+ controls.className='external-game-controls';
+ const skip=document.createElement('button');
+ skip.type='button';skip.className='secondary';skip.textContent=uiCopy('external-game.skip');
+ controls.append(skip);
+ if(fallback){
+  const offline=document.createElement('button');
+  offline.type='button';offline.className='secondary';offline.textContent=uiCopy('external-game.offline');
+  offline.onclick=()=>{if(sceneActivity===activity)fallback()};
+  controls.prepend(offline);
+ }
+ activity.element.append(controls);
+ const controller=new AbortController();
+ activity.dispose=()=>controller.abort();
+ const complete=(status:'won'|'skipped')=>{
+  if(sceneActivity!==activity)return;
+  closeSceneActivity();
+  finish(status);
+ };
+ skip.onclick=()=>complete('skipped');
+ window.addEventListener('message',event=>{
+  if(event.source===frame.contentWindow&&event.origin==='null'&&event.data?.type==='lovehouse:minigame-complete')complete('won');
+ },{signal:controller.signal});
+}
+function openPortalPage(label:string,url:string,response?:string){
+ showModal('<h2 id="modal-title">'+esc(label)+'</h2>'+(response?'<p class="body-copy">'+esc(response)+'</p>':'')+
+  '<iframe title="'+esc(label)+'" sandbox="allow-scripts" referrerpolicy="no-referrer" src="'+esc(url)+'" style="width:100%;height:55vh;border:0"></iframe>','portal-page');
+}
 function enterTaoyuan(){
  if(taoyuan||!started)return;scene.stop();scene.blocked=true;cinematic=true;duckAudio(true);
  const snapshot=online.getSnapshot(),me=snapshot?.players.find(p=>p.id===online.getPlayerId());
