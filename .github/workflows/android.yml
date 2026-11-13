@@ -32,7 +32,8 @@ jobs:
           if [[ ! -f "$ANDROID_HOME/platforms/android-35/android.jar" || ! -x "$ANDROID_HOME/build-tools/35.0.0/apksigner" ]]; then
             "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
           fi
-      - run: pip install pillow fonttools brotli
+      - run: pip install pillow fonttools brotli cryptography
+      - run: python -m unittest discover -s tools -p test_hot_update.py
       - run: npm ci
       - run: npm run build
       - name: Prepare Android launcher icon
@@ -61,4 +62,14 @@ jobs:
         with:
           name: lovehouse-android-offline
           path: android-delivery
+          if-no-files-found: error
+      - name: Build signed resource update
+        run: python -X utf8 tools/package_hot_update.py --version "$GITHUB_RUN_NUMBER"
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/lovehouse-signing.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lovehouse-content-update
+          path: hot-update-delivery
           if-no-files-found: error
