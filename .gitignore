@@ -8,6 +8,9 @@ playwright-report/
 test-results/
 src-tauri/target/
 .openai/
+android/.gradle/
+android/app/build/
+android/app/src/main/res/drawable-nodpi/cottage_icon.png
 
 work/taoyuan-build/
 
