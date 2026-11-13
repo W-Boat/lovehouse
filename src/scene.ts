@@ -147,7 +147,9 @@ export class Cottage extends Phaser.Scene {
  }
  approachById(id:string){const item=this.getItem(id);if(item)this.approach(item)}
  resizeView(){if(!this.cameras?.main)return;const camera=this.cameras.main;camera.setZoom(Math.max(camera.width/640,camera.height/426.667));this.frameView()}
- private frameView(){const c=this.cameras.main,halfH=c.height/c.zoom/2,halfW=c.width/c.zoom/2;const y=this.entered?Phaser.Math.Clamp(this.controlledActor.y-80,halfH,426.667-halfH):213.333;c.centerOn(this.entered?Phaser.Math.Clamp(this.controlledActor.x,halfW,640-halfW):320,y)}
+ private projectionFraming=false;
+ frameProjection(enabled:boolean){this.projectionFraming=enabled;this.frameView()}
+ private frameView(){const c=this.cameras.main,halfH=c.height/c.zoom/2,halfW=c.width/c.zoom/2;const y=this.projectionFraming?halfH:this.entered?Phaser.Math.Clamp(this.controlledActor.y-80,halfH,426.667-halfH):213.333;c.centerOn(this.entered&&!this.projectionFraming?Phaser.Math.Clamp(this.controlledActor.x,halfW,640-halfW):320,y)}
  project(x:number,y:number){const c=this.cameras.main;return{x:(x-c.worldView.x)*c.zoom,y:(y-c.worldView.y)*c.zoom}}
  async transitionTo(zone:Zone,done:()=>void){
   if(!this.onlineWorld?.handWalking)this.onlineWorld?.cancelAffection();const generation=++this.transitionGeneration;this.transitionTarget=zone;this.transitioning=true;this.transitionCleanup?.();this.transitionCleanup=undefined;this.blocked=true;this.stop();

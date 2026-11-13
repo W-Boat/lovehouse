@@ -6,11 +6,11 @@ import {setAmbience} from './audio';
 import {films,filmMoment,concertSection,rideProgress,type FilmId} from '../content/films';
 import personal from '../content/personal.json';
 /** Original frame-based shorts. Playback never moves the actors in the live world. */
-export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>void){
+export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>void,projection?:HTMLElement){
  let disposed=false,paused=false,ended=false,time=0,last=0,raf=0,affection=false;
  const concert=id==='concert',ride=id==='ferris',filmId=(id in films?id:'meet') as FilmId,spec=films[filmId],duration=concert?90:ride?60:spec.duration;
  const controls=document.createElement('div');controls.className='modal-actions';const title=document.createElement('h2');title.id='modal-title';title.textContent=concert?uiCopy('theater.concert-title'):ride?uiCopy('theater.ride-title'):spec.title;
- const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;canvas.className='film-canvas';canvas.setAttribute('role','img');canvas.setAttribute('aria-label',formatCopy('theater.canvas-label',{title:title.textContent}));host.replaceChildren(title,canvas,controls);
+ const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;canvas.className='film-canvas';canvas.setAttribute('role','img');canvas.setAttribute('aria-label',formatCopy('theater.canvas-label',{title:title.textContent}));if(projection){title.removeAttribute('id');host.replaceChildren(title,controls);projection.append(canvas)}else host.replaceChildren(title,canvas,controls);
  const controller=new AbortController();const button=(label:string,run:()=>void)=>{const b=document.createElement('button');b.className='secondary';b.textContent=label;b.addEventListener('click',run,{signal:controller.signal});controls.append(b);return b};
  const pause=button(uiCopy('theater.pause'),()=>{if(ended)return;paused=!paused;pause.textContent=paused?uiCopy('theater.resume'):uiCopy('theater.pause')});button(uiCopy('theater.restart'),()=>{time=0;last=0;ended=false;paused=false;pause.textContent=uiCopy('theater.pause')});button(uiCopy('theater.close'),done);
  if(ride)button(uiCopy('theater.shoulder'),()=>affection=!affection);if(concert)button(uiCopy('theater.cheer'),()=>affection=!affection);setAmbience(concert?'mars':'cinema');

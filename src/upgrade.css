@@ -91,3 +91,26 @@ input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
 .jump-actor{position:absolute;z-index:1;height:42%;width:auto;max-width:20%;object-fit:contain;object-position:bottom;transform-origin:bottom;image-rendering:pixelated;pointer-events:none}
 .jump-meter{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;margin-top:7px}
 .jump-meter i{height:9px;background:#b78e72}.jump-meter .filled{background:#b24162}
+
+
+.scene-activity{position:absolute;z-index:23;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,74%);max-height:66%;overflow:auto;background:#f6e4bf;color:#553c32;border:2px solid #9d754f;box-shadow:3px 4px #241b2c88;padding:10px 46px 10px 12px;box-sizing:border-box;pointer-events:auto;overscroll-behavior:contain}
+.scene-activity h2{font-size:21px;line-height:1.3;margin:0 0 6px}
+.scene-activity p{line-height:1.4}
+.scene-activity-close{position:absolute;top:0;right:0;width:var(--control-size,44px);height:var(--control-size,44px);font-size:26px;border:0;background:#e5bf91;color:#553c32}
+.scene-activity button.secondary,.scene-activity button.primary{font-size:16px;min-height:var(--control-size,44px);padding:5px 10px}
+.scene-activity-film{width:max-content;max-width:74%;padding-top:5px;padding-bottom:5px}
+.scene-activity-film #film-host,.scene-activity-film .modal-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.scene-activity-film h2{margin:0;font-size:17px}
+.scene-projection{position:absolute;z-index:6;background:#191c29;overflow:hidden;pointer-events:none}
+.scene-projection .film-canvas{display:block;width:100%;height:100%;max-height:none;object-fit:contain;margin:0;image-rendering:pixelated}
+.scene-activity-workshop{width:min(530px,70%);max-height:40%}
+.scene-activity-workshop .side-board{margin:5px 0;padding:4px 6px}
+.scene-activity-workshop .side-board p{margin:0}
+.scene-activity-game .game-board{margin:6px 0;min-height:0}
+.scene-activity-game .game-board canvas{max-height:none;object-fit:fill;width:min(100%,calc(var(--game-canvas-height) * 2));height:auto;margin:auto}
+.scene-activity-game .game-board canvas.letter-canvas{width:min(100%,calc(var(--game-canvas-height) * 1.6667))}
+.scene-activity-game #game-host>p{margin:4px 0}
+#app.compact-hud .scene-activity{width:min(680px,74%);max-height:72%}
+#app.compact-hud .scene-activity-workshop{width:min(490px,68%);max-height:40%}
+
+.scene-activity #online-game-host section button{min-height:var(--control-size,44px);margin:2px 4px 2px 0}

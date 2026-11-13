@@ -18,10 +18,15 @@ test('workshop makes, sells and settles one hawthorn order',async({page})=>{
  await enter(page);
  const host=await openGame(page,'tanghulu','sugar-sell');
  await host.getByRole('button',{name:/冰糖山楂/}).click();
+ await expect(page.locator('#modal-backdrop')).toBeHidden();
+ await host.getByRole('button',{name:'去备料台串果'}).click();
  for(let i=0;i<3;i++)await host.getByRole('button',{name:'串上一颗'}).click();
+ await host.getByRole('button',{name:'去铜锅熬糖'}).click();
  for(let i=0;i<3;i++)await host.getByRole('button',{name:'添火'}).click();
  await host.getByRole('button',{name:'裹糖'}).click();
+ await host.getByRole('button',{name:'去晾糖架'}).click();
  await host.getByRole('button',{name:'晾凉装袋'}).click();
+ await host.getByRole('button',{name:'去柜台交单'}).click();
  await host.getByRole('button',{name:/交单/}).click();
  await host.getByRole('button',{name:'收摊结算'}).click();
  await expect(host).toContainText('净收益 4');
@@ -30,6 +35,7 @@ test('workshop makes, sells and settles one hawthorn order',async({page})=>{
 test('heartbeat jump animates the actual pixel character and saves a record',async({page})=>{
  await enter(page);
  const host=await openGame(page,'tianmo','heartbeat-jump');
+ await expect(page.locator('#modal-backdrop')).toBeHidden();
  const actor=host.getByRole('img',{name:'正在跳跃的像素小人'});
  await expect(actor).toHaveAttribute('src',/^data:image\/png/);
  await host.getByRole('button',{name:'自动跳：关'}).click();
@@ -49,4 +55,22 @@ test('heartbeat landlord deals 17 cards, calls landlord and plays a valid hint',
  await host.getByRole('button',{name:'提示',exact:true}).click();
  await host.getByRole('button',{name:'出牌',exact:true}).click();
  await expect(host.locator('.playing-card')).not.toHaveCount(20);
+});
+
+test('cinema projects into the scene screen and releases the controls on exit',async({page})=>{
+ await enter(page);
+ await page.evaluate(async ()=>{
+  const scene=(window as any).__cottage;
+  await new Promise<void>(resolve=>scene.transitionTo('cinema',resolve));
+  scene.approachById('movie');
+ });
+ const host=page.locator('#film-host');
+ await expect(host.getByRole('button')).toHaveCount(3);
+ await host.getByRole('button').first().click();
+ const canvas=page.locator('#game-frame > .scene-projection canvas');
+ await expect(canvas).toBeVisible();
+ await expect(page.locator('#modal-backdrop')).toBeHidden();
+ await page.keyboard.press('Escape');
+ await expect(canvas).toHaveCount(0);
+ expect(await page.evaluate(()=>(window as any).__cottage.blocked)).toBe(false);
 });

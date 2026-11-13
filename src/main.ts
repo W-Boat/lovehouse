@@ -38,11 +38,11 @@ let ready=false,loadFailed=false,modalOpen=false,modalKind='',openingGift=false,
 const esc=(value:string)=>value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function toast(text:string){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').classList.remove('hidden');toastTimer=window.setTimeout(()=>$('toast').classList.add('hidden'),3300)}
 function updateHUD(){document.body.classList.toggle('reduced-motion',save.reduced);const count=$('progress').querySelector('b');if(count)count.textContent=String(save.opened.length);$('music').classList.toggle('active',save.music);$('music').classList.toggle('muted',!save.music);$('ceremony-music').classList.toggle('muted',!save.music);$('ceremony-music').setAttribute('aria-pressed',String(save.music));$('music').setAttribute('aria-pressed',String(save.music));$('music').setAttribute('aria-label',save.music?mainText("hud.music-disable"):mainText("hud.music-enable"));$('music').title=save.music?mainText("hud.music-active"):mainText("hud.music-muted");$('progress').setAttribute('aria-label',mainText('hud.progress',{count:save.opened.length}))}
-function showModal(html:string,kind='general',closable=true){closeInteractionChoices();duckAudio(true);disposeGame();if(dialogueOpen)closeDialogue();$('nearby').classList.add('hidden');if(!modalOpen)lastFocus=document.activeElement as HTMLElement;modalKind=kind;modalOpen=true;scene.blocked=true;scene.stop();$('modal-content').innerHTML=html;$('modal-backdrop').classList.remove('hidden');$('close-modal').classList.toggle('hidden',!closable);$('modal').scrollTop=0;window.setTimeout(()=>{$('modal').querySelector<HTMLButtonElement>('button:not([disabled])')?.focus()},0)}
-function closeModal(){if(openingGift)return;document.dispatchEvent(new Event('cottage-modal-closed'));theaterDispose?.();theaterDispose=undefined;scene.releaseCinema();duckAudio(false);disposeGame();if(modalTimer)clearTimeout(modalTimer);modalOpen=false;modalKind='';$('modal-backdrop').classList.add('hidden');scene.darken(false);scene.blocked=!started||cinematic;lastFocus?.focus();if(scene.nearby)showNearby(scene.nearby)}
+function showModal(html:string,kind='general',closable=true){closeSceneActivity();closeInteractionChoices();duckAudio(true);disposeGame();if(dialogueOpen)closeDialogue();$('nearby').classList.add('hidden');if(!modalOpen)lastFocus=document.activeElement as HTMLElement;modalKind=kind;modalOpen=true;scene.blocked=true;scene.stop();$('modal-content').innerHTML=html;$('modal-backdrop').classList.remove('hidden');$('close-modal').classList.toggle('hidden',!closable);$('modal').scrollTop=0;window.setTimeout(()=>{$('modal').querySelector<HTMLButtonElement>('button:not([disabled])')?.focus()},0)}
+function closeModal(){if(openingGift)return;document.dispatchEvent(new Event('cottage-modal-closed'));duckAudio(false);disposeGame();if(modalTimer)clearTimeout(modalTimer);modalOpen=false;modalKind='';$('modal-backdrop').classList.add('hidden');scene.darken(false);scene.blocked=!started||cinematic;lastFocus?.focus();if(scene.nearby)showNearby(scene.nearby)}
 $('close-modal').onclick=closeModal;
 $('modal-backdrop').addEventListener('pointerdown',e=>{if(e.target===$('modal-backdrop')&&modalKind!=='wish'&&modalKind!=='reset')closeModal()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&interactionChoices){e.preventDefault();closeInteractionChoices();showNearby(scene.nearby);return}if((e.key==='Escape'||e.key==='e'||e.key==='E')&&dialogueOpen){e.preventDefault();e.stopPropagation();closeDialogue();return}if(e.key==='Escape'&&!modalOpen&&!dialogueOpen){if(cinematic&&!ceremony){cinematic=false;scene.blocked=false}scene.stop();return}if(e.key==='Escape'&&modalOpen&&modalKind!=='wish')closeModal();if(e.key==='Tab'&&modalOpen){const items=Array.from($('modal').querySelectorAll<HTMLElement>('button:not(.hidden):not([disabled]),a[href],input,textarea'));const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sceneActivity){e.preventDefault();closeSceneActivity();return}if(e.key==='Escape'&&interactionChoices){e.preventDefault();closeInteractionChoices();showNearby(scene.nearby);return}if((e.key==='Escape'||e.key==='e'||e.key==='E')&&dialogueOpen){e.preventDefault();e.stopPropagation();closeDialogue();return}if(e.key==='Escape'&&!modalOpen&&!dialogueOpen){if(cinematic&&!ceremony){cinematic=false;scene.blocked=false}scene.stop();return}if(e.key==='Escape'&&modalOpen&&modalKind!=='wish')closeModal();if(e.key==='Tab'&&modalOpen){const items=Array.from($('modal').querySelectorAll<HTMLElement>('button:not(.hidden):not([disabled]),a[href],input,textarea'));const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}});
 function action(id:string,fn:()=>void){const element=document.getElementById(id);if(element)element.onclick=fn}
 function art(id:GiftId,parent:HTMLElement,size=150){const source=scene.textures.get('gift-'+id).getSourceImage() as HTMLCanvasElement;const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d')!;ctx.imageSmoothingEnabled=false;const ratio=Math.min((size-12)/source.width,(size-12)/source.height);const w=source.width*ratio,h=source.height*ratio;ctx.drawImage(source,(size-w)/2,(size-h)/2,w,h);parent.prepend(canvas)}
 function giftArt(gift:Gift){const container=document.querySelector<HTMLElement>('.gift-art');if(container)art(gift.id,container)}
@@ -86,7 +86,7 @@ async function wish(){
 function celebration(){showModal(`<div class="celebration"><span class="big-star">✧</span><div class="subheading">${mainHtml('celebration.eyebrow')}</div><h2 id="modal-title">${mainHtml('ceremony.birthday',{name:config.girlName})}</h2><p>${mainHtml("celebration.wish")}<br>${mainHtml("celebration.stay")}</p></div><div class="modal-actions"><button class="primary" id="celebrate-letter">${mainHtml("celebration.letter")}</button><button class="secondary" id="celebrate-photo">${mainHtml("celebration.photo")}</button></div><div class="modal-actions"><button class="secondary" id="celebrate-continue">${mainHtml("celebration.continue")}</button></div>`,'celebration');action('celebrate-letter',()=>{const g=config.gifts.find(g=>g.id==='letter')!;closeModal();openGift(g)});action('celebrate-photo',()=>{closeModal();takePhoto()});action('celebrate-continue',closeModal)}
 type Choice={label:string;run:()=>void};
 function showDialogue(speaker:string,text:string,choices:Choice[]=[],portrait=true){
- if(modalOpen)return;lastFocus=document.activeElement as HTMLElement;dialogueOpen=true;scene.blocked=true;scene.stop();$('nearby').classList.add('hidden');document.body.classList.add('conversing');
+ if(modalOpen)return;closeSceneActivity();lastFocus=document.activeElement as HTMLElement;dialogueOpen=true;scene.blocked=true;scene.stop();$('nearby').classList.add('hidden');document.body.classList.add('conversing');
  $('dialogue-speaker').textContent=speaker;$('dialogue-text').textContent=text.replace(/【可替换示例】/g,'');$('dialogue-portrait').classList.toggle('hidden',!portrait);if(portrait){$('dialogue-portrait').style.backgroundImage='url('+scene.avatar('boy')+')';$('dialogue-portrait').style.backgroundSize='contain';$('dialogue-portrait').style.backgroundPosition='center';$('dialogue-portrait').style.backgroundRepeat='no-repeat'}$('dialogue').classList.remove('hidden');const holder=$('dialogue-choices');holder.replaceChildren();
  for(const choice of choices){const button=document.createElement('button');button.className='dialogue-choice';button.textContent=choice.label;button.onclick=choice.run;holder.append(button)}
  $('dialogue-close').focus();
@@ -99,21 +99,24 @@ function talk(){
 }
 function placeDialogue(id:string){const content=places[id];if(!content)return;const item=scene.getItem(id);showDialogue(item?.name??mainText("dialogue.now"),content.text,[{label:content.choice,run:()=>{closeDialogue();scene.remember(id);if(id==='marshmallow'){restockSnack('marshmallow');toast(mainText('food.marshmallow-ready'))}if(id==='cabinet'){const gifts=(['chestnuts','chocolate'] as const).filter(snack=>save.opened.includes(snack));for(const snack of gifts)restockSnack(snack);if(gifts.length)toast(mainText('food.restocked'))}if(id==='chime')sound(1046);if(id==='shell'||id==='ocean-echo')sound(587);if(content.sit)scene.sit(content.sit);quietLine(content.response)}}],false)}
 function interact(id:string){
- if(modalOpen||dialogueOpen||cinematic)return;if(id==='taoyuan-portal'){enterTaoyuan();return}if(id.startsWith('game-')){const kind=id.slice(5);startGiftGame(({pairs:'chocolate',rhythm:'earphones',catch:'chestnuts',sequence:'notes',wish:'moon',ribbon:'hat'} as Record<string,GiftId>)[kind]??'notes');return}if(['chair-left','chair-right','greenhouse-seat','memory-seat'].includes(id)){scene.sit(id);return}if(id==='record'){scene.affection('dance');quietLine(mainText("record.jammed"));return}if(id==='seed'||id==='future'){writeFuture(undefined,undefined,undefined,()=>scene.remember(id));return}if(id==='aquarium-wish'){writeFuture('birthday-aquarium-note',mainText("aquarium.note-title"),mainText("aquarium.note-saved"));return}if(id==='post-letter'){writeFuture('birthday-postcard',mainText("postcard.title"),mainText("postcard.saved"));return}const gift=config.gifts.find(g=>g.id===id);if(gift){openGift(gift);return}const item=scene.getItem(id);if(item?.kind==='collect'){enhancements.collect(item);return}if(item?.kind==='slot'){enhancements.bag(item);return}if(['movie','memory-projector','concert','ferris-ride'].includes(id)){openTheater(id);return}if(id.includes('-small-note-0')||['movie-note','mars-message'].includes(id)){writeFuture('birthday-'+id,mainText("moment.title"),mainText("moment.saved"));return}
+ if(modalOpen||dialogueOpen||cinematic)return;if(sceneActivity&&sceneActivity.kind!=='workshop')return;if(id==='taoyuan-portal'){enterTaoyuan();return}if(id.startsWith('game-')){const kind=id.slice(5);startGiftGame(({pairs:'chocolate',rhythm:'earphones',catch:'chestnuts',sequence:'notes',wish:'moon',ribbon:'hat'} as Record<string,GiftId>)[kind]??'notes');return}if(['chair-left','chair-right','greenhouse-seat','memory-seat'].includes(id)){scene.sit(id);return}if(id==='record'){scene.affection('dance');quietLine(mainText("record.jammed"));return}if(id==='seed'||id==='future'){writeFuture(undefined,undefined,undefined,()=>scene.remember(id));return}if(id==='aquarium-wish'){writeFuture('birthday-aquarium-note',mainText("aquarium.note-title"),mainText("aquarium.note-saved"));return}if(id==='post-letter'){writeFuture('birthday-postcard',mainText("postcard.title"),mainText("postcard.saved"));return}const gift=config.gifts.find(g=>g.id===id);if(gift){openGift(gift);return}const item=scene.getItem(id);if(item?.kind==='collect'){enhancements.collect(item);return}if(item?.kind==='slot'){enhancements.bag(item);return}if(['movie','memory-projector','concert','ferris-ride'].includes(id)){openTheater(id);return}if(id.includes('-small-note-0')||['movie-note','mars-message'].includes(id)){writeFuture('birthday-'+id,mainText("moment.title"),mainText("moment.saved"));return}
  if(item?.to){travel(item.to);return}
- if(id.startsWith('sugar-')&&id!=='sugar-photo'){showModal('<div id="side-game-host"></div>','side-game');scene.remember(id);openSugarWorkshop($('side-game-host'));return}
- if(id==='heartbeat-cards'||id==='heartbeat-jump'){showModal('<div id="side-game-host"></div>','side-game');openHeartbeat($('side-game-host'),id==='heartbeat-cards'?'cards':'jump',scene.avatar(scene.onlineWorld?.role==='guest'?'boy':'girl'));return}
+ if(id.startsWith('sugar-')&&id!=='sugar-photo'){scene.remember(id);openWorkshopAt(id);return}
+ if(id==='heartbeat-cards'||id==='heartbeat-jump'){
+  const activity=mountSceneActivity('side-game-host','arcade',id==='heartbeat-cards'?'心跳斗地主':'心跳跳一跳');
+  openHeartbeat(activity.host,id==='heartbeat-cards'?'cards':'jump',scene.avatar(scene.onlineWorld?.role==='guest'?'boy':'girl'));return;
+ }
  if(/^(shichahai|gulou|chaya|tianmo|sugar)-photo$/.test(id)){void takePhoto();return}
  if(/^(shichahai|chaya|tianmo)-note$/.test(id)){writeFuture(id);return}
  if(seatDefinition(scene.zone,id)&&!places[id]){scene.sit(id);return}
 if(id==='cake')wish();else if(id==='boy')talk();else if(places[id])placeDialogue(id);else if(['sofa','swing','bench','sea'].includes(id))scene.sit(id);
 }
 function travel(zone:Zone){
- if(!ready||!started||openingGift||cinematic||zone===scene.zone)return;if(dialogueOpen)closeDialogue();if(modalOpen)closeModal();cinematic=true;
+ if(!ready||!started||openingGift||cinematic||zone===scene.zone)return;closeSceneActivity();if(dialogueOpen)closeDialogue();if(modalOpen)closeModal();cinematic=true;
  void scene.transitionTo(zone,()=>{cinematic=false;updateHUD();$('location-toast').textContent='✦ '+worlds[zone].name+' ✦';$('location-toast').classList.add('show');window.setTimeout(()=>$('location-toast').classList.remove('show'),2400)});
 }
 function showNearby(item?:Item){
- activeHint=item;const hint=$('nearby'),button=$<HTMLButtonElement>('interact');const available=Boolean(item&&!modalOpen&&!dialogueOpen&&!cinematic&&started&&!scene.seated&&!scene.movingTo);
+ activeHint=item;const hint=$('nearby'),button=$<HTMLButtonElement>('interact');const available=Boolean(item&&!modalOpen&&!dialogueOpen&&!scene.blocked&&!cinematic&&started&&!scene.seated&&!scene.movingTo);
  button.disabled=!available;button.querySelector('small')!.textContent=available?actionLabel(item!,save.opened.includes(item!.id as GiftId)):mainText("nearby.approach");
  if(!available||interactionChoices){hint.classList.add('hidden');return}const label=actionLabel(item!,save.opened.includes(item!.id as GiftId));
  hint.innerHTML=`<span class="cue-name">${esc(item!.name)}</span><span class="cue-action"><kbd>E</kbd></span>`;hint.title=label+' '+item!.name;hint.setAttribute('aria-label',label+' '+item!.name);hint.classList.remove('hidden');button.setAttribute('aria-label',label+' '+item!.name);
@@ -145,7 +148,7 @@ scene.bridge.on('interact',interact);scene.bridge.on('nearby',showNearby);scene.
 scene.bridge.on('hint-position',(p:{x:number;y:number})=>{if(!activeHint||interactionChoices||modalOpen||dialogueOpen||cinematic||scene.blocked||scene.seated||scene.movingTo)return;const hint=$('nearby');if(hint.offsetWidth&&hint.offsetHeight)hintSize={width:hint.offsetWidth,height:hint.offsetHeight};const appRect=$('app').getBoundingClientRect(),obstacles=Array.from(document.querySelectorAll<HTMLElement>('#round-minimap,.hud-tools,.place-plaque')).filter(node=>node.offsetWidth&&node.offsetHeight&&!node.classList.contains('hidden')).map(node=>{const r=node.getBoundingClientRect(),a=localPoint(r.left,r.top,appRect,viewport),b=localPoint(r.right,r.bottom,appRect,viewport);return{left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)}}),position=hintPosition(p,viewport.width,viewport.height,hintSize.width,hintSize.height,obstacles);hint.classList.toggle('hidden',position.hidden);hint.style.left=position.x+'px';hint.style.top=position.y+'px'});
 scene.bridge.on('approaching',(item?:Item)=>{if(item){$('resting-line').classList.add('hidden');$('path-label').textContent=mainText('movement.approach',{item:item.name});$('path-notice').classList.remove('hidden');$('nearby').classList.add('hidden')}else{$('path-notice').classList.add('hidden');showNearby(scene.nearby)}});
 scene.bridge.on('destination',(point:{x:number;y:number})=>{const p=scene.project(point.x,point.y),el=$('destination-mark');el.style.left=p.x+'px';el.style.top=p.y+'px';el.classList.remove('ripple');void el.offsetWidth;el.classList.add('ripple')});
-scene.bridge.on('zone',(zone:Zone)=>{setAmbience(zone);$('location-name').textContent=worlds[zone].name;$('location-caption').textContent=worlds[zone].caption;$('resting-line').classList.add('hidden');updateHUD()});
+scene.bridge.on('zone',(zone:Zone)=>{closeSceneActivity();setAmbience(zone);$('location-name').textContent=worlds[zone].name;$('location-caption').textContent=worlds[zone].caption;$('resting-line').classList.add('hidden');updateHUD()});
 scene.bridge.on('seated',(kind:string)=>{$('game-frame').classList.add('seated');$('stand').classList.remove('hidden');$('nearby').classList.add('hidden');quietLine(restingLines[kind]??mainText("resting.fallback"))});
 scene.bridge.on('stood',()=>{$('game-frame').classList.remove('seated');$('stand').classList.add('hidden');$('resting-line').classList.add('hidden')});
 $('stand').onclick=()=>scene.stand();$('dialogue-close').onclick=closeDialogue;$('cancel-walk').onclick=()=>scene.stop();$('nearby').onclick=e=>{e.stopPropagation();if(activeHint&&!scene.blocked)scene.approach(activeHint)};
@@ -159,10 +162,111 @@ function moveStick(e:PointerEvent){if(stickPointer!==e.pointerId||scene.blocked)
 stick.onpointerdown=e=>{e.preventDefault();e.stopPropagation();if(scene.blocked)return;stickPointer=e.pointerId;stick.setPointerCapture(e.pointerId);moveStick(e)};stick.onpointermove=e=>{e.stopPropagation();moveStick(e)};stick.onpointerleave=release;stick.onpointerup=release;stick.onpointercancel=release;stick.onlostpointercapture=release;window.addEventListener('blur',()=>{release();scene.stop()});document.addEventListener('visibilitychange',()=>{if(document.hidden){release();scene.stop()}});document.addEventListener('save-error',()=>{$('save-status').textContent=mainText("save.failed")});
 window.addEventListener('pagehide',()=>{persist();if(photoUrl)URL.revokeObjectURL(photoUrl)});
 game=new Phaser.Game({type:Phaser.CANVAS,parent:'game',width:viewport.width,height:viewport.height,backgroundColor:'#241e26',pixelArt:true,roundPixels:true,antialias:false,scene:[scene],scale:{mode:Phaser.Scale.NONE,autoCenter:Phaser.Scale.NO_CENTER},render:{preserveDrawingBuffer:true},input:{activePointers:3}});
-function startGiftGame(id:GiftId,done?:()=>void){showModal('<div id="game-host"></div>','game');launchGiftGame(id,$('game-host'),result=>{closeModal();if(result.status!=='exit')done?.()},(scene.textures.get('gift-'+id).getSourceImage() as HTMLCanvasElement).toDataURL())}
-function appendReplay(id:GiftId){const b=document.createElement('button');b.className='secondary';b.textContent=mainText("game.replay");b.onclick=()=>startGiftGame(id,()=>showGift(config.gifts.find(g=>g.id===id)!));$('modal-content').append(b)}
-function openTheater(id:string){if(id==='movie'){showModal(`<h2 id="modal-title">${mainHtml("cinema.pick")}</h2><div class="menu-grid"><button id="film-meet" class="secondary">${mainHtml("cinema.meet")}</button><button id="film-travel" class="secondary">${mainHtml("cinema.travel")}</button><button id="film-birthday" class="secondary">${mainHtml("cinema.birthday")}</button></div>`,'cinema');for(const title of ['meet','travel','birthday'])action('film-'+title,()=>screenFilm(title))}else screenFilm(id==='concert'?'concert':id==='ferris-ride'?'ferris':'meet')}
-let theaterDispose:(()=>void)|undefined;async function screenFilm(id:string){showModal(`<h2 id="modal-title">${mainHtml("cinema.loading")}</h2>`,'film');try{await scene.prepareCinema()}catch{toast(mainText("cinema.error"));closeModal();return}if(!modalOpen||modalKind!=='film')return;showModal('<div id="film-host"></div>','film');theaterDispose=playCinema(id,$('film-host'),scene,()=>{theaterDispose?.();theaterDispose=undefined;closeModal()})}
+type SceneActivity={kind:'game'|'arcade'|'workshop'|'film';element:HTMLElement;host:HTMLElement;focus:HTMLElement|null;dispose?:()=>void};
+let sceneActivity:SceneActivity|undefined;
+let workshopVisit:ReturnType<typeof openSugarWorkshop>|undefined;
+function closeSceneActivity(){
+ const activity=sceneActivity;
+ if(!activity)return;
+ sceneActivity=undefined;
+ activity.dispose?.();
+ if(activity.kind==='game')disposeGame();
+ workshopVisit=undefined;
+ activity.element.remove();
+ duckAudio(false);
+ scene.blocked=!started||modalOpen||dialogueOpen||cinematic;
+ if(activity.focus?.isConnected)activity.focus.focus({preventScroll:true});
+ showNearby(scene.nearby);
+}
+function mountSceneActivity(id:string,kind:SceneActivity['kind'],label:string){
+ closeSceneActivity();
+ if(modalOpen)closeModal();
+ if(dialogueOpen)closeDialogue();
+ closeInteractionChoices();
+ const focus=document.activeElement as HTMLElement|null;
+ const element=document.createElement('section');
+ element.className='scene-activity scene-activity-'+kind;
+ element.setAttribute('aria-label',label);
+ const host=document.createElement('div');host.id=id;
+ const close=document.createElement('button');
+ close.type='button';close.className='scene-activity-close';close.textContent='×';
+ close.setAttribute('aria-label',mainText('scene-activity.close'));
+ close.onclick=closeSceneActivity;
+ element.addEventListener('keydown',event=>{
+  if(event.key!=='Tab'||kind==='workshop')return;
+  const items=Array.from(element.querySelectorAll<HTMLElement>('button:not([disabled]),canvas[tabindex]'));
+  const first=items[0],last=items.at(-1);
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}
+ });
+ element.append(host,close);
+ $('game-frame').append(element);
+ const activity:SceneActivity={kind,element,host,focus};
+ sceneActivity=activity;
+ scene.stop();
+ scene.blocked=kind!=='workshop';
+ if(scene.blocked){$('nearby').classList.add('hidden');duckAudio(true)}
+ $('resting-line').classList.add('hidden');
+ window.setTimeout(()=>{if(sceneActivity===activity&&kind!=='workshop')close.focus({preventScroll:true})},0);
+ return activity;
+}
+function openWorkshopAt(station:string){
+ if(!workshopVisit){
+  const activity=mountSceneActivity('side-game-host','workshop','糖葫芦制作车间');
+  workshopVisit=openSugarWorkshop(activity.host,station,id=>scene.approachById(id));
+ }else workshopVisit.arrive(station);
+}
+function startGiftGame(id:GiftId,done?:()=>void){
+ const gift=config.gifts.find(g=>g.id===id);
+ const activity=mountSceneActivity('game-host','game',gift?.name??'');
+ launchGiftGame(id,activity.host,result=>{
+  if(sceneActivity!==activity)return;
+  closeSceneActivity();
+  if(result.status!=='exit')done?.();
+ },(scene.textures.get('gift-'+id).getSourceImage() as HTMLCanvasElement).toDataURL());
+}
+function appendReplay(id:GiftId){
+ const button=document.createElement('button');button.className='secondary';
+ button.textContent=mainText('game.replay');
+ button.onclick=()=>startGiftGame(id,()=>showGift(config.gifts.find(g=>g.id===id)!));
+ $('modal-content').append(button);
+}
+function openTheater(id:string){
+ const activity=mountSceneActivity('film-host','film',mainText('cinema.pick'));
+ if(id!=='movie'){void screenFilm(id==='concert'?'concert':id==='ferris-ride'?'ferris':'meet',activity);return}
+ for(const title of ['meet','travel','birthday'] as const){
+  const choice=document.createElement('button');choice.className='secondary';
+  choice.textContent=mainText(title==='meet'?'cinema.meet':title==='travel'?'cinema.travel':'cinema.birthday');choice.onclick=()=>void screenFilm(title,activity);
+  activity.host.append(choice);
+ }
+}
+async function screenFilm(id:string,activity:SceneActivity){
+ activity.host.textContent=mainText('cinema.loading');
+ const zone=scene.zone;
+ const prepared=scene.prepareCinema();
+ let cancelled=false;
+ activity.dispose=()=>{cancelled=true;void prepared.then(release,release)};
+ function release(){if(sceneActivity?.kind!=='film')scene.releaseCinema()}
+ try{await prepared}catch{
+  if(sceneActivity===activity){closeSceneActivity();toast(mainText('cinema.error'))}
+  return;
+ }
+ if(cancelled||sceneActivity!==activity||scene.zone!==zone)return;
+ const rect=zone==='cinema'?{x:224,y:33,w:192,h:99}:zone==='memory'?{x:230,y:20,w:186,h:100}:zone==='mars'?{x:152,y:58,w:336,h:184}:{x:145,y:56,w:350,h:195};
+ const screen=document.createElement('div');screen.className='scene-projection';
+ $('game-frame').append(screen);
+ scene.frameProjection(true);
+ let frame=0;
+ const project=()=>{
+  const top=scene.project(rect.x,rect.y),bottom=scene.project(rect.x+rect.w,rect.y+rect.h);
+  screen.style.left=top.x+'px';screen.style.top=top.y+'px';
+  screen.style.width=(bottom.x-top.x)+'px';screen.style.height=(bottom.y-top.y)+'px';
+  frame=requestAnimationFrame(project);
+ };
+ project();
+ const dispose=playCinema(id,activity.host,scene,closeSceneActivity,screen);
+ activity.dispose=()=>{cancelAnimationFrame(frame);screen.remove();scene.frameProjection(false);dispose();release()};
+}
 function writeFuture(storageKey='birthday-future',title=mainText("future.title"),savedLine=mainText("future.saved"),onSaved?:()=>void){let old='';try{old=save.notes[storageKey]??localStorage.getItem(storageKey)??''}catch{}showModal(`<div class="subheading">${mainHtml("future.eyebrow")}</div><h2 id="modal-title">${esc(title)}</h2><p>${mainHtml("future.help")}</p><textarea id="future-note" maxlength="500" rows="5" placeholder="${mainHtml('future.placeholder')}"></textarea><div class="modal-actions"><button id="future-save" class="primary">${mainHtml("future.save")}</button></div><small>${mainHtml("future.storage-help")}</small>`);($('future-note') as HTMLTextAreaElement).value=old;action('future-save',()=>{try{save.notes[storageKey]=($('future-note') as HTMLTextAreaElement).value;if(storageKey==='birthday-postcard')grantItem('postcard');persist();closeModal();onSaved?.();scene.confetti();quietLine(savedLine)}catch{toast(mainText("future.save-error"))}})}
 action('companion-toggle',()=>{if(started&&!scene.blocked){if(scene.seated){scene.stand();quietLine(mainText("resting.stand"))}else scene.approachById('boy')}});
 let taoyuan:ReturnType<typeof openTaoyuan>|undefined;
@@ -171,7 +275,13 @@ let onlineGame:ReturnType<typeof installOnlineGame>|undefined;
 const online=installOnlineUI({open:showModal,close:closeModal,toast,profile:role=>({name:save.names[role==='guest'?'boy':'girl'],appearance:save.appearance[role==='guest'?'boy':'girl']}),onSnapshot:s=>onlineWorld?.handleSnapshot(s,online.getPlayerId()),onMessage:m=>{onlineWorld?.handleMessage(m);onlineGame?.handleMessage(m);if(m.type==='event'&&m.event==='taoyuan-state')taoyuan?.receive({kind:'state',...(m.data as {save:string;route:string})});if(m.type==='event'&&m.event==='taoyuan-field')taoyuan?.receive({kind:'field',...(m.data as TaoyuanField)});if(m.type==='event'&&m.event==='taoyuan-action')taoyuan?.receive({kind:'command',...(m.data as {route:string;index:number;text:string})})},onConnection:s=>{onlineWorld?.handleConnection(s);taoyuan?.setConnected(s==='connected')},onGame:g=>onlineGame?.start(g)});
 onlineWorld=installOnlineWorld(scene,online.client);
 installOnlineAffection(onlineWorld,{open:showModal,close:closeModal,toast});
-onlineGame=installOnlineGame({client:online.client,open:showModal,close:closeModal,getSnapshot:online.getSnapshot,getPlayerId:online.getPlayerId});
+onlineGame=installOnlineGame({
+ client:online.client,
+ open:()=>{mountSceneActivity('online-game-host','arcade','双人礼物门')},
+ close:closeSceneActivity,
+ getSnapshot:online.getSnapshot,
+ getPlayerId:online.getPlayerId,
+});
 function enterTaoyuan(){
  if(taoyuan||!started)return;scene.stop();scene.blocked=true;cinematic=true;duckAudio(true);
  const snapshot=online.getSnapshot(),me=snapshot?.players.find(p=>p.id===online.getPlayerId());

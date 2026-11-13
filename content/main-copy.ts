@@ -1,5 +1,6 @@
 import personal from './personal.json';
 export const mainCopyDefaults={
+  "scene-activity.close": "结束当前活动",
   "nearby.choose": "想看看哪一个？",
   "nearby.cancel": "收起物件选择",
   "hud.music-disable": "关闭音乐",
