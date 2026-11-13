@@ -52,3 +52,10 @@ input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
 #app.compact-hud #game-host .game-status{margin:6px 0;font-size:16px!important;min-height:24px}
 #app.compact-hud #game-host .game-controls{gap:6px}
 #app.compact-hud #game-host button{font-size:16px;min-height:44px}
+
+.started #app{transform:translate(-50%,-50%) scale(var(--ui-scale,1))}
+.started #app.rotated{transform:translate(-50%,-50%) rotate(90deg) scale(var(--ui-scale,1))}
+.hud-tools button{width:var(--control-size,44px);height:var(--control-size,44px)}
+#app.compact-hud .hud-tools.expanded{grid-template-columns:repeat(4,var(--control-size,44px));width:calc(4 * var(--control-size,44px) + 56px)}
+.modal button,.dialogue-choice,.game-controls button{min-height:var(--control-size,44px)}
+#scale-confirm[hidden]{display:none}
