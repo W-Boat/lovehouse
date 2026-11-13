@@ -7,7 +7,14 @@ test('cold-room tea interaction retains real sprites through sitting and rising'
  await page.locator('#map-toggle').click();await page.locator('#item-tea').click();
  await expect(page.locator('#dialogue')).toBeVisible({timeout:30000});
  await page.locator('#dialogue-choices button').click();
- await page.waitForFunction(()=>{const scene=(window as any).__cottage;return scene.seated==='tea'&&scene.seatedPhase>1.2},undefined,{timeout:20000});
+ await expect.poll(()=>page.evaluate(()=>{
+  const scene=(window as any).__cottage;
+  return {
+   seat:scene.seated,
+   settled:scene.seatedPhase>=scene.seatingDuration,
+   poses:[scene.player.texture.key,scene.boy.texture.key].map(key=>/pose-4(?:-|$)/.test(key)),
+  };
+ }),{timeout:20000,message:'Both actors finish the tea seating animation and use the seated pose'}).toEqual({seat:'tea',settled:true,poses:[true,true]});
  const sprites=await page.evaluate(()=>{
   const scene=(window as any).__cottage;
   return [scene.player,scene.boy].map(actor=>{
