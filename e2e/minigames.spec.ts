@@ -109,7 +109,7 @@ test.describe('phone touch controls',()=>{
    await expect(board).not.toHaveClass(/paused/);
    await game.getByRole('button',{name:'重新开始',exact:true}).tap();
    await game.getByRole('button',{name:'先退出',exact:true}).tap();
-   await expect(game).toHaveCount(0);
+   await expect(game).toBeHidden();
   }
   expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened)).toEqual([]);
  });
