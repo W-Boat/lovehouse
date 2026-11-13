@@ -9,9 +9,19 @@ for p in list(assets.glob('*.png')):
  dest=source/p.name
  if not dest.exists():p.replace(dest)
 for p in source.glob('*.png'):
+ # Seasonal backgrounds are generated individually. Four-up comparison sheets
+ # remain in the source archive and must never become game backgrounds.
+ if p.stem.startswith('outdoor-'):
+  if not re.fullmatch(r'outdoor-(garden|forest|pier|station|postoffice|camp|ferris|market|mars)-(spring|summer|autumn|winter)-(day|night)',p.stem):continue
+  folder=assets/'seasons';folder.mkdir(exist_ok=True)
+  dest=folder/(p.stem.removeprefix('outdoor-')+'.webp')
+  if rebuild_all or not dest.exists() or dest.stat().st_mtime<p.stat().st_mtime:
+   im=Image.open(p).convert('RGB');im.thumbnail((768,512),Image.Resampling.NEAREST)
+   im.save(dest,'WEBP',lossless=True,method=6)
+  continue
  dest=assets/(p.stem+'.webp')
  if rebuild_all or not dest.exists() or dest.stat().st_size<32 or dest.stat().st_mtime<p.stat().st_mtime:
-  sizes={'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(512,512),'boy-walk':(512,512),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
+  sizes={'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(512,512),'boy-walk':(512,512),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
   im=Image.open(p).convert('RGBA');im.thumbnail(sizes.get(p.stem,(768,512)),Image.Resampling.NEAREST)
   im.save(dest,'WEBP',lossless=True,method=6)
 art_stamp.write_text('pixel-atlas-v3')

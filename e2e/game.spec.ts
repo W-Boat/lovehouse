@@ -1,4 +1,20 @@
 import {test,expect} from '@playwright/test';
+test('calendar initializes on the birthday, persists manual climate and rolls over automatically',async({page},info)=>{
+ await enter(page);await page.locator('#settings').click();await page.getByRole('button',{name:'时间',exact:true}).click();
+ await page.locator('#calendar-enabled').check();await expect(page.locator('#calendar-fields')).toBeEnabled({timeout:30000});
+ await expect(page.locator('#calendar-date')).toHaveValue('2026-10-23');
+ await page.selectOption('#calendar-time-mode','manual');await page.locator('#calendar-date').fill('2028-02-28');await page.locator('#calendar-date').dispatchEvent('change');
+ await page.locator('#calendar-time').fill('23:59');await page.locator('#calendar-time').dispatchEvent('change');
+ await page.selectOption('#calendar-season-mode','manual');await page.selectOption('#calendar-season','winter');
+ await page.selectOption('#calendar-weather-mode','manual');await page.selectOption('#calendar-weather','snow');
+ await page.selectOption('#calendar-temperature-mode','manual');await page.locator('#calendar-temperature').fill('-5');await page.locator('#calendar-temperature').dispatchEvent('change');
+ await expect(page.locator('#calendar-summary')).toContainText('冬天 · 飘雪 · -5.0°C');
+ await page.screenshot({path:`test-results/${info.project.name}/calendar-winter.png`});
+ await page.reload();await expect(page.locator('#continue')).toBeVisible({timeout:45000});await page.locator('#continue').click();await page.locator('#sky-settings').click();
+ await expect(page.locator('#calendar-date')).toHaveValue('2028-02-28');await expect(page.locator('#calendar-time')).toHaveValue('23:59');await expect(page.locator('#calendar-temperature')).toHaveValue('-5');
+ await page.selectOption('#calendar-time-mode','auto');await page.selectOption('#calendar-speed','60');await expect(page.locator('#calendar-date')).toHaveValue('2028-02-29',{timeout:15000});
+ await page.locator('#calendar-enabled').uncheck();await page.locator('#calendar-enabled').check();await expect(page.locator('#calendar-date')).toHaveValue('2028-02-29');
+});
 async function enter(page:any){await page.goto('/');await expect(page.locator('#custom-save')).toBeVisible({timeout:45000});await page.locator('#custom-save').click();await expect(page.locator('body')).toHaveClass(/started/);await page.waitForTimeout(1000)}
 test('cold entry is covered, customizable, and toolbar opens panels',async({page},info)=>{const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await enter(page);await page.getByRole('button',{name:'背包',exact:true}).click();await expect(page.locator('#modal-title')).toContainText('背包');await page.locator('#close-modal').click();await page.locator('#map-toggle').click();await expect(page.locator('.world-node')).toHaveCount(18);await page.waitForTimeout(350);await page.screenshot({path:`test-results/${info.project.name}/world-map.png`});expect(errors).toEqual([])});
 test('18 scenes and paired seats render without errors',async({page},info)=>{const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await enter(page);for(const zone of ['room','garden','forest','pier','greenhouse','memory','station','postoffice','aquarium','camp','magic','haunted','cinema','ferris','mars','hotspring','market','aurora']){await page.evaluate(async z=>{const scene=(window as any).__cottage;await new Promise<void>(resolve=>scene.transitionTo(z,resolve))},zone);await page.waitForTimeout(150);await page.screenshot({path:`test-results/${info.project.name}/scene-${zone}.png`})}expect(errors).toEqual([])});

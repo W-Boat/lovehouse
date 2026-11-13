@@ -1,4 +1,4 @@
-import {furnishings} from '../src/layouts';
+import {furnishings,backgroundSeats} from '../src/layouts';
 import {worlds} from '../src/world';
 export type PlaceContent={text:string;choice:string;response:string;sit?:string};
 export const places:Record<string,PlaceContent>={
@@ -22,7 +22,7 @@ export const places:Record<string,PlaceContent>={
  fireplace:{text:'木柴轻轻响了一声，暖光落在地板上。要把这一角再烘暖一点吗？',choice:'添一小块木柴',response:'火光亮了一点。冷的时候，就回这里坐坐。'},
  tea:{text:'茶壶里还留着热水，杯子恰好是两只。',choice:'倒两杯，一起坐下',response:'热茶的白雾慢慢升起来。等它凉一点，我们再喝。',sit:'tea'},
  flowers:{text:'花香很淡，凑近才能闻见。好像有些喜欢，也是这样安安静静的。',choice:'多停留一会儿',response:'不必把所有美好都带走，记住这一点香气就好。'},
- window:{text:'隔着玻璃，月色落在肩膀上。窗外很远，身边的人很近。',choice:'并肩看一会儿月亮',response:'今晚的月光，我们一人一半。',sit:'window'},
+ window:{text:'隔着玻璃，月色落在肩膀上。窗外很远，身边的人很近。',choice:'并肩看一会儿月亮',response:'今晚的月光，我们一人一半。'},
  chime:{text:'风铃停着，像一句还没说出口的话。',choice:'轻轻碰一下',response:'叮——短短的一声，被海风带得很远。'},
  shell:{text:'把海螺靠近耳边，像听见一片小小的海。',choice:'也给你听一听',response:'你听，海浪没有催我们回去。'},
  keepsake:{text:'这盏灯替路过的人记着海边的夜晚。想在这里留一会儿吗？',choice:'一起看海',response:'这一晚，有海风，有灯火，也有你。',sit:'sea'},
@@ -78,3 +78,5 @@ for(const [id,[text,choice,response,sit]]of Object.entries(extra))places[id]={te
 for(const w of Object.values(worlds))for(const i of w.items)if(!i.to&&!places[i.id]&&i.kind==='event')places[i.id]={text:i.name+'就在这里。想和身边的人一起试一试吗？',choice:i.action??'试一试',response:'这一小段时间，也一起记住了。'};
 
 for(const props of Object.values(furnishings))for(const p of props){if(p.hips){places[p.id]={text:'软垫铺好了，旁边的空位是留给你的。',choice:'一起坐下',response:'现在不用去别处，再陪你坐一会儿。',sit:p.id};restingLines[p.id]='灯还亮着，身边也有人。'}else if(!p.floor&&!places[p.id])places[p.id]={text:p.name+'就在手边。',choice:'和你一起看看',response:'小小的日常，今天也一起记住了。'}}
+
+for(const p of backgroundSeats){places[p.id]={text:'椅背和软垫都准备好了。旁边的位置，也留给你。',choice:p.id==='hotspring-seat'?'脱掉鞋，泡泡脚':'坐下来歇一会儿',response:'不赶路了，在这里陪你。',sit:p.id};restingLines[p.id]=p.id==='hotspring-seat'?'温热的水刚刚好，脚也终于暖起来了。':'不急，再陪你坐一会儿。'}

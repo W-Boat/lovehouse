@@ -10,6 +10,7 @@ for(const [id,p]of Object.entries(places)){p.text=texts['place.'+id+'.text']??p.
 config.birthDateForMoon=personal.birthDateForMoon;config.moonImage=personal.moonImage;config.labubuReveal.image=personal.labubuImage;config.mysteryBoxReveal.image=personal.mysteryImage;
 export {personal};
 
-for(const [id,film]of Object.entries(films))film.lines=film.lines.map((line,i)=>texts['film.'+id+'.'+i]??line);
+// Existing film.<id>.<index> copy IDs remain valid as shorts gain new shots.
+for(const [id,film]of Object.entries(films))film.shots.forEach((shot,i)=>{shot.line=texts['film.'+id+'.'+i]??shot.line});
 
 config.keychainLines=config.keychainLines.map((v,i)=>texts['keychain.'+i]??v);

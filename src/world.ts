@@ -1,4 +1,4 @@
-import {furnishings} from './layouts';
+import {furnishings,backgroundSeats} from './layouts';
 import {roomWalkable,gardenWalkable,type Point,inside,inPolygon,type Polygon,segmentWalkable,nearestWalkable,type Walkable} from './navigation';
 export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora';
 export type Item={id:string;name:string;x:number;y:number;point:[number,number];action?:string;kind?:'place'|'collect'|'slot'|'event';collect?:string;prop?:number;texture?:string;to?:Zone};
@@ -40,6 +40,7 @@ export const worlds:Record<Zone,World>={
  greenhouse:{name:'玻璃花房',caption:'把明年的花，也种在今晚',texture:'greenhouse',spawn:[320,370],boy:[345,370],walkable:p=>p.x>80&&p.x<560&&p.y>150&&p.y<400,items:[{id:'greenhouse-seat',name:'花房软椅',action:'依偎坐下',x:140,y:125,point:[150,165]},{id:'seed',name:'写给明年的种子',action:'种下心愿',x:320,y:110,point:[320,165]},{id:'game-pairs',name:'花瓣配对',action:'玩一局',x:440,y:265,point:[440,290]},{id:'greenhouse-return',name:'回海岸',action:'回去',x:320,y:397,point:[320,380],to:'garden'}]},
  memory:{name:'回忆放映室',caption:'普通的日子，也值得反复播放',texture:'room-after',spawn:[320,353],boy:[363,338],walkable:roomWalkable,items:[{id:'memory-seat',name:'回忆沙发',action:'坐下听故事',x:77,y:284,point:[214,320]},{id:'future',name:'给未来的一句话',action:'写下来',x:197,y:320,point:[220,324]},{id:'game-sequence',name:'记忆放映机',action:'玩一局',x:490,y:180,point:[474,246]},{id:'memory-return',name:'回到小屋',action:'回去',x:320,y:393,point:[320,379],to:'room'}]},
  room:{name:'温暖的小屋',caption:'壁炉暖着，今晚不用赶路',texture:'room',spawn:[320,353],boy:[363,338],walkable:roomWalkable,items:[
+ {id:'taoyuan-portal',name:'通往桃源乡的门',action:'一起去田庄',x:320,y:282,point:[320,318]},
  {id:'chair-left',name:'蛋糕桌左侧大椅子',action:'坐下',x:252,y:201,point:[221,242]},{id:'chair-right',name:'蛋糕桌右侧大椅子',action:'坐下',x:388,y:201,point:[430,242]},{id:'record',name:'唱片机的秘密节拍',action:'来段鬼畜舞',x:534,y:177,point:[477,247]},{id:'memory-door',name:'回忆放映室',action:'推开回忆',x:437,y:112,point:[440,146],to:'memory'},
  {id:'cake',name:'生日蛋糕',action:'许愿',x:320,y:170,point:[320,272]},
  {id:'sofa',name:'壁炉旁的沙发',action:'坐下',x:77,y:284,point:[214,320]},
@@ -114,6 +115,9 @@ worlds.aurora={...newRoom('极光玻璃屋','摇椅轻轻晃，天上的光也�
 worlds.camp.items.push({...spot('spring-door','去暖汤足浴屋',530,350,'暖暖脚'),to:'hotspring'});
 worlds.ferris.items.push({...spot('market-door','去云端生日集市',520,365,'逛逛集市'),to:'market'});
 worlds.station.items.push({...spot('aurora-door','去极光玻璃屋',110,340,'等一场极光'),to:'aurora'});
+// The painted carpet immediately in front of rear seats is usable floor too.
+for(const [zone,rect]of [['memory',{x:75,y:202,w:142,h:32}],['magic',{x:80,y:184,w:92,h:50}],['cinema',{x:65,y:185,w:115,h:49}],['haunted',{x:90,y:195,w:95,h:39}]] as [Zone,{x:number;y:number;w:number;h:number}][]){const prior=worlds[zone].walkable;worlds[zone].walkable=p=>prior(p)||inside(p,rect)}
+for(const seat of backgroundSeats){if(worlds[seat.zone].items.some(i=>i.id===seat.id))continue;worlds[seat.zone].items.push({...spot(seat.id,seat.name,(seat.hips[0]+seat.hips[2])/2,(seat.hips[1]+seat.hips[3])/2,'一起坐下'),kind:'event'})}
 // Central furniture is part of navigation and interaction, rather than an ornamental overlay.
 for(const [zone,props]of Object.entries(furnishings)){
  const w=worlds[zone as Zone],floor=w.walkable;

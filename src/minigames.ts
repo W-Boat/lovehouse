@@ -1,3 +1,4 @@
+import {createLetterGame} from './letter-game';
 import {save,persist} from './state';
 import {birthdayConfig as config,type GiftId} from '../content/birthday-config';
 export type GameResult={status:'won'|'skipped'|'exit';score:number};
@@ -10,7 +11,7 @@ export const giftGames:Record<GiftId,MinigameDefinition>={
  band:{id:'band',title:'今天慢慢走',rule:'点击相邻地块，收集两份心意后走到出口。注意剩余步数。'},
  doll:{id:'doll',title:'把小陪伴抱回家',rule:'左右移动抓钩，看准摆动时机按落爪。抓到娃娃后移到左侧出口再放下。'},
  chocolate:{id:'chocolate',title:'刚刚好的一盒甜',rule:'选择巧克力，点击旋转，放进礼盒。填满全部空格。'},
- letter:{id:'letter',title:'认真拼好这封信',rule:'把九片信笺拖回位置；点选纸片可旋转。'},
+ letter:{id:'letter',title:'认真拼好这封信',rule:'拖动不规则纸片对齐信封轮廓，选中后旋转。拼好三封信，再读生日信。'},
  notes:{id:'notes',title:'日子里的小线索',rule:'根据线索调整便签顺序，排好后检查。共有三组。'},
  hat:{id:'hat',title:'一针一线的猫耳',rule:'从亮起的针脚开始，按顺序连好左猫耳、右猫耳和帽沿。'},
  labubu:{id:'labubu',title:'盲盒的小机关',rule:'用方向键或屏幕按钮推箱，把盒子推到封条标记上。可撤销。'},
@@ -33,9 +34,13 @@ export function launchGiftGame(id:GiftId,host:HTMLElement,finish:(r:GameResult)=
  const resetBoard=(message='')=>{board.replaceChildren();controls.replaceChildren();status.textContent=message||`第 ${level+1} / 3 关`;board.className='game-board';};
  const draggable=(node:HTMLElement,getTarget:(x:number,y:number)=>void)=>{let moved=false;listen(node,'pointerdown',((e:PointerEvent)=>{if(paused)return;moved=false;node.setPointerCapture(e.pointerId);node.dataset.px=String(e.clientX);node.dataset.py=String(e.clientY)}) as EventListener);listen(node,'pointermove',((e:PointerEvent)=>{if(!node.hasPointerCapture(e.pointerId))return;if(Math.hypot(e.clientX-Number(node.dataset.px),e.clientY-Number(node.dataset.py))>5)moved=true}) as EventListener);listen(node,'pointerup',((e:PointerEvent)=>{if(paused)return;if(moved)getTarget(e.clientX,e.clientY);}) as EventListener)};
  const grid=(n:number)=>{board.style.setProperty('--cols',String(n));board.classList.add('board-grid')};
- if(id==='moon'||id==='letter'){
+ if(id==='letter'){
+  const letter=createLetterGame({board,status,paused:()=>paused,level:()=>level,listen,button:btn,points:n=>{score+=n},solved:success});
+  restart=()=>{resetBoard(`第 ${level+1} / 3 封 · 沿折痕修复信笺`);letter.restart()};hint=()=>letter.hint();
+ }
+ else if(id==='moon'){
   let pieces:{slot:number;rotation:number;placed:boolean}[]=[];let selected=-1;
-  restart=()=>{resetBoard();grid(3);pieces=Array.from({length:9},(_,i)=>({slot:i,rotation:(i+level)%4,placed:false}));const slots:HTMLElement[]=[];for(let i=0;i<9;i++){const slot=el('button','','puzzle-slot');slot.style.aspectRatio='1';slot.dataset.target=String(i);slot.setAttribute('aria-label','位置 '+(i+1));slots.push(slot);board.append(slot);listen(slot,'click',()=>place(i))}const tray=el('div','','piece-tray');board.append(tray);for(const p of [...pieces].sort(()=>Math.random()-.5)){const b=el('button',id==='moon'?'月片 '+(p.slot+1):'信笺 '+(p.slot+1),'puzzle-piece');b.dataset.piece=String(p.slot);b.setAttribute('aria-label','第 '+(p.slot+1)+' 片');if(artUrl){b.textContent=String(p.slot+1);b.style.backgroundImage='url('+artUrl+')';b.style.backgroundSize='300% 300%';b.style.backgroundPosition=(p.slot%3)*50+'% '+Math.floor(p.slot/3)*50+'%';b.style.aspectRatio='1'}b.style.transform=`rotate(${p.rotation*90}deg)`;b.style.setProperty('--piece',String(p.slot));tray.append(b);listen(b,'click',()=>{if(paused||p.placed)return;selected=p.slot;p.rotation=(p.rotation+1)%4;b.style.transform=`rotate(${p.rotation*90}deg)`;status.textContent=`已选第 ${p.slot+1} 片，方向 ${p.rotation*90}°`});draggable(b,(x,y)=>{selected=p.slot;const target=document.elementFromPoint(x,y)?.closest<HTMLElement>('[data-target]');if(target)place(Number(target.dataset.target))});}btn('旋转选中纸片',()=>{if(selected<0)return;pieces[selected].rotation=(pieces[selected].rotation+1)%4});hint=()=>`纸片编号对应位置，正向为 0°。第 ${pieces.find(p=>!p.placed)!.slot+1} 片还没放好。`;
+  restart=()=>{resetBoard();grid(3);pieces=Array.from({length:9},(_,i)=>({slot:i,rotation:(i+level)%4,placed:false}));const slots:HTMLElement[]=[];for(let i=0;i<9;i++){const slot=el('button','','puzzle-slot');slot.style.aspectRatio='1';slot.dataset.target=String(i);slot.setAttribute('aria-label','位置 '+(i+1));slots.push(slot);board.append(slot);listen(slot,'click',()=>place(i))}const tray=el('div','','piece-tray');board.append(tray);for(const p of [...pieces].sort(()=>Math.random()-.5)){const b=el('button','月片 '+(p.slot+1),'puzzle-piece');b.dataset.piece=String(p.slot);b.setAttribute('aria-label','第 '+(p.slot+1)+' 片');if(artUrl){b.textContent=String(p.slot+1);b.style.backgroundImage='url('+artUrl+')';b.style.backgroundSize='300% 300%';b.style.backgroundPosition=(p.slot%3)*50+'% '+Math.floor(p.slot/3)*50+'%';b.style.aspectRatio='1'}b.style.transform=`rotate(${p.rotation*90}deg)`;b.style.setProperty('--piece',String(p.slot));tray.append(b);listen(b,'click',()=>{if(paused||p.placed)return;selected=p.slot;p.rotation=(p.rotation+1)%4;b.style.transform=`rotate(${p.rotation*90}deg)`;status.textContent=`已选第 ${p.slot+1} 片，方向 ${p.rotation*90}°`});draggable(b,(x,y)=>{selected=p.slot;const target=document.elementFromPoint(x,y)?.closest<HTMLElement>('[data-target]');if(target)place(Number(target.dataset.target))});}btn('旋转选中纸片',()=>{if(selected<0)return;pieces[selected].rotation=(pieces[selected].rotation+1)%4});hint=()=>`纸片编号对应位置，正向为 0°。第 ${pieces.find(p=>!p.placed)!.slot+1} 片还没放好。`;
   function place(i:number){if(paused||selected<0)return;const p=pieces[selected];if(p.placed)return;if(p.slot!==i||p.rotation!==0){status.textContent='位置或方向还差一点，试着转一转。';return}p.placed=true;slots[i].textContent='';if(artUrl){slots[i].style.backgroundImage='url('+artUrl+')';slots[i].style.backgroundSize='300% 300%';slots[i].style.backgroundPosition=(i%3)*50+'% '+Math.floor(i/3)*50+'%'}slots[i].classList.add('placed');tray.querySelector<HTMLElement>(`[data-piece="${i}"]`)!.hidden=true;score+=10;if(pieces.every(p=>p.placed))success()}}
  }
  else if(id==='keychain'){

@@ -1,0 +1,1953 @@
+{
+  "note": "Inventory and contact sheets only; pending visual review is not a pass. Original PNGs preserved. Comparison grids excluded from seasonal export.",
+  "items": [
+    {
+      "name": "aquarium-clean.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2547006,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 605124,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "aquarium.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2763679,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 644146,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "aurora.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3434982,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 803446,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "birthday-cake.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1595274,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        384,
+        256
+      ],
+      "runtimeBytes": 60852,
+      "runtimeAlphaRange": [
+        0,
+        254
+      ]
+    },
+    {
+      "name": "boy-actions.png",
+      "dimensions": [
+        1261,
+        1247
+      ],
+      "sourceBytes": 1022167,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        506
+      ],
+      "runtimeBytes": 166116,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "boy-heads.png",
+      "dimensions": [
+        1261,
+        1247
+      ],
+      "sourceBytes": 925164,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        506
+      ],
+      "runtimeBytes": 151606,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "boy-walk.png",
+      "dimensions": [
+        1261,
+        1247
+      ],
+      "sourceBytes": 1028013,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        506
+      ],
+      "runtimeBytes": 157664,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "camp.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2810891,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 651808,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "characters.png",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "sourceBytes": 648696,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        256
+      ],
+      "runtimeBytes": 61154,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "cinema.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2565824,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 569658,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "coast.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3062622,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 761060,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "cottage-after.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2639962,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 637098,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "cottage.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2828473,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 664884,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "couple-actions.png",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "sourceBytes": 1760307,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        576
+      ],
+      "runtimeBytes": 433542,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "ferris-clean.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2643734,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 628488,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "ferris.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2999807,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 701144,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "footbath-poses-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1637529,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        384,
+        256
+      ],
+      "runtimeBytes": 58996,
+      "runtimeAlphaRange": [
+        0,
+        254
+      ]
+    },
+    {
+      "name": "footbath-poses.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1653391,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 202574,
+      "runtimeAlphaRange": [
+        0,
+        254
+      ]
+    },
+    {
+      "name": "forest.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3004695,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 739734,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "furniture.png",
+      "dimensions": [
+        1241,
+        1268
+      ],
+      "sourceBytes": 2144297,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        501,
+        512
+      ],
+      "runtimeBytes": 319706,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "gifts-v2.png",
+      "dimensions": [
+        1278,
+        1230
+      ],
+      "sourceBytes": 1337342,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        256,
+        246
+      ],
+      "runtimeBytes": 60310,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "gifts.png",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "sourceBytes": 1299429,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        384
+      ],
+      "runtimeBytes": 167898,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "girl-actions.png",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1491636,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        512
+      ],
+      "runtimeBytes": 224262,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "girl-heads.png",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1277630,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        512
+      ],
+      "runtimeBytes": 193426,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "girl-walk.png",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1393745,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        512
+      ],
+      "runtimeBytes": 213964,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "greenhouse.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2983902,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 658538,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "haunted.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2489631,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 590628,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "hero.png",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1555619,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        512
+      ],
+      "runtimeBytes": 228068,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "holding-walk-v2.png",
+      "dimensions": [
+        1247,
+        1261
+      ],
+      "sourceBytes": 1801639,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        506,
+        512
+      ],
+      "runtimeBytes": 277390,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "holding-walk.png",
+      "dimensions": [
+        1247,
+        1261
+      ],
+      "sourceBytes": 1747271,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        759,
+        768
+      ],
+      "runtimeBytes": 535140,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "hotspring-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3013597,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 722436,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "hotspring.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3119225,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 739506,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "icons-v2.png",
+      "dimensions": [
+        1263,
+        1246
+      ],
+      "sourceBytes": 1265409,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        256,
+        253
+      ],
+      "runtimeBytes": 67604,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "loading-cottage.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2101805,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        384,
+        256
+      ],
+      "runtimeBytes": 122934,
+      "runtimeAlphaRange": [
+        0,
+        254
+      ]
+    },
+    {
+      "name": "magic.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3313827,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 751214,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "market.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3471552,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 858758,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "mars.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3023129,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 689424,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "memory-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2520460,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 583620,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "outdoor-camp-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3012471,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-camp-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2818585,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-camp-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3024253,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-camp-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2862876,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-camp-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3153292,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-camp-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2926782,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-camp-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3145234,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-camp-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3109131,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-ferris-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2659214,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-ferris-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2540565,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-ferris-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2562423,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-ferris-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2573472,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-ferris-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2599140,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-ferris-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2564963,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-ferris-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2687242,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-ferris-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2666121,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-forest-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3421622,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-forest-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3139726,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-forest-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 4148731,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-forest-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3839248,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-forest-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3272498,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-forest-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3071775,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-forest-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3389799,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-forest-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3134262,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-forest-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3473263,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-forest-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3466753,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-garden-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3483347,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-garden-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3090242,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-garden-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3918218,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-garden-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3879808,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-garden-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3326697,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-garden-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3056146,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-garden-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3294339,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-garden-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3100267,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-garden-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3452434,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-garden-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3255152,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-market-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3535868,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-market-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3355420,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-market-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3380742,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-market-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3303206,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-market-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3426987,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-market-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3326438,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-market-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3590891,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-market-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3521992,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-mars-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3085113,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-mars-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2907291,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-mars-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3065451,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-mars-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2928823,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-mars-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3146889,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-mars-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2879186,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-mars-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3153217,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-mars-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3088682,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-pier-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2070448,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-pier-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1840772,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-pier-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2518833,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-pier-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2265994,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-pier-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2086788,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-pier-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1888598,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-pier-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2135616,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-pier-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1863073,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-pier-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2211318,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-pier-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2054348,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-postoffice-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3293523,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-postoffice-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3019869,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-postoffice-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3708937,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-postoffice-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3623510,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-postoffice-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3390408,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-postoffice-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3000975,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-postoffice-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3377597,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-postoffice-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3106288,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-postoffice-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3385043,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-postoffice-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3262498,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-station-autumn-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3043638,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-station-autumn-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2847193,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-station-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3377944,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-station-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3383963,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "comparison-only"
+    },
+    {
+      "name": "outdoor-station-spring-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3023337,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-station-spring-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3026026,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-station-summer-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3008218,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-station-summer-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2958132,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-station-winter-day.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3125913,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "outdoor-station-winter-night.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3123637,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "single-season-background"
+    },
+    {
+      "name": "pier.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1880597,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 464898,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "postoffice.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3270488,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 738668,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "props.png",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "sourceBytes": 1176614,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        256
+      ],
+      "runtimeBytes": 108226,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "season-views.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3367745,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 789826,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "seats-back.png",
+      "dimensions": [
+        1261,
+        1247
+      ],
+      "sourceBytes": 1534066,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        384,
+        380
+      ],
+      "runtimeBytes": 143624,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "sit-transition.png",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "sourceBytes": 1150664,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        256
+      ],
+      "runtimeBytes": 146158,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "sitting.png",
+      "dimensions": [
+        1217,
+        1293
+      ],
+      "sourceBytes": 674821,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        241,
+        256
+      ],
+      "runtimeBytes": 30968,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "station-clean.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 2927380,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 701650,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "station.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3133954,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 734326,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "weather-icons-v2.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1352831,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        192,
+        128
+      ],
+      "runtimeBytes": 15956,
+      "runtimeAlphaRange": [
+        0,
+        254
+      ]
+    },
+    {
+      "name": "weather-icons.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 1388477,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        768,
+        512
+      ],
+      "runtimeBytes": 194258,
+      "runtimeAlphaRange": [
+        0,
+        254
+      ]
+    },
+    {
+      "name": "wheel-actors.png",
+      "dimensions": [
+        1265,
+        1243
+      ],
+      "sourceBytes": 1766152,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        512,
+        503
+      ],
+      "runtimeBytes": 290152,
+      "runtimeAlphaRange": [
+        0,
+        255
+      ]
+    },
+    {
+      "name": "window-views.png",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sourceBytes": 3412942,
+      "alphaRange": null,
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        639,
+        426
+      ],
+      "runtimeBytes": 542992,
+      "runtimeAlphaRange": null
+    },
+    {
+      "name": "world-actors.png",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "sourceBytes": 2131039,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "visualReview": "pending",
+      "role": "existing-art",
+      "runtimeDimensions": [
+        640,
+        480
+      ],
+      "runtimeBytes": 339892,
+      "runtimeAlphaRange": [
+        0,
+        253
+      ]
+    }
+  ]
+}

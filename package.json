@@ -5,19 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "python -X utf8 tools/prepare_assets.py && tsc --noEmit && vite build",
+    "build": "python -X utf8 tools/prepare_assets.py && python -X utf8 tools/build_taoyuan.py && tsc --noEmit && vite build",
     "test": "node --import tsx --test tools/*.test.ts",
     "test:e2e": "playwright test",
     "desktop:build": "tauri build --no-bundle"
   },
   "dependencies": {
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "ws": "^8.23.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "vite": "^6.4.1",
-    "tsx": "^4.20.6",
     "@playwright/test": "^1.56.0",
-    "@tauri-apps/cli": "^2.9.0"
+    "@tauri-apps/cli": "^2.9.0",
+    "@types/node": "^26.6.6",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1"
   }
 }

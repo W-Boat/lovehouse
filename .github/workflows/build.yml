@@ -63,6 +63,7 @@ jobs:
           name: lovehouse-windows-x64-portable
           path: |
             src-tauri/target/release/lovehouse.exe
+            src-tauri/Cargo.lock
             docs/Windows便携版.md
             文案.md
             需替换内容.md

@@ -16,7 +16,7 @@ export const indoorZones=new Set<Zone>(['room','memory','aquarium','greenhouse',
 export function windowContains(zone:Zone,x:number,y:number){return (windowPanes[zone]??[]).some(p=>inPolygon({x,y},p))}
 export function renderWindowWeather(g:Phaser.GameObjects.Graphics,zone:Zone,weather:string,time:string,clock:number){
  const panes=windowPanes[zone]??[];
- for(const points of panes){g.fillStyle(time==='day'?0xffedd2:time==='dawn'?0xffc5b1:0x20324b,time==='night'?.025:.055);g.fillPoints(points.map(([x,y])=>({x,y})),true)}
+ for(const points of panes){g.fillStyle(time==='day'?0xffedd2:time==='dawn'||time==='dusk'?0xffc5b1:0x20324b,time==='night'?.025:.055);g.fillPoints(points.map(([x,y])=>({x,y})),true)}
  if(weather==='clear')return;
  for(const [index,points]of panes.entries()){
   const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),left=Math.min(...xs),top=Math.min(...ys),w=Math.max(...xs)-left,h=Math.max(...ys)-top;

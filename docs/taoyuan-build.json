@@ -1,0 +1,7 @@
+{
+  "upstream": "https://github.com/setube/taoyuan",
+  "commit": "2fd4bf8259e25ba4910cfed0d10a867428ff7299",
+  "archiveSha256": "bd341e6a9d5f0268927cdeaa7f42fddde9b0309b3ccc8168194e4b496c9412f0",
+  "license": "CC BY-NC 4.0",
+  "localBuild": true
+}

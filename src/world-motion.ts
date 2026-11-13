@@ -14,7 +14,7 @@ export class WorldMotion{
  if(z==='haunted')image(428,130,'motion-ghost',32,40,3);
  if(z==='magic')for(let i=0;i<3;i++)image(226+i*80,98+i%2*30,'motion-book',30,24,3);
  }
- update(clock:number){const t=save.reduced?0:clock,s=this.scene,z=s.zone;if(z==='station'){const p=t%44,train=this.images[0];const x=p<8?780-(p/8)*300:p<26?480:480-(p-26)/18*750;train?.setX(x).setTexture('train-'+(p>10&&p<23?2:p>8&&p<26?1:0));this.sun?.setY(110-45*(.5-.5*Math.cos(t/50))).setAlpha(.65+Math.sin(t/40)*.12)}
+ update(clock:number){const t=save.reduced?0:clock,s=this.scene,z=s.zone;if(z==='station'){const p=t%44,train=this.images[0];const x=p<8?780-(p/8)*300:p<26?480:480-(p-26)/18*750;train?.setX(x).setTexture('train-'+(p>10&&p<23?2:p>8&&p<26?1:0));this.sun?.setY(s.calendarState.enabled?110-45*s.calendarState.daylight:110-45*(.5-.5*Math.cos(t/50))).setAlpha(s.calendarState.enabled?(s.calendarState.period==='night'?0:.7):.65+Math.sin(t/40)*.12)}
  else if(z==='aquarium'){this.images.forEach((o,i)=>{if(i<4)o.setPosition(160+i*105+Math.sin(t*.3+i)*22,85+i%2*40+Math.sin(t*.8+i)*9).setTexture('jelly-'+Math.floor(t*5+i)%4);else{const k=i-4;o.setPosition(100+(k*97+t*(12+k*2))%440,110+k%3*20+Math.sin(t+k)*4).setTexture('fish-'+Math.floor(t*6+k)%4)}})}
  else if(z==='ferris'){this.images[0]?.setRotation(t/40);for(let i=1;i<this.images.length;i++){const a=t/40+(i-1)*Math.PI/4;this.images[i].setPosition(320+Math.cos(a)*142,78+Math.sin(a)*142)}}
  else if(z==='room'||z==='camp')this.images.forEach((o,i)=>{o.setTexture('flame-'+Math.floor(t*8+i)%4);if(z==='room'&&i>0)o.setVisible(!save.celebrated)});

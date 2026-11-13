@@ -8,3 +8,5 @@ edition = "2021"
 tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
+
+rfd = { version = "0.17.2", default-features = false }

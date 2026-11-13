@@ -1,7 +1,7 @@
 import type {Zone} from './world';
 import type {Rect} from './navigation';
 /** The base of each object is its ground contact. Seating uses cushion anchors. */
-export type Furnishing={id:string;name:string;frame:number;x:number;y:number;w:number;h:number;solid?:Rect;hips?:[number,number,number,number];floor?:boolean};
+export type Furnishing={id:string;name:string;frame:number;x:number;y:number;w:number;h:number;solid?:Rect;hips?:[number,number,number,number];floor?:boolean;texture?:string;facing?:number;occlusion?:'rear'|'arms'};
 const prop=(id:string,name:string,frame:number,x:number,y:number,w:number,h:number,hips?:Furnishing['hips']):Furnishing=>({id,name,frame,x,y,w,h,hips,solid:{x:x-w*.36,y:y-17,w:w*.72,h:19}});
 const rug=(x:number,y:number,w=190,h=65):Furnishing=>({id:'central-rug',name:'脚下的软地毯',frame:7,x,y,w,h,floor:true});
 export const furnishings:Partial<Record<Zone,Furnishing[]>>={
@@ -13,3 +13,23 @@ export const furnishings:Partial<Record<Zone,Furnishing[]>>={
  mars:[prop('mars-seat','中央观演双人座',1,197,312,106,87,[175,281,219,281]),prop('mars-supplies','星球补给箱',12,451,316,81,62),prop('mars-tea','低重力热可可',0,340,329,69,69),prop('mars-lamp','返航引路灯',6,522,341,29,87)],
 };
 export function furnishingSeats(zone:Zone,id:string){return furnishings[zone]?.find(p=>p.id===id)?.hips}
+
+export const actorHeights:Partial<Record<Zone,number>>={memory:72,hotspring:96,aurora:88,market:80};
+export type BuiltSeat={id:string;name:string;zone:Zone;hips:[number,number,number,number];facing?:number};
+export const backgroundSeats:BuiltSeat[]=[
+ {id:'chair-left',name:'蛋糕桌左侧大椅子',zone:'room',hips:[253,197,388,197]},
+ {id:'chair-right',name:'蛋糕桌右侧大椅子',zone:'room',hips:[388,197,253,197]},
+ {id:'sofa',name:'壁炉旁的沙发',zone:'room',hips:[68,281,101,281]},
+ {id:'tea',name:'两杯热茶旁的沙发',zone:'room',hips:[68,281,101,281]},
+ {id:'memory-armchair-left',name:'左边的大扶手椅',zone:'memory',hips:[100,169,185,169]},
+ {id:'memory-armchair-right',name:'右边的大扶手椅',zone:'memory',hips:[185,169,100,169]},
+ {id:'magic-mushroom-seat',name:'树边的蘑菇软座',zone:'magic',hips:[99,146,126,146]},
+ {id:'haunted-back-sofa',name:'幽灵家的靠墙沙发',zone:'haunted',hips:[117,159,146,159]},
+ {id:'cinema-side-armchairs',name:'散场聊天的大扶手椅',zone:'cinema',hips:[80,150,158,150]},
+ {id:'ferris-back-bench',name:'站台旁的候车软椅',zone:'ferris',hips:[72,190,141,190]},
+ {id:'hotspring-seat',name:'中央双人足浴座',zone:'hotspring',hips:[258,201,408,204]},
+ {id:'market-seat',name:'花摊边的双人座',zone:'market',hips:[63,237,173,241]},
+ {id:'aurora-seat',name:'中央双人摇椅',zone:'aurora',hips:[211,241,433,245]},
+];
+for(const zone of ['memory','cinema'] as Zone[])for(const p of furnishings[zone]??[])if(p.hips){p.texture=zone==='cinema'?'seat-cinema-back':'seat-memory-back';p.facing=2;p.occlusion='rear';p.hips=[p.hips[0],p.y-66,p.hips[2],p.y-66]}
+export function seatDefinition(zone:Zone,id:string){return furnishings[zone]?.find(p=>p.id===id&&p.hips)??backgroundSeats.find(p=>p.zone===zone&&p.id===id)}

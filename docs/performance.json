@@ -1,5 +1,5 @@
 {
-  "coreTextureBytes": 4150818,
+  "coreTextureBytes": 4166774,
   "coreTextureKeys": [
     "room",
     "hero",
@@ -19,13 +19,14 @@
     "boy-heads",
     "couple-actions",
     "holding-walk",
-    "window-views"
+    "window-views",
+    "weather-icons"
   ],
-  "fixedFontBytes": 41856,
+  "fixedFontBytes": 43136,
   "loaderBytes": 122934,
-  "compressedEntryBytes": 414542,
-  "fontCssBytes": 91607,
-  "estimatedCoreWithHttpCompressionBytes": 4821757,
+  "compressedEntryBytes": 438840,
+  "fontCssBytes": 91661,
+  "estimatedCoreWithHttpCompressionBytes": 4863345,
   "estimateNotes": "Static byte estimate. HTTP compression depends on the selected host; not a measured network transfer. Excludes delayed music, adjacent-scene prefetch and optional name-font chunks.",
   "mobilePhysicalDeviceTest": "not performed; browser emulation does not substitute for devices",
   "fps": "not measured on physical devices"

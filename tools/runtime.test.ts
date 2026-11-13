@@ -1,3 +1,5 @@
+import * as wearableArt from '../src/wearable-art';
+import * as calendar from '../src/calendar';
 import * as atlas from '../src/atlas';
 import * as handFormation from '../src/hand-formation';
 import * as windowWeather from '../src/window-weather';
@@ -13,14 +15,14 @@ import * as navigation from '../src/navigation';
 import * as world from '../src/world';
 import * as follow from '../src/follow';
 import * as actors from '../src/actors';
-import {textureFiles} from '../src/assets';
+import {textureFiles,additionalTextureFiles} from '../src/assets';
 import {defaults} from '../src/state';
 import {gameViewport,localPoint,localDelta,requestImmersive} from '../src/viewport';
 function loadScene(){
  const code=transformSync(readFileSync('src/scene.ts','utf8'),{loader:'ts',format:'cjs',target:'es2022'}).code;
  const output={exports:{} as any};
  class Scene{sys={};}
- const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:defaults(),persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./assets':{textureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
+ const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:defaults(),persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./calendar':calendar,'./wearable-art':wearableArt,'./seat-layers':{SeatLayers:class{rebuild(){};update(){}}},'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./outdoor-environment':{OutdoorEnvironment:class{update(){}}},'./assets':{textureFiles,additionalTextureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
  vm.runInNewContext(code,{module:output,exports:output.exports,require:(id:string)=>{if(!(id in dependencies))throw new Error(id);return dependencies[id]}});
  return new output.exports.Cottage();
 }
@@ -58,7 +60,7 @@ test('missing or failed textures never create a placeholder scene or emit ready'
 
 test('new scene seats restore both actors to reachable floor on standing',()=>{
  for(const [zone,seat]of [['station','station-seat'],['postoffice','postal-seat'],['aquarium','aquarium-seat'],['camp','camp-seat']] as const){
-  const scene=loadScene(),w=world.worlds[zone];scene.zone=zone;scene.player=fakeObject(...w.spawn);scene.boy=fakeObject(...w.boy);const original=[scene.player.x,scene.player.y,scene.boy.x,scene.boy.y];scene.setPose=()=>{};scene.sit(seat);for(let i=0;i<800;i++)scene.updateSeated(.04);assert.equal(scene.seated,seat);assert.notDeepEqual([scene.player.x,scene.player.y,scene.boy.x,scene.boy.y],original);scene.stand();for(let i=0;i<20;i++)scene.updateSeated(.04);assert.equal(scene.seated,'');assert.ok(w.walkable(scene.player));assert.ok(w.walkable(scene.boy));
+  const scene=loadScene(),w=world.worlds[zone];scene.zone=zone;scene.player=fakeObject(...w.spawn);scene.boy=fakeObject(...w.boy);const original=[scene.player.x,scene.player.y,scene.boy.x,scene.boy.y];scene.setPose=()=>{};scene.renderMoving=()=>{};scene.prepareSeatArt=async()=>{};scene.sit(seat);for(let i=0;i<800;i++)scene.updateSeated(.04);assert.equal(scene.seated,seat);assert.notDeepEqual([scene.player.x,scene.player.y,scene.boy.x,scene.boy.y],original);scene.stand();for(let i=0;i<20;i++)scene.updateSeated(.04);assert.equal(scene.seated,'');assert.ok(w.walkable(scene.player));assert.ok(w.walkable(scene.boy));
  }
 });
 test('scheduled interaction never fires remotely and fires once the player arrives',()=>{
@@ -77,4 +79,32 @@ test('superseded scene loads and fade callbacks cannot commit stale destinations
 test('a failed obsolete load does not unblock a newer transition',async()=>{
  const scene=loadScene(),requests=new Map<string,{resolve:()=>void;reject:()=>void}>();scene.cameras={main:{fadeIn(){},once(){},off(){},fadeOut(){}}};scene.ensureZone=(zone:string)=>new Promise<void>((resolve,reject)=>requests.set(zone,{resolve,reject}));let errors=0;scene.bridge.on('zone-error',()=>errors++);
  const old=scene.transitionTo('memory',()=>{}),latest=scene.transitionTo('aurora',()=>{});requests.get('memory')!.reject();await old;assert.equal(scene.transitioning,true);assert.equal(scene.blocked,true);assert.equal(errors,0);requests.get('aurora')!.reject();await latest;assert.equal(scene.transitioning,false);assert.equal(scene.blocked,false);assert.equal(errors,1);
+});
+
+
+test('registered seats anchor both hips and preserve reachable standing positions',()=>{
+ for(const definition of [...layouts.backgroundSeats,...Object.entries(layouts.furnishings).flatMap(([zone,props])=>props.filter(p=>p.hips).map(p=>({...p,zone})))]){
+  const scene=loadScene(),zone=definition.zone as world.Zone,w=world.worlds[zone];scene.zone=zone;scene.player=fakeObject(...w.spawn);scene.boy=fakeObject(...w.boy);scene.prepareSeatArt=async()=>{};scene.setPose=()=>{};scene.renderMoving=()=>{};
+  scene.textures={exists:()=>false,get:()=>({getSourceImage:()=>({width:40,height:64})})};scene.sit(definition.id);assert.equal(scene.seated,definition.id,definition.id);
+  for(let i=0;i<1600;i++)scene.updateSeated(.04);
+  assert.equal(scene.player.x,definition.hips![0],definition.id);assert.equal(scene.boy.x,definition.hips![2],definition.id);
+  scene.stand();for(let i=0;i<40;i++)scene.updateSeated(.04);assert.equal(scene.seated,'',definition.id);assert.ok(w.walkable(scene.player),definition.id+' girl');assert.ok(w.walkable(scene.boy),definition.id+' boy');
+ }
+});
+
+test('drawn sitting transition keeps aspect ratio and reverses frames on rising',()=>{
+ const scene=loadScene(),selected:string[]=[];scene.zone='room';scene.appearanceKey=(_who:string,key:string)=>key;
+ const actor={texture:{getSourceImage:()=>({width:25,height:50})},setTexture(key:string){selected.push(key);return this},setDisplaySize(w:number,h:number){assert.equal(w/h,.5);return this}};
+ scene.textures={exists:()=>true,get:()=>({getSourceImage:()=>({width:32,height:64})})};scene.transitionSeatPose(actor,'girl',.1);scene.transitionSeatPose(actor,'girl',.9);scene.transitionSeatPose(actor,'girl',.1);
+ assert.deepEqual(selected,['girl-sitmove-0','girl-sitmove-5','girl-sitmove-0']);
+});
+
+
+test('network seating retains every legacy seat for both roles without moving the remote actor',()=>{
+ for(const role of ['host','guest'])for(const zone of Object.keys(world.worlds) as world.Zone[]){
+  const sample=loadScene();for(const item of world.worlds[zone].items){if(!sample.legacySeats[item.id]&&!layouts.seatDefinition(zone,item.id))continue;
+   const scene=loadScene(),w=world.worlds[zone];scene.zone=zone;scene.player=fakeObject(...w.spawn);scene.boy=fakeObject(...w.boy);scene.textures={get:()=>({getSourceImage:()=>({width:40,height:64})})};scene.onlineWorld={active:true,role,local:role==='host'?scene.player:scene.boy,cancelFollowing(){}};
+   const remote=role==='host'?scene.boy:scene.player,original={x:remote.x,y:remote.y};scene.sit(item.id);assert.equal(scene.seated,item.id,role+':'+item.id);assert.ok(scene.onlineSeat,role+':'+item.id);assert.deepEqual({x:remote.x,y:remote.y},original);scene.stand();assert.equal(scene.onlineSeat.standing,true);
+  }
+ }
 });
