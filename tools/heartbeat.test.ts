@@ -23,3 +23,13 @@ test('old saves receive a workshop budget and settlement values survive reload',
  assert.deepEqual(state.workshop,{day:3,coins:24,best:7,stove:1});
  assert.equal(state.jumpBest,14);assert.equal(state.cardsWins,3);
 });
+
+
+test('unfinished workshop orders can resume without a second material charge',()=>{
+ const workshop={day:2,coins:16,best:4,stove:0};
+ const workshopDraft={day:2,cash:13,stove:0,heat:0,fruit:1,phase:'string',served:0,recipe:0,orders:[0,2,1]};
+ const load=(patch:Record<string,unknown>)=>parseSave(JSON.stringify({version:2,workshop,workshopDraft:{...workshopDraft,...patch}}));
+ assert.deepEqual(load({}).workshopDraft,workshopDraft);
+ assert.equal(load({day:1}).workshopDraft,undefined);
+ assert.equal(load({fruit:3}).workshopDraft,undefined);
+});

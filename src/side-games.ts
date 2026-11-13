@@ -1,4 +1,4 @@
-import {save,persist} from './state';
+import {save,persist,type WorkshopPhase} from './state';
 import {beats,chooseCards,classify,rankOf,type Play} from './heartbeat-cards';
 
 function node<K extends keyof HTMLElementTagNameMap>(tag:K,text='',className=''){
@@ -24,11 +24,27 @@ export function openSugarWorkshop(host:HTMLElement,station:string,go:(id:string)
  const {status,board,controls}=panel(host,'糖葫芦制作车间');
  const recipes=[{name:'冰糖山楂',cost:3,price:7,heat:3,fruit:'●'},{name:'芝麻山楂',cost:4,price:9,heat:4,fruit:'◉'},{name:'双果糖葫芦',cost:5,price:12,heat:5,fruit:'◆'}];
  let day=save.workshop.day, initial=save.workshop.coins;
- let stove=save.workshop.stove,cash=initial, heat=0, fruit=0, phase='order', served=0, recipe=recipes[0], message='选一张订单。当天营业收入结算后会写入存档。';
+ const draft=save.workshopDraft;
+ let stove=draft?.stove??save.workshop.stove,cash=draft?.cash??initial;
+ let heat=draft?.heat??0,fruit=draft?.fruit??0,served=draft?.served??0;
+ let phase:WorkshopPhase|'summary'=draft?.phase??'order';
+ let recipe=recipes[draft?.recipe??0];
+ const instructions:Record<WorkshopPhase,string>={
+  order:'去柜台挑一张订单。',string:'把果子串上竹签。',heat:'把糖浆调到 '+recipe.heat+' 格，再裹糖。',
+  cool:'糖衣裹好了，放到架上晾凉。',sell:'糖衣脆了，可以交单。',done:'三张订单都交了，可以收摊。',
+ };
+ let message=instructions[phase];
  const ordersForDay=()=>Array.from({length:3},(_,i)=>recipes[(day-1+i*(day%3===0?0:2))%recipes.length]);
- let orders=ordersForDay();
+ let orders=draft?draft.orders.map(i=>recipes[i]):ordersForDay();
  const cost=(r:typeof recipes[number])=>Math.max(1,r.cost-stove);
  let activeStation=station, reached=withinReach(station),frame=0;
+ function saveStep(){
+  if(phase!=='summary'){
+   save.workshopDraft={day,cash,stove,heat,fruit,phase,served,recipe:recipes.indexOf(recipe),orders:orders.map(r=>recipes.indexOf(r))};
+   persist();
+  }
+  draw();
+ }
  function draw(){
   status.textContent='第 '+day+' 天 · '+cash+' 铜钱 · 已交单 '+served+'/3';
   board.replaceChildren(node('p',message),node('div',recipe.fruit.repeat(fruit),'sugar-skewer'));
@@ -42,29 +58,29 @@ export function openSugarWorkshop(host:HTMLElement,station:string,go:(id:string)
   if(phase==='order'){
    for(const [index,r] of orders.entries())if(index>=served)controls.append(button(r.name+' · 成本 '+cost(r)+' · 售价 '+r.price,()=>{
     [orders[served],orders[index]]=[orders[index],orders[served]];
-    recipe=r;cash-=cost(r);fruit=0;heat=0;phase='string';message='把三颗洗好的果子串上竹签。';draw();
+    recipe=r;cash-=cost(r);fruit=0;heat=0;phase='string';message='把三颗洗好的果子串上竹签。';saveStep();
    },cash<cost(r)));
-   if(stove<2){const price=16+stove*12;controls.append(button('升级铜锅 · '+price+' 铜钱',()=>{cash-=price;stove++;message='新铜锅让每串少用一份糖。';draw()},cash<price))}
+   if(stove<2){const price=16+stove*12;controls.append(button('升级铜锅 · '+price+' 铜钱',()=>{cash-=price;stove++;message='新铜锅让每串少用一份糖。';saveStep()},cash<price))}
    controls.append(button('收摊结算',settle));
   }
-  if(phase==='string')controls.append(button('串上一颗',()=>{fruit++;if(fruit===3){phase='heat';message='把糖浆调到 '+recipe.heat+' 格，再裹糖。'}draw()}));
+  if(phase==='string')controls.append(button('串上一颗',()=>{fruit++;if(fruit===3){phase='heat';message='把糖浆调到 '+recipe.heat+' 格，再裹糖。'}saveStep()}));
   if(phase==='heat'){
    board.append(node('div','糖浆 '+('■'.repeat(heat))+'□'.repeat(6-heat),'sugar-heat'));
-   controls.append(button('添火',()=>{heat++;draw()},heat===6),button('降火',()=>{heat--;draw()},heat===0),button('裹糖',()=>{
-    if(heat!==recipe.heat){message=heat<recipe.heat?'糖衣太薄。再添一点火。':'糖浆偏热。先把火降下来。';draw();return}
-    phase='cool';message='薄糖衣裹好了，放到架上晾凉。';draw();
+   controls.append(button('添火',()=>{heat++;saveStep()},heat===6),button('降火',()=>{heat--;saveStep()},heat===0),button('裹糖',()=>{
+    if(heat!==recipe.heat){message=heat<recipe.heat?'糖衣太薄。再添一点火。':'糖浆偏热。先把火降下来。';saveStep();return}
+    phase='cool';message='薄糖衣裹好了，放到架上晾凉。';saveStep();
    }));
   }
-  if(phase==='cool')controls.append(button('晾凉装袋',()=>{phase='sell';message='糖衣脆了，可以交单。';draw()}));
-  if(phase==='sell')controls.append(button('交单 +'+recipe.price,()=>{cash+=recipe.price;served++;fruit=0;phase=served===3?'done':'order';message=served===3?'三张订单都交了。':'下一位客人来了。';draw()}));
+  if(phase==='cool')controls.append(button('晾凉装袋',()=>{phase='sell';message='糖衣脆了，可以交单。';saveStep()}));
+  if(phase==='sell')controls.append(button('交单 +'+recipe.price,()=>{cash+=recipe.price;served++;fruit=0;phase=served===3?'done':'order';message=served===3?'三张订单都交了。':'下一位客人来了。';saveStep()}));
   if(phase==='done')controls.append(button('收摊结算',settle));
-  if(phase==='summary')controls.append(button('开始下一天',()=>{day=save.workshop.day;cash=save.workshop.coins;initial=cash;served=0;fruit=0;orders=ordersForDay();phase='order';message='今天的新订单到了。';draw()}));
+  if(phase==='summary')controls.append(button('开始下一天',()=>{day=save.workshop.day;cash=save.workshop.coins;initial=cash;served=0;fruit=0;orders=ordersForDay();phase='order';message='今天的新订单到了。';saveStep()}));
  }
  function settle(){
   if(phase==='summary')return;
   const profit=cash-initial, nextCash=Math.max(cash,12);
   save.workshop={day:Math.min(10000,day+1),coins:Math.min(100000,nextCash),best:Math.max(save.workshop.best,profit),stove};
-  persist();phase='summary';
+  delete save.workshopDraft;persist();phase='summary';
   message='今天交了 '+served+' 单，净收益 '+profit+' 铜钱。最高单日收益 '+save.workshop.best+'。'+(cash<12?' 明天有 12 铜钱的启动资金。':'');
   draw();
  }

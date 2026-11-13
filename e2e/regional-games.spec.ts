@@ -27,7 +27,12 @@ test('workshop makes, sells and settles one hawthorn order',async({page})=>{
  });
  await expect(host.getByRole('button',{name:'串上一颗'})).toHaveCount(0);
  await host.getByRole('button',{name:'去备料台串果'}).click();
- for(let i=0;i<3;i++)await host.getByRole('button',{name:'串上一颗'}).click();
+ await host.getByRole('button',{name:'串上一颗'}).click();
+ await page.getByRole('button',{name:'结束当前活动',exact:true}).click();
+ await expect(host).toHaveCount(0);
+ await page.evaluate(()=>(window as any).__cottage.approachById('sugar-prep'));
+ await expect(host.locator('.sugar-skewer')).toHaveText('●');
+ for(let i=0;i<2;i++)await host.getByRole('button',{name:'串上一颗'}).click();
  await host.getByRole('button',{name:'去铜锅熬糖'}).click();
  for(let i=0;i<3;i++)await host.getByRole('button',{name:'添火'}).click();
  await host.getByRole('button',{name:'裹糖'}).click();
