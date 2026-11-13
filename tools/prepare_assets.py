@@ -34,10 +34,16 @@ for p in source.glob('*.png'):
   record_export(p,dest,recipe)
   continue
  dest=assets/(p.stem+'.webp')
- recipe='lossless-rgba-nearest-v1-'+str(sizes.get(p.stem,(768,512)))
+ target_size=(768,768) if p.stem=='interaction-props' else sizes.get(p.stem,(768,512))
+ recipe=('pixel-alpha64-v2-' if p.stem=='interaction-props' else 'lossless-rgba-nearest-v1-')+str(target_size)
  if needs_export(p,dest,recipe):
-  im=Image.open(p).convert('RGBA');im.thumbnail(sizes.get(p.stem,(768,512)),Image.Resampling.NEAREST)
-  im.save(dest,'WEBP',lossless=True,method=6)
+  im=Image.open(p).convert('RGBA');im.thumbnail(target_size,Image.Resampling.NEAREST)
+  if p.stem=='interaction-props':
+   rgba=bytearray(im.tobytes())
+   for index in range(0,len(rgba),4):
+    if rgba[index+3]<=64:rgba[index:index+4]=bytes(4)
+   im=Image.frombytes('RGBA',im.size,bytes(rgba))
+  im.save(dest,'WEBP',lossless=True,method=6,exact=p.stem=='interaction-props')
  record_export(p,dest,recipe)
 cache_path.write_text(json.dumps(art_cache,sort_keys=True,indent=2))
 art_stamp.write_text('pixel-atlas-v3')

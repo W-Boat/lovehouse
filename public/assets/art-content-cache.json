@@ -164,6 +164,11 @@
     "recipe": "lossless-rgba-nearest-v1-(256, 256)",
     "source": "012ffa04695da5340757eff533b8e1559a8b78430cd751fba276ab0e1284afff"
   },
+  "interaction-props.png": {
+    "output": "7a4aba9eb7078304fbdfd9fcf891bbc2283de3022468810c8798901e04b3b9a0",
+    "recipe": "pixel-alpha64-v2-(768, 768)",
+    "source": "32a94f24544366e9eecff06738ba44a2533c0ed95874138ae001a8e3baf2a887"
+  },
   "loading-cottage.png": {
     "output": "0d782daf71e2676ced0801b42a55fa94f292f7727b40340b90bb9363057d3956",
     "recipe": "lossless-rgba-nearest-v1-(384, 384)",

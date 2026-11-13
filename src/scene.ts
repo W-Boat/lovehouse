@@ -1,6 +1,6 @@
 import {recolorAppearance,captureRaisedHands,restoreRaisedHands} from './appearance-colors';
 import type {AffectionState} from './online-protocol';
-import {PlaceEffects} from './place-effects';
+import {PlaceEffects,effectFrames} from './place-effects';
 import {OnlinePets} from './online-pets';
 import type {OnlineWorld} from './online-world';
 import {drawEarphones,drawHat} from './wearable-art';
@@ -107,6 +107,7 @@ export class Cottage extends Phaser.Scene {
  refreshAppearance(){for(const who of ['girl','boy'] as const){const prefix=who+'-styled-';for(const key of this.textures.getTextureKeys())if(key.startsWith(prefix)||((key.startsWith('pair-art-')||key.startsWith('holding-art-'))&&key.includes('{')))this.textures.remove(key)}this.setPose(this.player,'girl',this.seated?'sit':'idle',0);this.setPose(this.boy,'boy',this.seated?'sit':'idle',0)}
  private appearanceKey(who:'girl'|'boy',base:string){if(!this.textures.exists(base))return base;const a=save.appearance[who],key=who+'-styled-'+base+'-'+[a.hair,a.color,a.skin,a.outfit].join('-');if(this.textures.exists(key))return key;const source=this.textures.get(base).getSourceImage() as HTMLCanvasElement,c=document.createElement('canvas');c.width=source.width;c.height=source.height;const g=c.getContext('2d')!;g.drawImage(source,0,0);if(a.hair>0&&!base.startsWith('pair-')&&!base.startsWith('holding-')&&!base.startsWith('head-')){const index=Number(base.split('-').at(-1)),dir=base.includes('-soak-')||base.includes('-sitmove-')?0:base.includes('-stride-')?Math.floor(index/4):index<4?index:index<8?index-4:0;const headKey=who+'-head-'+(a.hair*4+dir);if(this.textures.exists(headKey)){const head=this.textures.get(headKey).getSourceImage() as HTMLCanvasElement;const h=c.height*(who==='girl'?.59:.51),w=h*head.width/head.height;const before=g.getImageData(0,0,c.width,Math.min(c.height,Math.ceil(h))),hands=captureRaisedHands(before.data,before.width,before.height,before.height);g.clearRect(0,0,c.width,h);g.drawImage(head,(c.width-w)/2,0,w,h);const composed=g.getImageData(0,0,c.width,before.height);restoreRaisedHands(composed.data,hands);g.putImageData(composed,0,0)}}const image=g.getImageData(0,0,c.width,c.height);recolorAppearance(image.data,c.width,c.height,who,a,base);g.putImageData(image,0,0);this.textures.addCanvas(key,c);return key}
  private async ensureTexture(key:keyof typeof textureFiles|keyof typeof additionalTextureFiles){if(this.textures.exists(key))return;await new Promise<void>((resolve,reject)=>{const image=new Image();image.onload=()=>{if(!this.textures.exists(key))this.textures.addImage(key,image);resolve()};image.onerror=reject;image.src=assetUrl(({...textureFiles,...additionalTextureFiles})[key])})}
+ async prepareInteractionArt(){await this.ensureTexture('interaction-props');this.sliceAtlas('interaction-props',4,4,effectFrames)}
  async prepareCalendar(){await this.ensureTexture('season-views')}
  refreshEnvironment(){this.calendarState=calendarSnapshot(save.calendar,save.sky);this.weather=this.calendarState.weather;this.daylight=this.calendarState.period;this.bridge.emit('calendar',this.calendarState)}
  private calendarClock?:number;

@@ -1,0 +1,12 @@
+{
+  "tool": "built-in image_gen",
+  "prompt": "Use case: stylized-concept. Create a transparent pixel art GAME PROP SPRITE ATLAS, exactly 4 columns by 4 rows, 16 equally sized square cells, square canvas. Each object isolated at center of its own cell with generous transparent padding, occupies no more than 65 percent cell width and height. Warm richly detailed 16-bit pixel art, crisp stepped pixels, dark warm outlines, antique cozy birthday cottage palette. NO background, NO grid, NO ground, NO text labels, NO numbers. Exact row-major order: Row1 open cream-page leather book, turquoise glass message bottle with rolled parchment, vintage copper watering can with spout, small golden framed landscape photo. Row2 small brass hanging bell, burgundy rubber postmark stamp beside cream envelope, golden toasted marshmallow on wooden skewer, purple glass potion bottle with cork. Row3 tiny wood chessboard with recognizable black white chess pieces, OPEN decorative wooden treasure chest, red-and-cream striped carton full of golden popcorn, small cream candle in brass saucer. Row4 folded cream towel with rose-pink stripes, small open teal-and-brass greenhouse vent window, copper teapot with floral decoration and curved handle and spout, TWO separate cream teacups with pink floral patterns on saucers grouped together. Keep the entire prop intact within its cell, clean transparent edges, no overlapping cells. Objects must be detailed recognizable game sprites, not flat rectangles.",
+  "source": "tools/art-source/interaction-props.png",
+  "runtime": "public/assets/interaction-props.webp",
+  "layout": {
+    "columns": 4,
+    "rows": 4
+  },
+  "processing": "768x768 nearest-neighbor export. Pixels with alpha at most 64 are cleared to RGBA zero. WebP exact transparency retained.",
+  "usage": "14 illustrated interaction feedback types, loaded on first use"
+}
