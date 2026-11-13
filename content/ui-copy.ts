@@ -151,7 +151,7 @@ export const uiCopyDefaults={
  "calendar.auto": "自动",
  "calendar.manual": "手动",
  "calendar.enabled": "开启小屋日历",
- "calendar.first-help": "第一次开启从 2026.10.23 开始。自动时间只在小屋运行且页面可见时推进。",
+ "calendar.first-help": "默认开启，从 2026.11.23 开始。自动时间只在小屋运行且页面可见时推进。",
  "calendar.prev": "上一个月",
  "calendar.next": "下一个月",
  "calendar.date": "日期",

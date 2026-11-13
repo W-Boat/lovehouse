@@ -8,7 +8,7 @@ assets=root/'public/assets';art_stamp=assets/'art-version.txt';rebuild_all=not a
 for p in list(assets.glob('*.png')):
  dest=source/p.name
  if not dest.exists():p.replace(dest)
-sizes={'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(512,512),'boy-walk':(512,512),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
+sizes={'gift-opening-v1':(1024,1024),'tea-pour-v1':(1024,1024),'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(1024,1024),'boy-walk':(1024,1024),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
 cache_path=assets/'art-content-cache.json'
 try:art_cache=json.loads(cache_path.read_text())
 except (OSError,ValueError):art_cache={}

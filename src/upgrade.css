@@ -114,3 +114,27 @@ input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
 #app.compact-hud .scene-activity-workshop{width:min(490px,68%);max-height:40%}
 
 .scene-activity #online-game-host section button{min-height:var(--control-size,44px);margin:2px 4px 2px 0}
+
+/* Physical touch targets remain constant at every UI DPI. */
+#app #joystick{width:calc(108px / var(--ui-scale,1));height:calc(108px / var(--ui-scale,1));left:calc(42px / var(--ui-scale,1));bottom:calc(34px / var(--ui-scale,1));touch-action:none}
+#app #joystick-knob{width:44%;height:44%}
+#app #interact{right:calc(42px / var(--ui-scale,1));bottom:calc(40px / var(--ui-scale,1));min-width:calc(64px / var(--ui-scale,1));min-height:calc(64px / var(--ui-scale,1))}
+#app #round-minimap{top:var(--minimap-top,148px);width:calc(84px / var(--ui-scale,1));height:calc(84px / var(--ui-scale,1));left:max(14px,env(safe-area-inset-left))}
+#app .hud-progress{top:var(--progress-top,104px)}
+#app .modal-backdrop{background:transparent;backdrop-filter:none}
+#app .modal{box-shadow:3px 4px #241b2c55}
+#app .scene-activity-game,#app .scene-activity-arcade{width:calc(100% - 32px / var(--ui-scale,1));max-height:calc(100% - 24px / var(--ui-scale,1));bottom:calc(12px / var(--ui-scale,1));padding:8px calc(48px / var(--ui-scale,1)) 8px 12px}
+#app .scene-activity-game .modal-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;position:sticky;bottom:0;background:#f6e4bf;margin:6px 0 0;padding-top:4px}
+#app .scene-activity-game .modal-actions button{min-width:0;margin:0;white-space:normal}
+.game-options{display:flex;flex-wrap:wrap;gap:8px}.game-options[hidden]{display:none}
+.scale-presets{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.scale-presets button{flex:1}
+#app #set-scale{width:100%;min-height:var(--control-size,44px)}
+
+.stellar-panel{position:absolute;inset:0;z-index:65;color:#fff0cf;background:linear-gradient(110deg,#142338c7,#26334768 58%,#1a253d9c);padding:28px 6%;box-sizing:border-box;overflow:auto;overscroll-behavior:contain;backdrop-filter:none}
+.stellar-panel header{border-bottom:1px solid #e5c99577;padding-bottom:12px}.stellar-panel header small{letter-spacing:3px;color:#e8cd9f}.stellar-panel h2{font-size:32px;margin:10px 0}.stellar-close{position:absolute;right:20px;top:14px;min-width:var(--control-size,44px);min-height:var(--control-size,44px);background:transparent;color:#ffedbf;border:1px solid #e8d0a277;font-size:28px}
+.stellar-content{position:relative;text-align:center}.stellar-content canvas{width:100%;max-height:72vh;aspect-ratio:16/9;object-fit:contain}.wish-orbit{width:140px;height:140px;border:2px solid #f2d49c;margin:30px auto 20px;font-size:90px;line-height:140px;border-radius:50%;box-shadow:0 0 50px #f4bc7555,inset 0 0 40px #9dcfff44;animation:star-orbit 8s linear infinite}.wish-actions{display:flex;justify-content:center;gap:18px;flex-wrap:wrap}.wish-actions button{min-height:var(--control-size,44px)}.wish-skip{position:absolute;bottom:8px;right:8px}.achievement-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:20px;text-align:left}.achievement-list article{padding:18px;border:1px solid #bfb8a955;background:#18273d66;opacity:.65}.achievement-list article.earned{border-color:#e8cf97;opacity:1;background:#403b3466}.achievement-list h3{margin:0;font-size:24px}.achievement-list p{font-size:18px}.achievement-list small{color:#efcb8f}.achievement-toast{position:absolute;z-index:70;top:25%;left:50%;transform:translateX(-50%);padding:18px 32px;color:#ffe7af;background:linear-gradient(90deg,transparent,#233049eb 15%,#233049eb 85%,transparent);border-block:1px solid #eacb8855;pointer-events:none;white-space:nowrap;font-size:24px;animation:achievement-in .4s ease-out}
+@keyframes star-orbit{to{transform:rotate(360deg)}}@keyframes achievement-in{from{opacity:0;translate:0 -12px}to{opacity:1;translate:0 0}}.reduced-motion .wish-orbit{animation:none}
+
+#app #round-minimap{top:var(--minimap-top,148px)!important}
+#app.compact-hud .scene-activity-game,#app.compact-hud .scene-activity-arcade{width:calc(100% - 32px / var(--ui-scale,1));max-height:calc(100% - 24px / var(--ui-scale,1))}
+#app .modal-backdrop{pointer-events:none}#app .modal-backdrop .modal{pointer-events:auto}

@@ -1,0 +1,10 @@
+{
+  "generator": "image_gen builtin",
+  "source": "exec-8c706faf-f66f-4657-89ec-f761dc4d279e.png",
+  "frames": 16,
+  "columns": 4,
+  "rows": 4,
+  "frameMs": 110,
+  "usage": "scene anchored gift opening, no backdrop",
+  "prompt": "Golden birthday chest, 16 sequential opening frames, transparent pixel art, fixed baseline"
+}

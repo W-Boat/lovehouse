@@ -30,8 +30,8 @@
     "source": "94f29214436c49b66ad09353e4f95dd0ba0c31c75e12ddb4bff9a13d8cc0a9a5"
   },
   "boy-walk.png": {
-    "output": "8166f7006309fcd385b6bd40041dffa749910d402b2d0cc9628c93e8506c6921",
-    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "output": "91af2a76194283a091e8a87744c47a0f1df1b39ca1836cd00d05d505a9565c3e",
+    "recipe": "lossless-rgba-nearest-v1-(1024, 1024)",
     "source": "27667fbe4328cc1c0b668bb6fea3fb6ebb077ab41227c78543ae75e4a71f3ff5"
   },
   "camp.png": {
@@ -109,6 +109,11 @@
     "recipe": "lossless-rgba-nearest-v1-(512, 512)",
     "source": "996d01a04b2ff61c9aac943cba68ad48df0b4de883581a02e8dd7530db2340ba"
   },
+  "gift-opening-v1.png": {
+    "output": "52bbb6741faff635f81f31ae6fe16cf467e5435467776465536778bf137d7126",
+    "recipe": "lossless-rgba-nearest-v1-(1024, 1024)",
+    "source": "f785c1af07509c21f28394a1f3ec4196cd670ed1247aee1e501253b0da99002d"
+  },
   "gifts-v2.png": {
     "output": "06cff7e0e0e7dc4bcb812c5abb862256bac62ab3ffae667624bb3bf638178792",
     "recipe": "lossless-rgba-nearest-v1-(256, 256)",
@@ -130,8 +135,8 @@
     "source": "bb662e6ee7e08933fc06fceea72752bb246ac2b5192464a9105a20ebbcf9ad6b"
   },
   "girl-walk.png": {
-    "output": "18bb7891a0492c370b4b8701815e26df8677fe091f9db7044f2f3fe4780b68d0",
-    "recipe": "lossless-rgba-nearest-v1-(512, 512)",
+    "output": "c14a50e0112f5a52f4c302324fb107746eab99572aded89e596706c1021c55a1",
+    "recipe": "lossless-rgba-nearest-v1-(1024, 1024)",
     "source": "23901da489846891bea112964af7c5c7ed1387c5142fef7318d564098b7a6c4a"
   },
   "greenhouse.png": {
@@ -623,6 +628,11 @@
     "output": "848e1f41ca2b5fb6d65d9bd8efbd3e4c28977990af96ae78663a2ed79e350907",
     "recipe": "lossless-rgba-nearest-v1-(768, 512)",
     "source": "9c677f00e1372a08c3ca76a1d27788d42ca234cec5251fec6cbb4c83eb1bf442"
+  },
+  "tea-pour-v1.png": {
+    "output": "0a0010c77922e8afb2c626f380c509d4c0b306c4f373f1f1477c4f2a339990f5",
+    "recipe": "lossless-rgba-nearest-v1-(1024, 1024)",
+    "source": "dd80b9734f705e39e77a98e2e3f3e8f7fd2f6424f47d799dc128ccab2b86c7ab"
   },
   "tianmo.png": {
     "output": "95ea164d9fb9686aa8550bb5837506125fe81d5dc8edbc438511599cab3772f0",

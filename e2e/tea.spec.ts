@@ -5,8 +5,7 @@ test('cold-room tea interaction retains real sprites through sitting and rising'
  page.on('console',message=>{if(/Texture.*(not found|missing)|Error loading.*sit-transition/i.test(message.text()))missing.push(message.text())});
  await page.goto('/');await page.locator('#custom-save').click({timeout:45000});
  await page.locator('#map-toggle').click();await page.locator('#item-tea').click();
- await expect(page.locator('#dialogue')).toBeVisible({timeout:30000});
- await page.locator('#dialogue-choices button').click();
+ await expect(page.locator('#dialogue')).toBeHidden();
  await expect.poll(()=>page.evaluate(()=>{
   const scene=(window as any).__cottage;
   return {

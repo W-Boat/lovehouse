@@ -10,7 +10,7 @@ test('display scaling preserves screen bounds and commits only after confirmatio
  await page.locator('#set-scale').selectOption('125');
  await expect.poll(()=>page.locator('#app').evaluate(node=>Math.abs(node.getBoundingClientRect().width-(window.visualViewport?.width??innerWidth)))).toBeLessThanOrEqual(1);
  await expect.poll(()=>page.locator('#app').evaluate(node=>Math.abs(node.getBoundingClientRect().height-(window.visualViewport?.height??innerHeight)))).toBeLessThanOrEqual(1);
- expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).settings.uiScale??100)).toBe(100);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).settings.uiScale??100)).toBe(80);
  await page.locator('#scale-keep').click();
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).settings.uiScale)).toBe(125);
  await page.locator('#set-scale').selectOption('80');

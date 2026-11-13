@@ -3,8 +3,8 @@ export type Season='spring'|'summer'|'autumn'|'winter';
 export type Weather='clear'|'rain'|'snow';
 export type DayPeriod='night'|'dawn'|'day'|'dusk';
 export type CalendarSettings={enabled:boolean;initialized:boolean;date:string;minutes:number;timeMode:'auto'|'manual';timeScale:1|10|30|60;seasonMode:'auto'|'manual';season:Season;weatherMode:'auto'|'manual';weather:Weather;temperatureMode:'auto'|'manual';temperature:number};
-export const FIRST_CALENDAR_DATE='2026-10-23';
-export const calendarDefaults=():CalendarSettings=>({enabled:false,initialized:false,date:FIRST_CALENDAR_DATE,minutes:18*60,timeMode:'auto',timeScale:10,seasonMode:'auto',season:'autumn',weatherMode:'auto',weather:'clear',temperatureMode:'auto',temperature:16});
+export const FIRST_CALENDAR_DATE='2026-11-23';
+export const calendarDefaults=():CalendarSettings=>({enabled:true,initialized:true,date:FIRST_CALENDAR_DATE,minutes:18*60,timeMode:'auto',timeScale:10,seasonMode:'auto',season:'autumn',weatherMode:'auto',weather:'clear',temperatureMode:'auto',temperature:16});
 export const seasonNames:Record<Season,string>={get spring(){return uiCopy('climate.season.spring')},get summer(){return uiCopy('climate.season.summer')},get autumn(){return uiCopy('climate.season.autumn')},get winter(){return uiCopy('climate.season.winter')}};
 export const weatherNames:Record<Weather,string>={get clear(){return uiCopy('climate.weather.clear')},get rain(){return uiCopy('climate.weather.rain')},get snow(){return uiCopy('climate.weather.snow')}};
 export const periodNames:Record<DayPeriod,string>={get night(){return uiCopy('climate.period.night')},get dawn(){return uiCopy('climate.period.dawn')},get day(){return uiCopy('climate.period.day')},get dusk(){return uiCopy('climate.period.dusk')}};
@@ -20,7 +20,7 @@ export function enableCalendar(calendar:CalendarSettings,enabled:boolean){
 }
 export function parseCalendar(raw:unknown):CalendarSettings{
  const c=calendarDefaults();if(!raw||typeof raw!=='object')return c;const d=raw as Partial<CalendarSettings>;
- c.initialized=d.initialized===true;c.enabled=d.enabled===true;
+ c.initialized=d.initialized===true;c.enabled=typeof d.enabled==='boolean'?d.enabled:true;
  if(c.initialized){if(validCalendarDate(d.date))c.date=d.date;c.minutes=bounded(d.minutes,0,1439.999,c.minutes)}
  c.timeMode=d.timeMode==='manual'?'manual':'auto';c.timeScale=([1,10,30,60] as number[]).includes(d.timeScale as number)?d.timeScale!:10;
  for(const key of ['seasonMode','weatherMode','temperatureMode'] as const)c[key]=d[key]==='manual'?'manual':'auto';

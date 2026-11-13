@@ -1,0 +1,10 @@
+{
+  "generator": "image_gen builtin",
+  "source": "exec-45eccb74-9a8b-46dc-871a-1f6c7efc7c80.png",
+  "columns": 4,
+  "rows": 4,
+  "frames": 16,
+  "frameMs": 180,
+  "usage": "all tea interactions",
+  "prompt": "Rose porcelain teapot pouring into two cups, fixed tray and baseline, transparent pixel art"
+}

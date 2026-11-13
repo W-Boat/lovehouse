@@ -15,7 +15,7 @@ export class PlaceEffects{
  constructor(private scene:Cottage){this.zone=scene.zone;this.ink=scene.add.graphics().setDepth(8.6)}
  rebuild(){for(const prop of this.props.values())prop.destroy();this.props.clear();this.active.clear();this.ink.clear();this.zone=this.scene.zone}
  trigger(id:string){const kind=placeEvents[this.scene.zone]?.[id],item=this.scene.getItem(id);if(!kind||!item)return false;
-  if(this.zone!==this.scene.zone)this.rebuild();if(illustratedEffects.has(kind)&&this.scene.prepareInteractionArt&&!this.artRequest)this.artRequest=this.scene.prepareInteractionArt().catch(()=>{this.artRequest=undefined});this.toggled.set(this.zone+':'+id,!this.toggled.get(this.zone+':'+id));
+  if(this.zone!==this.scene.zone)this.rebuild();if(kind==='tea')void this.scene.playObjectAnimation?.(id,'tea-pour-v1',180).catch(()=>{});if(illustratedEffects.has(kind)&&this.scene.prepareInteractionArt&&!this.artRequest)this.artRequest=this.scene.prepareInteractionArt().catch(()=>{this.artRequest=undefined});this.toggled.set(this.zone+':'+id,!this.toggled.get(this.zone+':'+id));
   let {x,y}=item;
   const camera=this.scene.cameras?.main,view=camera?.worldView;
   if(illustratedEffects.has(kind)&&view){

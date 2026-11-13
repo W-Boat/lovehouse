@@ -37,7 +37,7 @@ test('rhythm requires actual notes on all three rounds',async({page})=>{
  await won(page,'earphones');
 });
 test('pause blocks chocolate placement and retry starts a fresh board',async({page})=>{
- await enter(page);await start(page,'chocolate');const host=page.locator('#game-host');await host.getByRole('button',{name:'暂停',exact:true}).click();await host.locator('.game-board button').nth(0).click({force:true});await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'继续',exact:true}).click();await host.locator('.game-board button').nth(0).click();await expect(host.locator('.game-board')).toContainText('甜');await host.getByRole('button',{name:'重新开始',exact:true}).click();await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toBeHidden();expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes('chocolate'))).toBe(false);
+ await enter(page);await start(page,'chocolate');const host=page.locator('#game-host');await host.getByRole('button',{name:'暂停',exact:true}).click();await host.locator('.game-board button').nth(0).click({force:true});await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'继续',exact:true}).click();await host.locator('.game-board button').nth(0).click();await expect(host.locator('.game-board')).toContainText('甜');await host.getByRole('button',{name:'选项',exact:true}).click();await host.getByRole('button',{name:'重新开始',exact:true}).click();await expect(host.locator('.game-board')).not.toContainText('甜');await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toBeHidden();expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes('chocolate'))).toBe(false);
 });
 
 test('route planning, push boxes and two-character switches solve all three distinct layouts',async({page})=>{
@@ -89,7 +89,7 @@ test('catch falling chestnuts by tracking visible pixels, through three rounds',
 test('all twelve games permit retry, pause, resume and exit without receiving a gift',async({page})=>{
  test.setTimeout(120000);await enter(page);
  for(const id of ['moon','keychain','chestnuts','earphones','band','doll','chocolate','letter','notes','hat','labubu','mystery']){
-  await start(page,id);const host=page.locator('#game-host');await host.getByRole('button',{name:'重新开始',exact:true}).click();await host.getByRole('button',{name:'暂停',exact:true}).click();await expect(host.locator('.game-board')).toHaveClass(/paused/);await host.getByRole('button',{name:'继续',exact:true}).click();await expect(host.locator('.game-board')).not.toHaveClass(/paused/);await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toBeHidden();expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes(value),id)).toBe(false);
+  await start(page,id);const host=page.locator('#game-host');await host.getByRole('button',{name:'选项',exact:true}).click();await host.getByRole('button',{name:'重新开始',exact:true}).click();await host.getByRole('button',{name:'暂停',exact:true}).click();await expect(host.locator('.game-board')).toHaveClass(/paused/);await host.getByRole('button',{name:'继续',exact:true}).click();await expect(host.locator('.game-board')).not.toHaveClass(/paused/);await host.getByRole('button',{name:'先退出',exact:true}).click();await expect(host).toBeHidden();expect(await page.evaluate(value=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).opened.includes(value),id)).toBe(false);
  }
 });
 
@@ -107,7 +107,7 @@ test.describe('phone touch controls',()=>{
    await expect(board).toHaveClass(/paused/);
    await game.getByRole('button',{name:'继续',exact:true}).tap();
    await expect(board).not.toHaveClass(/paused/);
-   await game.getByRole('button',{name:'重新开始',exact:true}).tap();
+   await game.getByRole('button',{name:'选项',exact:true}).tap();await game.getByRole('button',{name:'重新开始',exact:true}).tap();
    await game.getByRole('button',{name:'先退出',exact:true}).tap();
    await expect(game).toBeHidden();
   }

@@ -126,7 +126,7 @@ test('calendar follows visible elapsed time across slow frames and excludes susp
  const state=defaults();calendar.enableCalendar(state.calendar,true);state.calendar.timeMode='auto';state.calendar.timeScale=60;state.calendar.minutes=1439;
  let now=0;const scene=loadScene({now:()=>now},state);scene.entered=true;
  scene.updateCalendar(16);now=1000;scene.updateCalendar(16);
- assert.equal(state.calendar.date,'2026-10-24');assert.equal(state.calendar.minutes,0);
+ assert.equal(state.calendar.date,'2026-11-24');assert.equal(state.calendar.minutes,0);
  scene.calendarPaused=true;now=60000;scene.updateCalendar(16);
  assert.equal(state.calendar.minutes,0);
  scene.calendarPaused=false;scene.resetCalendarClock();now=61000;scene.updateCalendar(16);
