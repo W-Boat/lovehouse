@@ -3,7 +3,13 @@ async function enter(page:Page){await page.goto('/');await expect(page.locator('
 async function panel(page:Page){await page.locator('#online-toggle').click();await expect(page.locator('#online-panel')).toBeVisible()}
 async function back(page:Page){await page.getByRole('button',{name:'回到小屋',exact:true}).click()}
 async function point(page:Page,who:'girl'|'boy'){return page.evaluate(w=>{const s=(window as any).__cottage,p=w==='girl'?s.player:s.boy;return{x:p.x,y:p.y}},who)}
-async function walk(page:Page,key:string){await page.keyboard.down(key);await page.waitForTimeout(550);await page.keyboard.up(key)}
+async function walk(page:Page,key:string){
+ await page.bringToFront();
+ const start=await page.evaluate(()=>{const actor=(window as any).__cottage.controlledActor;return{x:actor.x,y:actor.y}});
+ await page.keyboard.down(key);
+ try{await expect.poll(()=>page.evaluate(origin=>{const actor=(window as any).__cottage.controlledActor;return Math.hypot(actor.x-origin.x,actor.y-origin.y)},start),{timeout:10000}).toBeGreaterThan(6)}
+ finally{await page.keyboard.up(key)}
+}
 test('two real players move independently, follow by consent, chat, merge writing, cooperate and resume',async({browser},info)=>{
  test.setTimeout(240000);const hc=await browser.newContext({baseURL:'http://127.0.0.1:4173'}),gc=await browser.newContext({baseURL:'http://127.0.0.1:4173'});const host=await hc.newPage(),guest=await gc.newPage();
  try{
