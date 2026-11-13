@@ -1,0 +1,12 @@
+{
+  "tool": "built-in image_gen",
+  "prompt": "Use case: logo-brand. Asset type: Android adaptive launcher icon foreground for an intimate pixel-art birthday cottage exploration game. Generate ONE square transparent PNG. A compact cozy timber cottage with dark teal pitched roof, cream stucco walls, rose-pink door, two warm amber glowing windows, a tiny birthday candle in the window and a little pink flower planter. Crisp deliberately chunky 16-bit pixel art, orthogonal stepped pixel edges, restrained warm palette and strong silhouette legible at 48px. Straight-on slight three-quarter perspective. The COMPLETE cottage must fit inside the central 54% of the canvas width and height, with generous genuinely transparent padding on all four sides. No scenery, no ground plane, no text, no letters, no badge border, no cast shadow, no background rectangle, no app mockup, no gradients outside the windows. Whole house intact and centered. Final ready-to-use isolated icon.",
+  "master": "tools/android-icon-source.png",
+  "exporter": "tools/prepare_android_icons.py",
+  "safeCircleRadius": ".30 of canvas width",
+  "outputs": [
+    "legacy mipmap mdpi through xxxhdpi",
+    "API 26 adaptive foreground/background",
+    "API 33 monochrome"
+  ]
+}

@@ -11,6 +11,7 @@ src-tauri/target/
 android/.gradle/
 android/app/build/
 android/app/src/main/res/drawable-nodpi/cottage_icon.png
+android/app/src/main/res/
 
 work/taoyuan-build/
 

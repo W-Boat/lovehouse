@@ -174,7 +174,7 @@ scene.bridge.on('portal-positions',(points:{id:string;name:string;x:number;y:num
  }
 });
 
-document.addEventListener('visibilitychange',()=>{scene.calendarPaused=document.hidden;if(document.hidden)persist()});window.addEventListener('pagehide',()=>persist());
+document.addEventListener('visibilitychange',()=>{scene.calendarPaused=document.hidden;scene.resetCalendarClock();if(document.hidden)persist()});window.addEventListener('pagehide',()=>persist());
 
 document.addEventListener('cottage-export-result',event=>{
  const result=(event as CustomEvent<string>).detail;

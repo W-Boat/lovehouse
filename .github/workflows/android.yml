@@ -36,9 +36,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Prepare Android launcher icon
-        run: |
-          mkdir -p android/app/src/main/res/drawable-nodpi
-          python -c "from PIL import Image; Image.open('dist/assets/favicon.webp').save('android/app/src/main/res/drawable-nodpi/cottage_icon.png')"
+        run: python -X utf8 tools/prepare_android_icons.py
       - run: gradle --project-dir android :app:assembleDebug
       - name: Verify installable package and offline assets
         run: |

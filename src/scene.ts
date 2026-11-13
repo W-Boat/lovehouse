@@ -109,7 +109,17 @@ export class Cottage extends Phaser.Scene {
  private async ensureTexture(key:keyof typeof textureFiles|keyof typeof additionalTextureFiles){if(this.textures.exists(key))return;await new Promise<void>((resolve,reject)=>{const image=new Image();image.onload=()=>{if(!this.textures.exists(key))this.textures.addImage(key,image);resolve()};image.onerror=reject;image.src=assetUrl(({...textureFiles,...additionalTextureFiles})[key])})}
  async prepareCalendar(){await this.ensureTexture('season-views')}
  refreshEnvironment(){this.calendarState=calendarSnapshot(save.calendar,save.sky);this.weather=this.calendarState.weather;this.daylight=this.calendarState.period;this.bridge.emit('calendar',this.calendarState)}
- private updateCalendar(delta:number){const oldDate=save.calendar.date;if(this.entered&&!this.calendarPaused&&advanceCalendar(save.calendar,Math.min(1000,Math.max(0,delta))/1000)){this.calendarSaveElapsed+=Math.min(delta,1000)/1000;if(this.calendarSaveElapsed>=30||save.calendar.date!==oldDate){this.calendarSaveElapsed=0;persist()}}
+ private calendarClock?:number;
+ resetCalendarClock(){this.calendarClock=undefined}
+ private updateCalendar(delta:number){
+  const now=typeof performance==='undefined'?undefined:performance.now();
+  const elapsed=now===undefined?Math.max(0,delta)/1000:this.calendarClock===undefined?0:Math.max(0,now-this.calendarClock)/1000;
+  this.calendarClock=now;
+  const oldDate=save.calendar.date;
+  if(this.entered&&!this.calendarPaused&&advanceCalendar(save.calendar,elapsed)){
+   this.calendarSaveElapsed+=elapsed;
+   if(this.calendarSaveElapsed>=30||save.calendar.date!==oldDate){this.calendarSaveElapsed=0;persist()}
+  }
  const c=save.calendar,key=[c.enabled,c.date,Math.floor(c.minutes*4),c.timeMode,c.timeScale,c.seasonMode,c.season,c.weatherMode,c.weather,c.temperatureMode,c.temperature,save.sky.time,save.sky.weather].join(':');if(key!==this.calendarSignature){this.calendarSignature=key;this.refreshEnvironment()}}
  async prepareBirthday(){await Promise.all([this.ensureTexture('pier'),this.ensureTexture('room-after')])}
  async prepareCinema(){this.filmTextures=[];for(const key of ['garden','forest','pier'] as const){if(!this.textures.exists(key))this.filmTextures.push(key);await this.ensureTexture(key)}}
@@ -327,7 +337,7 @@ export class Cottage extends Phaser.Scene {
   const candidates=this.objects.filter(item=>item.id!=='boy'&&inReach(local,item,this.walkable));const nearest=candidates.find(i=>i.id===this.focusId)??candidates[0];if(nearest?.id!==this.nearby?.id){this.nearby=nearest;this.bridge.emit('nearby',nearest)}if(nearest)this.bridge.emit('hint-position',this.project(nearest.x,nearest.y-20));this.bridge.emit('portal-positions',this.objects.filter(i=>i.to||i.id==='taoyuan-portal').map(i=>({id:i.id,name:i.to?worlds[i.to].name:i.name,...this.project(i.x,i.y)})));this.seatLayers?.update();this.windowView?.update();this.atmosphere();this.environment();this.motion?.update(this.idleTime);
  }
  update(_time:number,delta:number){
-  if(!this.player)return;this.placeEffects?.update(delta);this.updateCalendar(delta);this.outdoorEnvironment?.update();this.walkingNow=false;this.frameView();const dt=Math.min(delta,40)/1000;this.idleTime+=dt;this.onlinePets?.update(dt);if(this.onlineWorld?.active){this.updateOnline(dt);return;}
+  if(!this.player)return;this.placeEffects?.update(delta);this.updateCalendar(delta);if(this.entered&&this.blocked&&!this.staging&&!this.onlineWorld?.active)return;this.outdoorEnvironment?.update();this.walkingNow=false;this.frameView();const dt=Math.min(delta,40)/1000;this.idleTime+=dt;this.onlinePets?.update(dt);if(this.onlineWorld?.active){this.updateOnline(dt);return;}
   if(this.staging){this.actor.update(this.player,dt,this.walkable);this.buddy.update(this.boy,dt,this.walkable);if(!this.actor.moving&&!this.buddy.moving){this.staging=false;this.setPose(this.player,'girl','idle',2);this.setPose(this.boy,'boy','idle',2);this.syncFollowing();const done=this.stagingDone;this.stagingDone=undefined;done?.()}}
   if(this.seated)this.updateSeated(dt);else if(this.actionKind&&!this.blocked)this.updateAction(dt);
   if(!this.blocked&&this.entered&&!this.seated&&!this.actionKind){

@@ -19,12 +19,12 @@ import * as actors from '../src/actors';
 import {textureFiles,additionalTextureFiles} from '../src/assets';
 import {defaults} from '../src/state';
 import {gameViewport,localPoint,localDelta,requestImmersive} from '../src/viewport';
-function loadScene(){
+function loadScene(clock?:{now:()=>number},state=defaults()){
  const code=transformSync(readFileSync('src/scene.ts','utf8'),{loader:'ts',format:'cjs',target:'es2022'}).code;
  const output={exports:{} as any};
  class Scene{sys={};}
- const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:defaults(),persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./online-pets':{OnlinePets:class{update(){}}},'./calendar':calendar,'./wearable-art':wearableArt,'./place-effects':{PlaceEffects:class{trigger(){return false};update(){};rebuild(){}}},'./seat-layers':{SeatLayers:class{rebuild(){};update(){}}},'./appearance-colors':appearanceColors,'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./outdoor-environment':{OutdoorEnvironment:class{update(){}}},'./assets':{textureFiles,additionalTextureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
- vm.runInNewContext(code,{module:output,exports:output.exports,require:(id:string)=>{if(!(id in dependencies))throw new Error(id);return dependencies[id]}});
+ const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:state,persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./online-pets':{OnlinePets:class{update(){}}},'./calendar':calendar,'./wearable-art':wearableArt,'./place-effects':{PlaceEffects:class{trigger(){return false};update(){};rebuild(){}}},'./seat-layers':{SeatLayers:class{rebuild(){};update(){}}},'./appearance-colors':appearanceColors,'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./outdoor-environment':{OutdoorEnvironment:class{update(){}}},'./assets':{textureFiles,additionalTextureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
+ vm.runInNewContext(code,{...(clock?{performance:clock}:{}),module:output,exports:output.exports,require:(id:string)=>{if(!(id in dependencies))throw new Error(id);return dependencies[id]}});
  const scene=new output.exports.Cottage();
  scene.textures={exists:()=>false};
  return scene;
@@ -119,4 +119,16 @@ test('equipment images bind after replacement gift atlases, never to destroyed f
  scene.add={image:(x:number,y:number,key:string)=>{const object=fakeObject(x,y);if(key==='gift-hat'||key==='gift-earphones')equipped.push({key,generation});return object},graphics:fakeObject,ellipse:fakeObject,rectangle:fakeObject,text:fakeObject,container:fakeObject};
  scene.input={keyboard:{addKeys:()=>({}),on:()=>{}}};scene.cameras={main:fakeObject()};scene.cameras.main.width=844;scene.cameras.main.height=390;
  scene.create();assert.deepEqual(equipped,[{key:'gift-hat',generation:2},{key:'gift-earphones',generation:2}]);
+});
+
+test('calendar follows visible elapsed time across slow frames and excludes suspended time',()=>{
+ const state=defaults();calendar.enableCalendar(state.calendar,true);state.calendar.timeMode='auto';state.calendar.timeScale=60;state.calendar.minutes=1439;
+ let now=0;const scene=loadScene({now:()=>now},state);scene.entered=true;
+ scene.updateCalendar(16);now=1000;scene.updateCalendar(16);
+ assert.equal(state.calendar.date,'2026-10-24');assert.equal(state.calendar.minutes,0);
+ scene.calendarPaused=true;now=60000;scene.updateCalendar(16);
+ assert.equal(state.calendar.minutes,0);
+ scene.calendarPaused=false;scene.resetCalendarClock();now=61000;scene.updateCalendar(16);
+ assert.equal(state.calendar.minutes,0);
+ now=62000;scene.updateCalendar(16);assert.equal(state.calendar.minutes,1);
 });
