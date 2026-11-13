@@ -284,14 +284,14 @@ export class Cottage extends Phaser.Scene {
   if(this.zone==='aquarium'){
    const active=save.moments.includes('jellyfish');for(let i=0;i<(active?9:4);i++){const x=110+(i*69)%420+Math.sin(t*.4+i)*14,y=65+(i*31)%80+Math.sin(t*.6+i)*6;g.fillStyle(i%2?0xe9b8eb:0xa8e8e6,.24);g.fillEllipse(x,y,12,8);g.lineStyle(1,0xc3e6f0,.3);g.lineBetween(x-2,y+3,x-3+Math.sin(t+i)*3,y+14)}
   }else if(this.zone==='camp'){
-   g.fillStyle(0xffbf70,.13);g.fillEllipse(400,156,85+Math.sin(t*3)*4,44);for(let i=0;i<6;i++){g.fillStyle(0xffd291,.65);g.fillRect(394+(i*7)%17+Math.sin(t+i)*3,156-(t*14+i*8)%36,1,2)}if(save.moments.includes('camp-lights'))for(let i=0;i<8;i++){const x=100+i*60,y=98+Math.sin(i*.5)*14;g.fillStyle(0xffdd88,.14);g.fillCircle(x,y,12);g.fillStyle(0xffebbd,.9);g.fillRect(x-1,y,3,4)}if(save.moments.includes('marshmallow')){g.fillStyle(0xffead2,.9);g.fillRect(387,160,5,5);g.fillRect(412,160,5,5)}
+   g.fillStyle(0xffbf70,.13);g.fillEllipse(400,156,85+Math.sin(t*3)*4,44);for(let i=0;i<6;i++){g.fillStyle(0xffd291,.65);g.fillRect(394+(i*7)%17+Math.sin(t+i)*3,156-(t*14+i*8)%36,1,2)}if(save.moments.includes('camp-lights'))for(let i=0;i<8;i++){const x=100+i*60,y=98+Math.sin(i*.5)*14;g.fillStyle(0xffdd88,.14);g.fillCircle(x,y,12);g.fillStyle(0xffebbd,.9);g.fillRect(x-1,y,3,4)}if(save.moments.includes('marshmallow')){g.lineStyle(1,0xffead2,.28);for(const x of [387,412]){const rise=(t*6+x)%18;g.lineBetween(x+Math.sin(t)*2,153-rise,x+1+Math.sin(t)*2,149-rise)}}
   }else if(this.zone==='room'){
    const lit=save.moments.includes('fireplace');g.fillStyle(0xffbc55,lit?.14:.07);g.fillEllipse(79,116,lit?100:70,42);
    if(save.moments.includes('flowers'))for(let i=0;i<4;i++){g.fillStyle(0xe5abc0,.55);g.fillRect(437+Math.sin(t*.4+i)*12,123+(t*3+i*9)%36,2,1)}
    if(save.moments.includes('tea'))for(let i=0;i<3;i++){const y=312-((t*6+i*8)%25);g.fillStyle(0xffeddb,.22);g.fillRect(195+Math.sin(t+i)*3,y,2,4)}
    for(const x of [280,292,304,318,332,346]){g.fillStyle(0xffe1a7,.45+Math.sin(t*5+x)*.2);g.fillEllipse(x,164+Math.sin(t*4+x)*1.5,2.5,5)}for(const x of [188,238,391]){g.fillStyle(0xffc77e,.07+(Math.sin(t*2+x)+1)*.025);g.fillCircle(x,105,25)}
   }else if(this.zone==='magic'){
-   for(let i=0;i<16;i++){const x=130+(i*71)%390,y=75+(i*47)%120;g.fillStyle(i%2?0xeab7e7:0xafe6da,.4);g.fillRect(x+Math.sin(t*.8+i)*8,y+Math.cos(t+i)*5,2,2)}if(save.moments.includes('potion')){g.fillStyle(0xe7a0cb,.4);g.fillEllipse(391,236,16,22)}if(save.moments.includes('spell'))for(let i=0;i<12;i++){const a=i/12*Math.PI*2+t;g.fillStyle(0xffe8b4,.6);g.fillRect(389+Math.cos(a)*26,230+Math.sin(a)*17,2,2)}
+   for(let i=0;i<16;i++){const x=130+(i*71)%390,y=75+(i*47)%120;g.fillStyle(i%2?0xeab7e7:0xafe6da,.4);g.fillRect(x+Math.sin(t*.8+i)*8,y+Math.cos(t+i)*5,2,2)}if(save.moments.includes('potion')){g.lineStyle(1,0xe7a0cb,.4);for(let i=0;i<3;i++)g.strokeCircle(387+i*4,225-(t*5+i*6)%22,1.5)}if(save.moments.includes('spell'))for(let i=0;i<12;i++){const a=i/12*Math.PI*2+t;g.fillStyle(0xffe8b4,.6);g.fillRect(389+Math.cos(a)*26,230+Math.sin(a)*17,2,2)}
   }else if(this.zone==='haunted'){
    if(save.moments.includes('ghost-lights')){g.fillStyle(0xffd28a,.12);g.fillRect(0,0,640,210)}if(save.moments.includes('portrait')){g.fillStyle(0xffdf9c,.5);g.fillEllipse(201,71+Math.sin(t)*2,4,2)}
   }else if(this.zone==='hotspring'){
