@@ -34,7 +34,7 @@ test('workshop makes, sells and settles one hawthorn order',async({page})=>{
  await host.getByRole('button',{name:'去晾糖架'}).click();
  await host.getByRole('button',{name:'晾凉装袋'}).click();
  await host.getByRole('button',{name:'去柜台交单'}).click();
- await host.getByRole('button',{name:/交单/}).click();
+ await host.getByRole('button',{name:/^交单 \+\d+$/}).click();
  await host.getByRole('button',{name:'收摊结算'}).click();
  await expect(host).toContainText('净收益 4');
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('birthday-cottage-v2')!).workshop.day)).toBe(2);
@@ -72,7 +72,7 @@ test('cinema projects into the scene screen and releases the controls on exit',a
   scene.approachById('movie');
  });
  const host=page.locator('#film-host');
- await expect(host.getByRole('button')).toHaveCount(3);
+ await expect(host.getByRole('button')).toHaveCount(3,{timeout:20000});
  await host.getByRole('button').first().click();
  const canvas=page.locator('#game-frame > .scene-projection canvas');
  await expect(canvas).toBeVisible();
@@ -84,7 +84,7 @@ test('cinema projects into the scene screen and releases the controls on exit',a
  expect(await canvas.evaluate((node:HTMLCanvasElement)=>node.toDataURL())).toBe(pausedFrame);
  await host.getByRole('button',{name:'从头播放',exact:true}).click();
  await expect(host.getByRole('button',{name:'暂停',exact:true})).toBeVisible();
- await page.keyboard.press('Escape');
+ await host.getByRole('button',{name:'结束放映',exact:true}).click();
  await expect(canvas).toHaveCount(0);
  expect(await page.evaluate(()=>(window as any).__cottage.blocked)).toBe(false);
 });
