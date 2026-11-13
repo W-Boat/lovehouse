@@ -1,3 +1,4 @@
+import {uiCopy,formatCopy} from '../content/ui-copy';
 import type {Cottage} from './scene';
 import {worlds} from './world';
 import {save} from './state';
@@ -8,11 +9,11 @@ import personal from '../content/personal.json';
 export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>void){
  let disposed=false,paused=false,ended=false,time=0,last=0,raf=0,affection=false;
  const concert=id==='concert',ride=id==='ferris',filmId=(id in films?id:'meet') as FilmId,spec=films[filmId],duration=concert?90:ride?60:spec.duration;
- const controls=document.createElement('div');controls.className='modal-actions';const title=document.createElement('h2');title.id='modal-title';title.textContent=concert?'火星 · 今晚为你亮起':ride?'和你一起，慢慢升高':spec.title;
- const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;canvas.className='film-canvas';canvas.setAttribute('role','img');canvas.setAttribute('aria-label',title.textContent+'，原创像素动画');host.replaceChildren(title,canvas,controls);
+ const controls=document.createElement('div');controls.className='modal-actions';const title=document.createElement('h2');title.id='modal-title';title.textContent=concert?uiCopy('theater.concert-title'):ride?uiCopy('theater.ride-title'):spec.title;
+ const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;canvas.className='film-canvas';canvas.setAttribute('role','img');canvas.setAttribute('aria-label',formatCopy('theater.canvas-label',{title:title.textContent}));host.replaceChildren(title,canvas,controls);
  const controller=new AbortController();const button=(label:string,run:()=>void)=>{const b=document.createElement('button');b.className='secondary';b.textContent=label;b.addEventListener('click',run,{signal:controller.signal});controls.append(b);return b};
- const pause=button('暂停',()=>{if(ended)return;paused=!paused;pause.textContent=paused?'继续':'暂停'});button('从头播放',()=>{time=0;last=0;ended=false;paused=false;pause.textContent='暂停'});button('结束放映',done);
- if(ride)button('把肩膀借给你',()=>affection=!affection);if(concert)button('一起举起应援棒',()=>affection=!affection);setAmbience(concert?'mars':'cinema');
+ const pause=button(uiCopy('theater.pause'),()=>{if(ended)return;paused=!paused;pause.textContent=paused?uiCopy('theater.resume'):uiCopy('theater.pause')});button(uiCopy('theater.restart'),()=>{time=0;last=0;ended=false;paused=false;pause.textContent=uiCopy('theater.pause')});button(uiCopy('theater.close'),done);
+ if(ride)button(uiCopy('theater.shoulder'),()=>affection=!affection);if(concert)button(uiCopy('theater.cheer'),()=>affection=!affection);setAmbience(concert?'mars':'cinema');
  const photos:HTMLImageElement[]=[];for(const path of personal.memoryPhotos as string[]){const img=new Image();img.src=new URL('../'+path,import.meta.url).href;photos.push(img)}
  const g=canvas.getContext('2d')!;g.imageSmoothingEnabled=false;
  const smooth=(v:number)=>{const x=Math.max(0,Math.min(1,v));return x*x*(3-2*x)};
@@ -52,15 +53,15 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
   if(section!=='countdown'&&section!=='curtain')for(let i=0;i<6;i++){g.fillStyle=climax?'#edb0ca35':'#f6dca320';g.beginPath();g.moveTo(230+i*95,90);g.lineTo(100+i*90+Math.sin(motion*.5+i)*55,400);g.lineTo(250+i*95+Math.sin(motion*.5+i)*55,400);g.closePath();g.fill()}
   const performing=['opening','verse','climax'].includes(section);actor('boy',480+(save.reduced?0:Math.sin(time*.7)*8),260,section==='bow'?9:performing?12+(save.reduced?0:Math.floor(time*(climax?6:3))%4):0,114);
   actor('girl',355,430,affection?15:12);actor('boy',408,430,affection?15:0);for(let i=0;i<32;i++){g.fillStyle=i%2?'#ff8fbc':'#fff0b6';g.fillRect(35+i*28,505+Math.sin(motion*(climax?3:1.5)+i)*8,4,18)}
-  caption(section==='countdown'?`演出即将开始 · ${Math.max(1,6-Math.floor(time))}`:section==='opening'?'第一束灯光亮了。今晚，陪你听到最后。':section==='verse'?'不必急着记录，先好好听这一段。':section==='climax'?'把应援棒举起来，这一刻一起发光。':section==='bow'?'谢谢你，把今晚留给了这里。':'灯慢慢暗下来，心里的声音还在。');
+  caption(section==='countdown'?formatCopy('theater.countdown',{seconds:Math.max(1,6-Math.floor(time))}):section==='opening'?uiCopy('theater.concert.opening'):section==='verse'?uiCopy('theater.concert.verse'):section==='climax'?uiCopy('theater.concert.climax'):section==='bow'?uiCopy('theater.concert.bow'):uiCopy('theater.concert.curtain'));
  };
  const showRide=()=>{background('ferris');const progress=save.reduced?.5:rideProgress(time),angle=Math.PI/2+Math.PI*2*progress,cx=480,cy=245,r=175;
   g.strokeStyle='#f0ce8e';g.lineWidth=6;g.beginPath();g.arc(cx,cy,r,0,Math.PI*2);g.stroke();for(let i=0;i<8;i++){const a=angle+i*Math.PI/4;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);g.stroke()}
   g.beginPath();g.moveTo(400,444);g.lineTo(cx,cy);g.lineTo(560,444);g.stroke();const x=cx+Math.cos(angle)*r,y=cy+Math.sin(angle)*r;
   // Cabin stays upright while the wheel turns; sill occludes seated lower legs.
   g.fillStyle='#49323f';g.fillRect(x-62,y-60,124,100);actor('girl',x-24,y+20,affection?10:4,70);actor('boy',x+23,y+20,4,70);g.fillStyle='#b66f83';g.fillRect(x-66,y+7,132,35);g.strokeStyle='#ffe7bb';g.lineWidth=5;g.strokeRect(x-66,y-62,132,104);
-  caption(time<5?'坐稳了吗？我们慢慢出发。':time<25?'一点点升高，街灯变成小小的星星。':time<35?'到最高处了。想说的话，可以慢慢说。':time<55?'把肩膀借给你，再一起回到地面。':'到站了。下次，还坐你旁边。');
+  caption(time<5?uiCopy('theater.ride.board'):time<25?uiCopy('theater.ride.rise'):time<35?uiCopy('theater.ride.top'):time<55?uiCopy('theater.ride.return'):uiCopy('theater.ride.arrive'));
  };
- const tick=(now:number)=>{if(disposed)return;const dt=last?Math.min(.1,(now-last)/1000):0;last=now;if(!paused)time=Math.min(duration,time+dt);g.fillStyle='#151a2b';g.fillRect(0,0,960,540);concert?showConcert():ride?showRide():film();if(time>=duration){ended=true;paused=true;pause.textContent='已放映完毕';g.fillStyle='#151a2bce';g.fillRect(0,0,960,540);g.fillStyle='#ffe7c0';g.font='30px CottagePixel';g.textAlign='center';g.fillText('这一段，替你好好收着。',480,260)}raf=requestAnimationFrame(tick)};
+ const tick=(now:number)=>{if(disposed)return;const dt=last?Math.min(.1,(now-last)/1000):0;last=now;if(!paused)time=Math.min(duration,time+dt);g.fillStyle='#151a2b';g.fillRect(0,0,960,540);concert?showConcert():ride?showRide():film();if(time>=duration){ended=true;paused=true;pause.textContent=uiCopy('theater.completed');g.fillStyle='#151a2bce';g.fillRect(0,0,960,540);g.fillStyle='#ffe7c0';g.font='30px CottagePixel';g.textAlign='center';g.fillText(uiCopy('theater.end-card'),480,260)}raf=requestAnimationFrame(tick)};
  raf=requestAnimationFrame(tick);return()=>{if(disposed)return;disposed=true;cancelAnimationFrame(raf);controller.abort();setAmbience(scene.zone);canvas.remove()};
 }

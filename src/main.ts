@@ -1,3 +1,4 @@
+import type {TaoyuanField} from './online-protocol';
 import {installOnlineAffection} from './online-affection';
 import {openTaoyuan} from './taoyuan-portal';
 import {installOnlineUI} from './online-ui';
@@ -129,14 +130,14 @@ action('companion-toggle',()=>{if(started&&!scene.blocked){if(scene.seated){scen
 let taoyuan:ReturnType<typeof openTaoyuan>|undefined;
 let onlineWorld:ReturnType<typeof installOnlineWorld>|undefined;
 let onlineGame:ReturnType<typeof installOnlineGame>|undefined;
-const online=installOnlineUI({open:showModal,close:closeModal,toast,profile:role=>({name:save.names[role==='guest'?'boy':'girl'],appearance:save.appearance[role==='guest'?'boy':'girl']}),onSnapshot:s=>onlineWorld?.handleSnapshot(s,online.getPlayerId()),onMessage:m=>{onlineWorld?.handleMessage(m);onlineGame?.handleMessage(m);if(m.type==='event'&&m.event==='taoyuan-state')taoyuan?.receive({kind:'state',...(m.data as {save:string;route:string})});if(m.type==='event'&&m.event==='taoyuan-action')taoyuan?.receive({kind:'command',...(m.data as {route:string;index:number;text:string})})},onConnection:s=>onlineWorld?.handleConnection(s),onGame:g=>onlineGame?.start(g)});
+const online=installOnlineUI({open:showModal,close:closeModal,toast,profile:role=>({name:save.names[role==='guest'?'boy':'girl'],appearance:save.appearance[role==='guest'?'boy':'girl']}),onSnapshot:s=>onlineWorld?.handleSnapshot(s,online.getPlayerId()),onMessage:m=>{onlineWorld?.handleMessage(m);onlineGame?.handleMessage(m);if(m.type==='event'&&m.event==='taoyuan-state')taoyuan?.receive({kind:'state',...(m.data as {save:string;route:string})});if(m.type==='event'&&m.event==='taoyuan-field')taoyuan?.receive({kind:'field',...(m.data as TaoyuanField)});if(m.type==='event'&&m.event==='taoyuan-action')taoyuan?.receive({kind:'command',...(m.data as {route:string;index:number;text:string})})},onConnection:s=>{onlineWorld?.handleConnection(s);taoyuan?.setConnected(s==='connected')},onGame:g=>onlineGame?.start(g)});
 onlineWorld=installOnlineWorld(scene,online.client);
 installOnlineAffection(onlineWorld,{open:showModal,close:closeModal,toast});
 onlineGame=installOnlineGame({client:online.client,open:showModal,close:closeModal,getSnapshot:online.getSnapshot,getPlayerId:online.getPlayerId});
 function enterTaoyuan(){
  if(taoyuan||!started)return;scene.stop();scene.blocked=true;cinematic=true;duckAudio(true);
  const snapshot=online.getSnapshot(),me=snapshot?.players.find(p=>p.id===online.getPlayerId());
- taoyuan=openTaoyuan({role:online.client.state==='connected'&&me?me.role:'offline',onExit:()=>{taoyuan=undefined;cinematic=false;scene.blocked=false;duckAudio(false)},onMessage:payload=>{if(online.client.state!=='connected')return;if(payload.kind==='state')online.client.send({type:'taoyuan-state',save:payload.save,route:payload.route});else online.client.send({type:'taoyuan-action',route:payload.route,index:payload.index,text:payload.text})}});
+ taoyuan=openTaoyuan({role:online.client.state==='connected'&&me?me.role:'offline',onExit:()=>{taoyuan=undefined;cinematic=false;scene.blocked=false;duckAudio(false)},onMessage:payload=>{if(online.client.state!=='connected')return;if(payload.kind==='state')online.client.send({type:'taoyuan-state',save:payload.save,route:payload.route});else if(payload.kind==='command')online.client.send({type:'taoyuan-action',route:payload.route,index:payload.index,text:payload.text});else{const {kind,...field}=payload;online.client.send({type:'taoyuan-field',...field})}}});
  if(me?.role==='guest'&&snapshot?.taoyuan)taoyuan.receive({kind:'state',save:snapshot.taoyuan.save,route:snapshot.taoyuan.route});
 }
 const onlineButton=document.createElement('button');onlineButton.id='online-toggle';onlineButton.type='button';onlineButton.textContent='联机';onlineButton.title='双人房间与悄悄话';onlineButton.onclick=()=>{if(started&&!cinematic&&!openingGift&&!scene.transitioning){scene.bridge.emit('retry-pets');online.openPanel()}};document.querySelector('.hud-tools')!.append(onlineButton);

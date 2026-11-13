@@ -109,3 +109,12 @@ test('network seating retains every legacy seat for both roles without moving th
   }
  }
 });
+
+
+test('equipment images bind after replacement gift atlases, never to destroyed frames',()=>{
+ const scene=loadScene();let generation=1;const equipped:any[]=[];
+ scene.textures={exists:()=>true};scene.sliceAtlas=()=>{};scene.buildActionFrames=()=>{generation=2};
+ scene.add={image:(x:number,y:number,key:string)=>{const object=fakeObject(x,y);if(key==='gift-hat'||key==='gift-earphones')equipped.push({key,generation});return object},graphics:fakeObject,ellipse:fakeObject,rectangle:fakeObject,text:fakeObject,container:fakeObject};
+ scene.input={keyboard:{addKeys:()=>({}),on:()=>{}}};scene.cameras={main:fakeObject()};scene.cameras.main.width=844;scene.cameras.main.height=390;
+ scene.create();assert.deepEqual(equipped,[{key:'gift-hat',generation:2},{key:'gift-earphones',generation:2}]);
+});

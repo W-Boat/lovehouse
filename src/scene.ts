@@ -65,11 +65,12 @@ export class Cottage extends Phaser.Scene {
   this.background=this.add.image(0,0,this.backgroundKey).setOrigin(0).setDisplaySize(640,426.667).setDepth(0);this.outdoorEnvironment=new OutdoorEnvironment(this);this.climateGround=this.add.graphics().setDepth(1.1);this.trail=this.add.graphics().setDepth(2);this.glow=this.add.graphics().setDepth(3);this.effects=this.add.graphics().setDepth(8);
   this.shadow=this.add.ellipse(320,356,19,6,0x2d2030,.3).setDepth(5);this.boyShadow=this.add.ellipse(365,343,19,6,0x2d2030,.3).setDepth(5);
   this.player=this.add.image(320,356,'girl0').setOrigin(.5,1).setDisplaySize(23,37).setDepth(10);this.boy=this.add.image(363,338,'boy0').setOrigin(.5,1).setDisplaySize(24,37).setDepth(9);
+  this.buildActionFrames();
   this.hat=this.add.image(0,0,'gift-hat').setDisplaySize(28,20).setDepth(12);this.band=this.add.rectangle(0,0,2,2,0xe7a7c2).setDepth(12);
   this.earwear=this.add.image(0,0,'gift-earphones').setDisplaySize(16,16).setDepth(13);
   this.cakeDark=this.add.rectangle(320,213.333,640,426.667,0x0b1022,.5).setDepth(20).setVisible(false);
   this.keys=this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,E') as Record<string,Phaser.Input.Keyboard.Key>;this.input.keyboard!.on('keydown-E',()=>{if(!this.blocked&&!this.seated)this.interactNearest()});
-  this.buildActionFrames();this.onlinePets=new OnlinePets(this);this.windowView=new WindowView(this);this.seatLayers=new SeatLayers(this);this.motion=new WorldMotion(this);this.placeEffects=new PlaceEffects(this);this.rebuild();this.resizeView();this.syncFollowing();this.readyToEnter=true;this.bridge.emit('cottage-ready');
+  this.onlinePets=new OnlinePets(this);this.windowView=new WindowView(this);this.seatLayers=new SeatLayers(this);this.motion=new WorldMotion(this);this.placeEffects=new PlaceEffects(this);this.rebuild();this.resizeView();this.syncFollowing();this.readyToEnter=true;this.bridge.emit('cottage-ready');
  }
  setFollowing(enabled:boolean){if(!enabled){this.holding=false;this.handFormation.reset()}save.following=enabled;persist();this.syncFollowing();this.bridge.emit('following',enabled)}
  syncFollowing(){if(this.player&&this.boy)this.follower.setEnabled(save.following,this.player,this.boy,this.walkable)}
