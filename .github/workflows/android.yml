@@ -37,14 +37,23 @@ jobs:
       - run: npm run build
       - name: Prepare Android launcher icon
         run: python -X utf8 tools/prepare_android_icons.py
-      - run: gradle --project-dir android :app:assembleDebug
+      - name: Restore fixed Android signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          python -c "import os,base64,pathlib; value=os.environ['ANDROID_KEYSTORE_BASE64']; assert value, 'Android signing secret is missing'; pathlib.Path(os.environ['RUNNER_TEMP'],'lovehouse-signing.p12').write_bytes(base64.b64decode(value,validate=True))"
+      - run: gradle --project-dir android :app:assembleRelease
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/lovehouse-signing.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       - name: Verify installable package and offline assets
         run: |
           mkdir -p android-delivery
-          cp android/app/build/outputs/apk/debug/app-debug.apk android-delivery/生日小屋-Android.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify android-delivery/生日小屋-Android.apk
+          cp android/app/build/outputs/apk/release/app-release.apk android-delivery/生日小屋-Android.apk
+          python -X utf8 tools/check_android_signature.py android-delivery/生日小屋-Android.apk
           python -X utf8 tools/check_android_apk.py android-delivery/生日小屋-Android.apk
           cp docs/Android离线版.md android-delivery/
+          cp docs/android-signing-cert.sha256 android-delivery/
           git rev-parse HEAD > android-delivery/commit.txt
           cd android-delivery
           sha256sum *.apk > SHA256SUMS.txt

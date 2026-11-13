@@ -9,10 +9,27 @@ android {
         applicationId 'com.wboat.lovehouse'
         minSdk 24
         targetSdk 35
-        versionCode 1
-        versionName '2.0.0'
+        versionCode 20000 + Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
+        versionName '2.1.' + (System.getenv('GITHUB_RUN_NUMBER') ?: '1')
     }
     sourceSets.main.assets.srcDirs = [rootProject.file('../dist')]
+    signingConfigs {
+        release {
+            def keystore = System.getenv('ANDROID_KEYSTORE_PATH')
+            if (keystore) {
+                storeFile file(keystore)
+                storeType 'PKCS12'
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias 'lovehouse'
+                keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
