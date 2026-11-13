@@ -15,5 +15,13 @@ for(const [id,film]of Object.entries(films))film.shots.forEach((shot,i)=>section
 for(const [id,text]of Object.entries(uiCopyDefaults))section('ui.'+id,'界面 · '+id,uiCopy(id as UICopyId));
 for(const id of Object.keys(gameCopyDefaults) as GameCopyId[])section('game-ui.'+id,'小游戏界面 · '+id,getGameCopy(id));
 for(const id of Object.keys(mainCopyDefaults) as MainCopyId[])section('main-ui.'+id,'主流程与仪式 · '+id,mainText(id));
+for(const [zone,world]of Object.entries(worlds)){
+ section('scene.'+zone+'.name','区域名称 · '+zone,world.name);
+ section('scene.'+zone+'.caption','区域说明 · '+zone,world.caption);
+ for(const item of world.items){
+  section('item.'+zone+'.'+item.id+'.name',zone+' · '+item.id+' · 物件名称',item.name);
+  section('item.'+zone+'.'+item.id+'.action',zone+' · '+item.id+' · 动作标签（空白保留系统默认）',item.action??'');
+ }
+}
 out+='\n# 场景与小游戏说明（设计参考）\n';for(const w of Object.values(worlds))out+='\n- '+w.name+'：'+w.caption;for(const g of Object.values(giftGames))out+='\n- '+g.title+'：'+g.rule;
 writeFileSync('文案.md',out);console.log('Exported '+Object.keys(places).length+' place conversations');

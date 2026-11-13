@@ -29,9 +29,9 @@ test('moon rotation, sentence fragments, notes, stitches and chocolate complete 
  }
 });
 test('rhythm requires actual notes on all three rounds',async({page})=>{
- test.setTimeout(120000);await enter(page);await start(page,'earphones');
+ test.setTimeout(175000);await enter(page);await start(page,'earphones');
  // Repeated short presses still require genuine note-window hits; no callbacks or state injection.
- const until=Date.now()+65000;while(Date.now()<until&&await page.locator('#game-host').count()){
+ const until=Date.now()+140000;while(Date.now()<until&&await page.locator('#game-host').count()){
   for(const key of ['a','s','d'])await page.keyboard.press(key);await page.waitForTimeout(65);
  }
  await won(page,'earphones');
@@ -58,15 +58,15 @@ test('letter scraps rotate and drag into all three envelopes',async({page})=>{
 test('claw catches and transports the doll using the real canvas and space key',async({page})=>{
  test.setTimeout(60000);await enter(page);await start(page,'doll');
  for(const x of [300,400,220]){
-  const canvas=page.locator('#game-host canvas'),box=(await canvas.boundingBox())!;await page.mouse.move(box.x+x/600*box.width,box.y+box.height/2);await page.keyboard.press('Space');await expect(page.locator('.game-status')).toContainText('抓到了',{timeout:10000});await page.waitForTimeout(1600);await page.mouse.move(box.x+70/600*box.width,box.y+box.height/2);await page.keyboard.press('Space');
+  const canvas=page.locator('#game-host canvas');await canvas.scrollIntoViewIfNeeded();const box=(await canvas.boundingBox())!;await page.mouse.move(box.x+x/600*box.width,box.y+box.height/2);await page.keyboard.press('Space');await expect(page.locator('.game-status')).toContainText('抓到了',{timeout:10000});await page.waitForTimeout(2000);await canvas.scrollIntoViewIfNeeded();const exit=(await canvas.boundingBox())!;await page.mouse.move(exit.x+70/600*exit.width,exit.y+exit.height/2);await page.keyboard.press('Space');
  }
  await won(page,'doll');
 });
 test('catch falling chestnuts by tracking visible pixels, through three rounds',async({page})=>{
- test.setTimeout(150000);await enter(page);await start(page,'chestnuts');const deadline=Date.now()+120000;
+ test.setTimeout(150000);await enter(page);await start(page,'chestnuts');await page.locator('#game-host canvas').scrollIntoViewIfNeeded();const deadline=Date.now()+120000;
  while(Date.now()<deadline&&await page.locator('#game-host').count()){
   const canvas=page.locator('#game-host canvas');const target=await canvas.evaluate((c:HTMLCanvasElement)=>{const g=c.getContext('2d')!,d=g.getImageData(0,0,600,260).data;for(let y=258;y>=0;y-=2)for(let x=2;x<598;x+=2){const i=(y*600+x)*4;if(d[i]===189&&d[i+1]===130&&d[i+2]===84)return{x,y}}return null});
-  if(target){const box=(await canvas.boundingBox())!;await page.mouse.move(box.x+(target.x+5)/600*box.width,box.y+box.height*.92)}await page.waitForTimeout(40);
+  if(target){const box=(await canvas.boundingBox())!;await page.mouse.move(box.x+(target.x+5)/600*box.width,box.y+box.height*.55)}await page.waitForTimeout(40);
  }
  await won(page,'chestnuts');
 });

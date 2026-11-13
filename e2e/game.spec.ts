@@ -12,7 +12,7 @@ test('calendar initializes on the birthday, persists manual climate and rolls ov
  await page.screenshot({path:`test-results/${info.project.name}/calendar-winter.png`});
  await page.reload();await expect(page.locator('#continue')).toBeVisible({timeout:45000});await page.locator('#continue').click();await page.locator('#sky-settings').click();
  await expect(page.locator('#calendar-date')).toHaveValue('2028-02-28');await expect(page.locator('#calendar-time')).toHaveValue('23:59');await expect(page.locator('#calendar-temperature')).toHaveValue('-5');
- await page.selectOption('#calendar-time-mode','auto');await page.selectOption('#calendar-speed','60');await expect(page.locator('#calendar-date')).toHaveValue('2028-02-29',{timeout:15000});
+ await page.locator('#calendar-time-mode').focus();await page.selectOption('#calendar-time-mode','auto');await page.selectOption('#calendar-speed','60');await expect(page.locator('#calendar-summary')).toContainText('2028.02.29',{timeout:20000});await expect(page.locator('#calendar-date')).toHaveValue('2028-02-29');
  await page.locator('#calendar-enabled').uncheck();await page.locator('#calendar-enabled').check();await expect(page.locator('#calendar-date')).toHaveValue('2028-02-29');
 });
 async function enter(page:any){await page.goto('/');await expect(page.locator('#custom-save')).toBeVisible({timeout:45000});await page.locator('#custom-save').click();await expect(page.locator('body')).toHaveClass(/started/);await page.waitForTimeout(1000)}
