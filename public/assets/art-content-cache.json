@@ -39,6 +39,11 @@
     "recipe": "lossless-rgba-nearest-v1-(768, 512)",
     "source": "94e11609aad073d3322466dd468fc3be8b1f07e11de7e770e169c690d47ea19d"
   },
+  "catcottage.png": {
+    "output": "08f343166b4b092785f6873831cdc448069f8bbdeb02d87cbb6c10f300b352de",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "78d35dc6285b4013e41e56632b542502d83b59d10782e87abc4d802f1ad108be"
+  },
   "characters.png": {
     "output": "b37c909bceaa27e2aaafd478b272508d7af639b0930757c5d15704bd0d573468",
     "recipe": "lossless-rgba-nearest-v1-(512, 256)",

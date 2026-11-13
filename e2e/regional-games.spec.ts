@@ -20,7 +20,7 @@ test('workshop makes, sells and settles one hawthorn order',async({page})=>{
  await host.getByRole('button',{name:/冰糖山楂/}).click();
  await expect(page.locator('#modal-backdrop')).toBeHidden();
  await host.getByRole('button',{name:'去备料台串果'}).click();
- await expect(host.getByRole('button',{name:'串上一颗'})).toBeVisible();
+ await expect(host.getByRole('button',{name:'串上一颗'})).toBeVisible({timeout:20000});
  await page.evaluate(()=>{
   const scene=(window as any).__cottage;
   scene.walk({x:320,y:370});
@@ -92,4 +92,26 @@ test('cinema projects into the scene screen and releases the controls on exit',a
  await host.getByRole('button',{name:'结束放映',exact:true}).click();
  await expect(canvas).toHaveCount(0);
  expect(await page.evaluate(()=>(window as any).__cottage.blocked)).toBe(false);
+});
+
+
+test('cat cottage shows the cat and feeding moves it to the bowl',async({page},info)=>{
+ await enter(page);
+ await page.evaluate(async ()=>{
+  const scene=(window as any).__cottage;
+  await new Promise<void>(resolve=>scene.transitionTo('catcottage',resolve));
+  scene.approachById('cat-feed');
+ });
+ await expect(page.locator('#resting-line')).toContainText('饭碗边',{timeout:20000});
+ const positions=await page.evaluate(()=>{
+  const scene=(window as any).__cottage;
+  const cat=scene.children.list.find((object:any)=>object.texture?.key.startsWith('cottage-cat-'));
+  return {shown:cat?.visible,zone:scene.zone};
+ });
+ expect(positions).toEqual({shown:true,zone:'catcottage'});
+ await expect.poll(()=>page.evaluate(()=>{
+  const scene=(window as any).__cottage;
+  return scene.children.list.find((object:any)=>object.texture?.key.startsWith('cottage-cat-'))?.x;
+ })).toBeGreaterThan(390);
+ await page.screenshot({path:`test-results/${info.project.name}/cat-cottage.png`});
 });

@@ -47,7 +47,7 @@ function action(id:string,fn:()=>void){const element=document.getElementById(id)
 function art(id:GiftId,parent:HTMLElement,size=150){const source=scene.textures.get('gift-'+id).getSourceImage() as HTMLCanvasElement;const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d')!;ctx.imageSmoothingEnabled=false;const ratio=Math.min((size-12)/source.width,(size-12)/source.height);const w=source.width*ratio,h=source.height*ratio;ctx.drawImage(source,(size-w)/2,(size-h)/2,w,h);parent.prepend(canvas)}
 function giftArt(gift:Gift){const container=document.querySelector<HTMLElement>('.gift-art');if(container)art(gift.id,container)}
 function openGift(gift:Gift){if(!save.opened.includes(gift.id)&&!save.games[gift.id]&&!(gift.id==='mystery'&&config.mysteryBoxUnlockMode==='afterCake'&&!save.celebrated)){startGiftGame(gift.id,()=>openGift(gift));return}if(openingGift)return;if(gift.id==='mystery'&&config.mysteryBoxUnlockMode==='afterCake'&&!save.celebrated){toast(mainText("gift.secret-locked"));return}if(save.opened.includes(gift.id)){showGift(gift);scene.animateGift(gift.id);return}openingGift=true;sound(659);showModal(`<div class="subheading">${mainHtml("gift.opening-eyebrow")}</div><div class="gift-art opening-art"></div><h2 id="modal-title">${mainHtml("gift.opening-title")}</h2><div class="subheading">${mainHtml("gift.opening-caption")}</div>`,'opening',false);art(gift.id==='mystery'?'mystery':'labubu',document.querySelector('.gift-art')!);modalTimer=window.setTimeout(()=>{if(!save.opened.includes(gift.id))save.opened.push(gift.id);if(gift.id==='chestnuts'||gift.id==='chocolate')restockSnack(gift.id);else grantItem(gift.id);openingGift=false;scene.refresh();updateHUD();sound(1046);showGift(gift)},save.reduced?80:1000)}
-const snackSeats:Record<Zone,string>={room:'sofa',garden:'bench',forest:'picnic',pier:'pier-bench',greenhouse:'greenhouse-seat',memory:'memory-seat',station:'station-seat',postoffice:'postal-seat',aquarium:'aquarium-seat',camp:'camp-seat',magic:'magic-seat',haunted:'haunted-seat',cinema:'cinema-seat',ferris:'ferris-seat',mars:'mars-seat',hotspring:'hotspring-seat',market:'market-seat',aurora:'aurora-seat',shichahai:'shichahai-seat',gulou:'gulou-seat',chaya:'chaya-seat',tianmo:'tianmo-seat',tanghulu:'tanghulu-seat'};
+const snackSeats:Record<Zone,string>={room:'sofa',garden:'bench',forest:'picnic',pier:'pier-bench',greenhouse:'greenhouse-seat',memory:'memory-seat',station:'station-seat',postoffice:'postal-seat',aquarium:'aquarium-seat',camp:'camp-seat',magic:'magic-seat',haunted:'haunted-seat',cinema:'cinema-seat',ferris:'ferris-seat',mars:'mars-seat',hotspring:'hotspring-seat',market:'market-seat',aurora:'aurora-seat',shichahai:'shichahai-seat',gulou:'gulou-seat',chaya:'chaya-seat',tianmo:'tianmo-seat',tanghulu:'tanghulu-seat',catcottage:'catcottage-seat'};
 function shareSnack(id:Snack){
  if(!save.snackPortions[id]){toast(mainText('food.empty'));return}
  const seat=scene.getItem(snackSeats[scene.zone]);
@@ -106,8 +106,9 @@ function interact(id:string){
   const activity=mountSceneActivity('side-game-host','arcade',id==='heartbeat-cards'?'心跳斗地主':'心跳跳一跳');
   openHeartbeat(activity.host,id==='heartbeat-cards'?'cards':'jump',scene.avatar(scene.onlineWorld?.role==='guest'?'boy':'girl'));return;
  }
- if(/^(shichahai|gulou|chaya|tianmo|sugar)-photo$/.test(id)){void takePhoto();return}
- if(/^(shichahai|chaya|tianmo)-note$/.test(id)){writeFuture(id);return}
+ if(id==='cat-pet'||id==='cat-play'||id==='cat-feed'){scene.remember(id);quietLine(mainText(id==='cat-pet'?'cat.pet':id==='cat-play'?'cat.play':'cat.feed'));return}
+ if(/^(shichahai|gulou|chaya|tianmo|sugar|cat)-photo$/.test(id)){void takePhoto();return}
+ if(/^(shichahai|chaya|tianmo|cat)-note$/.test(id)){writeFuture(id);return}
  if(seatDefinition(scene.zone,id)&&!places[id]){scene.sit(id);return}
 if(id==='cake')wish();else if(id==='boy')talk();else if(places[id])placeDialogue(id);else if(['sofa','swing','bench','sea'].includes(id))scene.sit(id);
 }

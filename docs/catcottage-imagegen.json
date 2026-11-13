@@ -1,0 +1,6 @@
+{
+  "asset": "catcottage",
+  "generator": "Built-in imagegen",
+  "prompt": "Single 3:2 cozy 16-bit pixel-art RPG room background, exact top-down three-quarter perspective, warm woods and dusty sage, knitted blankets, books, rain on mullioned windows. A wooden double bench against the left wall around x 25% y 57%, an empty round wicker cat basket at center x 52% y 55%, on right a cat tree, feeding bowl and toy box. No cats or people because animated cats will be placed by engine, no lettering, no UI, no panels. Lower 40% clearly walkable warm wood floor with furniture footprints and doorway centered at bottom. Crisp handcrafted pixel clusters.",
+  "source": "tools/art-source/catcottage.png"
+}

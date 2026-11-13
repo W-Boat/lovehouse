@@ -1,6 +1,6 @@
 import {furnishings,backgroundSeats} from './layouts';
 import {roomWalkable,gardenWalkable,type Point,inside,inPolygon,type Polygon,segmentWalkable,nearestWalkable,type Walkable} from './navigation';
-export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora'|'shichahai'|'gulou'|'chaya'|'tianmo'|'tanghulu';
+export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora'|'shichahai'|'gulou'|'chaya'|'tianmo'|'tanghulu'|'catcottage';
 export type Item={id:string;name:string;x:number;y:number;point:[number,number];action?:string;kind?:'place'|'collect'|'slot'|'event';collect?:string;prop?:number;texture?:string;to?:Zone};
 export type World={name:string;caption:string;texture:string;spawn:[number,number];boy:[number,number];items:Item[];walkable:(point:Point)=>boolean};
 // Broad walkable floor regions match the painted clearing/deck instead of invisible center lines.
@@ -160,6 +160,16 @@ trip('tanghulu','糖葫芦制作车间','铜锅冒着泡，等一串红山楂','
  spot('sugar-photo','今日糖葫芦',462,322,'拍张照'),
 ],[[235,233,160,39],[12,181,52,117]]);
 worlds.station.items.push(onward('to-shichahai','shichahai','列车去北京',390,350),onward('to-chaya','chaya','列车去遂平',240,350));
+
+worlds.catcottage={...newRoom('猫猫小屋','把脚步放轻，猫咪正在打盹','catcottage','greenhouse',[
+ spot('cat-pet','团团',334,210,'摸摸猫'),
+ spot('cat-play','羽毛逗猫棒',597,246,'陪它玩'),
+ spot('cat-feed','猫咪饭碗',445,226,'添点猫粮'),
+ spot('cat-photo','和团团合影',393,331,'拍张照'),
+ spot('cat-note','猫爪便签',225,302,'留句话'),
+]),walkable:p=>p.x>70&&p.x<566&&p.y>225&&p.y<399
+ &&!inside(p,{x:289,y:205,w:97,h:42},5)};
+worlds.greenhouse.items.push(onward('to-catcottage','catcottage','去猫猫小屋',469,353));
 
 // The painted carpet immediately in front of rear seats is usable floor too.
 for(const [zone,rect]of [['memory',{x:75,y:202,w:142,h:32}],['magic',{x:80,y:184,w:92,h:50}],['cinema',{x:65,y:185,w:115,h:49}],['haunted',{x:90,y:195,w:95,h:39}]] as [Zone,{x:number;y:number;w:number;h:number}][]){const prior=worlds[zone].walkable;worlds[zone].walkable=p=>prior(p)||inside(p,rect)}

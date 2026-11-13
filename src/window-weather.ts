@@ -12,7 +12,7 @@ export const windowPanes:Partial<Record<Zone,Polygon[]>>={
  hotspring:[pane(120,46,32,45),pane(162,46,34,45),pane(205,46,30,45),pane(124,103,30,29),pane(164,103,33,29),pane(207,103,29,29)],
  aurora:[pane(230,100,78,85),pane(317,100,93,85),pane(426,100,48,80)],
 };
-export const indoorZones=new Set<Zone>(['room','memory','aquarium','greenhouse','haunted','cinema','magic','hotspring','aurora','tanghulu']);
+export const indoorZones=new Set<Zone>(['room','memory','aquarium','greenhouse','haunted','cinema','magic','hotspring','aurora','tanghulu','catcottage']);
 export function windowContains(zone:Zone,x:number,y:number){return (windowPanes[zone]??[]).some(p=>inPolygon({x,y},p))}
 export function renderWindowWeather(g:Phaser.GameObjects.Graphics,zone:Zone,weather:string,time:string,clock:number){
  const panes=windowPanes[zone]??[];

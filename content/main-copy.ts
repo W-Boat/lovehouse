@@ -1,5 +1,8 @@
 import personal from './personal.json';
 export const mainCopyDefaults={
+  "cat.pet": "团团蹭了蹭你的手，呼噜声轻轻响起来。",
+  "cat.play": "羽毛一动，团团立刻扑了过来。",
+  "cat.feed": "团团跑到饭碗边，把尾巴竖了起来。",
   "scene-activity.close": "结束当前活动",
   "nearby.choose": "想看看哪一个？",
   "nearby.cancel": "收起物件选择",
