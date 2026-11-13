@@ -20,7 +20,19 @@ export class PlaceEffects{
  switch(e.kind){
  case 'fire':box(x-10+10*p,y+8,18,4,0x724329);for(let i=0;i<4;i++){g.fillStyle(i%2?0xffbc61:0xffe0a1,.65);g.fillTriangle(x-12+i*7,y+9,x-5+i*7,y-8-8*Math.sin(t*5+i)**2,x+1+i*7,y+9)}break;
  case 'lamp':{const on=this.toggled.get(this.zone+':'+id);g.fillStyle(0xffdc94,on?.2:.035);g.fillCircle(x,y,30);if(on)for(let i=0;i<5;i++){g.fillStyle(0xffe4ac,.8);g.fillCircle(x-30+i*15,y+Math.sin(i)*4,2)}break}
- case 'tea':for(let i=0;i<2;i++){box(x-14+i*23,y,12,8,0xf4dfb9);box(x-12+i*23,y+1,8,3,0xb37f53);line(x-10+i*23,y-5,x-7+i*23+Math.sin(t*2+i)*3,y-11-(t*4)%12,0xf7e9d7,1)}if(t<2)line(x-20+15*p,y-20,x-10,y,0xb5895e);break;
+ case 'tea':{
+  // The scene already contains the illustrated tea set. Keep the cups visible.
+  for(let i=0;i<2;i++){
+   const cupX=x-6+i*12;
+   for(let segment=0;segment<3;segment++){
+    const rise=(t*5+segment*5)%17;
+    const sway=save.reduced?0:Math.sin(t*2+i+segment)*1.5;
+    line(cupX+sway,y-9-rise,cupX+sway+1,y-12-rise,0xf7e9d7,1);
+   }
+  }
+  if(t<1.6){const pour=Math.sin(Math.min(1,t/1.6)*Math.PI);if(pour>.15)line(x-4,y-17,x+6,y-9,0xc6a274,1)}
+  break;
+ }
  case 'book':box(x-23,y-15,46,31,0x704a3c);box(x-21,y-13,20,26,0xf1d9a8);box(x+1,y-13,20,26,0xf1d9a8);for(let i=0;i<4;i++)line(x-17,y-8+i*5,x-5,y-8+i*5,0x967a63,1);{const fold=Math.cos(Math.min(1,t/3)*Math.PI);g.fillStyle(0xffebc8,1);g.fillTriangle(x,y-13,x+21*fold,y-10,x,y+13)}break;
  case 'flower':for(let i=0;i<5;i++){const a=i*1.25;g.fillStyle(i%2?0xf7b9c4:0xffdba8,1);g.fillCircle(x+Math.cos(a)*8,y-5+Math.sin(a)*8,5)}line(x,y,x+Math.sin(t)*3,y+22,0x749b62);break;
  case 'chime':line(x,y-20,x+Math.sin(t*5)*9*(1-p*.8),y,0xbca16b);g.fillStyle(0xffd79f,.8);g.fillEllipse(x+Math.sin(t*5)*9*(1-p*.8),y,10,13);break;

@@ -15,3 +15,12 @@ test('every registered effect belongs to a real scene object and each region has
   for(const id of Object.keys(entries))assert.ok(worlds[zone as Zone].items.some(i=>i.id===id),zone+':'+id);
  }
 });
+
+test('tea feedback draws steam without painting solid blocks over the existing cups',()=>{
+ let rectangles=0,lines=0;
+ const g:any=new Proxy({},{get:(_target,key)=>()=>{if(key==='fillRect')rectangles++;if(key==='lineBetween')lines++;return g}});
+ const scene:any={zone:'room',add:{graphics:()=>g},getItem:(id:string)=>worlds.room.items.find(item=>item.id===id)};
+ const effect=new PlaceEffects(scene);assert.equal(effect.trigger('tea'),true);
+ for(let i=0;i<30;i++)effect.update(100);
+ assert.equal(rectangles,0);assert.ok(lines>0);
+});
