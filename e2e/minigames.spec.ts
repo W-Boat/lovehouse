@@ -64,9 +64,24 @@ test('claw catches and transports the doll using the real canvas and space key',
 });
 test('catch falling chestnuts by tracking visible pixels, through three rounds',async({page})=>{
  test.setTimeout(150000);await enter(page);await start(page,'chestnuts');await page.locator('#game-host canvas').scrollIntoViewIfNeeded();const deadline=Date.now()+120000;
- while(Date.now()<deadline&&await page.locator('#game-host').count()){
-  const canvas=page.locator('#game-host canvas');const target=await canvas.evaluate((c:HTMLCanvasElement)=>{const g=c.getContext('2d')!,d=g.getImageData(0,0,600,260).data;for(let y=258;y>=0;y-=2)for(let x=2;x<598;x+=2){const i=(y*600+x)*4;if(d[i]===189&&d[i+1]===130&&d[i+2]===84)return{x,y}}return null});
-  if(target){const box=(await canvas.boundingBox())!;await page.mouse.move(box.x+(target.x+5)/600*box.width,box.y+box.height*.55)}await page.waitForTimeout(40);
+ while(Date.now()<deadline){
+  // Sample the drawing and its position together. The final catch can remove
+  // the canvas between browser calls, so an absent board ends the input loop.
+  const sample=await page.evaluate(()=>{
+   const canvas=document.querySelector<HTMLCanvasElement>('#game-host canvas');
+   if(!canvas)return null;
+   const pixels=canvas.getContext('2d')!.getImageData(0,0,600,260).data;
+   const rect=canvas.getBoundingClientRect();
+   for(let y=258;y>=0;y-=2)for(let x=2;x<598;x+=2){
+    const i=(y*600+x)*4;
+    if(pixels[i]===189&&pixels[i+1]===130&&pixels[i+2]===84)
+     return {x:rect.left+(x+5)/600*rect.width,y:rect.top+rect.height*.55};
+   }
+   return {};
+  });
+  if(!sample)break;
+  if(sample.x!==undefined&&sample.y!==undefined)await page.mouse.move(sample.x,sample.y);
+  await page.waitForTimeout(40);
  }
  await won(page,'chestnuts');
 });
