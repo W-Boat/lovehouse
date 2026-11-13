@@ -12,7 +12,22 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
  const controls=document.createElement('div');controls.className='modal-actions';const title=document.createElement('h2');title.id='modal-title';title.textContent=concert?uiCopy('theater.concert-title'):ride?uiCopy('theater.ride-title'):spec.title;
  const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;canvas.className='film-canvas';canvas.setAttribute('role','img');canvas.setAttribute('aria-label',formatCopy('theater.canvas-label',{title:title.textContent}));if(projection){title.removeAttribute('id');host.replaceChildren(title,controls);projection.append(canvas)}else host.replaceChildren(title,canvas,controls);
  const controller=new AbortController();const button=(label:string,run:()=>void)=>{const b=document.createElement('button');b.className='secondary';b.textContent=label;b.addEventListener('click',run,{signal:controller.signal});controls.append(b);return b};
- const pause=button(uiCopy('theater.pause'),()=>{if(ended)return;paused=!paused;pause.textContent=paused?uiCopy('theater.resume'):uiCopy('theater.pause')});button(uiCopy('theater.restart'),()=>{time=0;last=0;ended=false;paused=false;pause.textContent=uiCopy('theater.pause')});button(uiCopy('theater.close'),done);
+ const pause=button(uiCopy('theater.pause'),()=>{
+  if(ended)return;
+  paused=!paused;last=0;
+  pause.textContent=paused?uiCopy('theater.resume'):uiCopy('theater.pause');
+  if(!paused)schedule();
+ });
+ button(uiCopy('theater.restart'),()=>{
+  time=0;last=0;ended=false;paused=false;pause.disabled=false;
+  pause.textContent=uiCopy('theater.pause');schedule();
+ });
+ button(uiCopy('theater.close'),done);
+ document.addEventListener('visibilitychange',()=>{
+  last=0;
+  if(document.hidden){cancelAnimationFrame(raf);raf=0}
+  else if(!paused)schedule();
+ },{signal:controller.signal});
  if(ride)button(uiCopy('theater.shoulder'),()=>affection=!affection);if(concert)button(uiCopy('theater.cheer'),()=>affection=!affection);setAmbience(concert?'mars':'cinema');
  const photos:HTMLImageElement[]=[];for(const path of personal.memoryPhotos as string[]){const img=new Image();img.src=new URL('../'+path,import.meta.url).href;photos.push(img)}
  const g=canvas.getContext('2d')!;g.imageSmoothingEnabled=false;
@@ -62,6 +77,28 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
   g.fillStyle='#49323f';g.fillRect(x-62,y-60,124,100);actor('girl',x-24,y+20,affection?10:4,70);actor('boy',x+23,y+20,4,70);g.fillStyle='#b66f83';g.fillRect(x-66,y+7,132,35);g.strokeStyle='#ffe7bb';g.lineWidth=5;g.strokeRect(x-66,y-62,132,104);
   caption(time<5?uiCopy('theater.ride.board'):time<25?uiCopy('theater.ride.rise'):time<35?uiCopy('theater.ride.top'):time<55?uiCopy('theater.ride.return'):uiCopy('theater.ride.arrive'));
  };
- const tick=(now:number)=>{if(disposed)return;const dt=last?Math.min(.1,(now-last)/1000):0;last=now;if(!paused)time=Math.min(duration,time+dt);g.fillStyle='#151a2b';g.fillRect(0,0,960,540);concert?showConcert():ride?showRide():film();if(time>=duration){ended=true;paused=true;pause.textContent=uiCopy('theater.completed');g.fillStyle='#151a2bce';g.fillRect(0,0,960,540);g.fillStyle='#ffe7c0';g.font='30px CottagePixel';g.textAlign='center';g.fillText(uiCopy('theater.end-card'),480,260)}raf=requestAnimationFrame(tick)};
- raf=requestAnimationFrame(tick);return()=>{if(disposed)return;disposed=true;cancelAnimationFrame(raf);controller.abort();setAmbience(scene.zone);canvas.remove()};
+ function schedule(){
+  if(!disposed&&!raf&&!document.hidden)raf=requestAnimationFrame(tick);
+ }
+ function tick(now:number){
+  raf=0;
+  if(disposed||document.hidden)return;
+  if(!paused&&last)time=Math.min(duration,time+Math.max(0,now-last)/1000);
+  last=now;
+  g.fillStyle='#151a2b';g.fillRect(0,0,960,540);
+  if(concert)showConcert();else if(ride)showRide();else film();
+  if(time>=duration){
+   ended=true;paused=true;pause.disabled=true;
+   pause.textContent=uiCopy('theater.completed');
+   g.fillStyle='#151a2bce';g.fillRect(0,0,960,540);
+   g.fillStyle='#ffe7c0';g.font='30px CottagePixel';g.textAlign='center';
+   g.fillText(uiCopy('theater.end-card'),480,260);
+  }
+  if(!paused)schedule();
+ }
+ schedule();
+ return()=>{
+  if(disposed)return;
+  disposed=true;cancelAnimationFrame(raf);controller.abort();setAmbience(scene.zone);canvas.remove();
+ };
 }

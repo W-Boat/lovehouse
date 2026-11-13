@@ -261,10 +261,16 @@ async function screenFilm(id:string,activity:SceneActivity){
  $('game-frame').append(screen);
  scene.frameProjection(true);
  let frame=0;
+ let previousBounds='';
  const project=()=>{
   const top=scene.project(rect.x,rect.y),bottom=scene.project(rect.x+rect.w,rect.y+rect.h);
-  screen.style.left=top.x+'px';screen.style.top=top.y+'px';
-  screen.style.width=(bottom.x-top.x)+'px';screen.style.height=(bottom.y-top.y)+'px';
+  const bounds=[top.x,top.y,bottom.x-top.x,bottom.y-top.y].map(Math.round);
+  const signature=bounds.join(',');
+  if(signature!==previousBounds){
+   previousBounds=signature;
+   const [left,top,width,height]=bounds.map(value=>value+'px');
+   Object.assign(screen.style,{left,top,width,height});
+  }
   frame=requestAnimationFrame(project);
  };
  project();

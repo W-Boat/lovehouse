@@ -77,6 +77,13 @@ test('cinema projects into the scene screen and releases the controls on exit',a
  const canvas=page.locator('#game-frame > .scene-projection canvas');
  await expect(canvas).toBeVisible();
  await expect(page.locator('#modal-backdrop')).toBeHidden();
+ await host.getByRole('button',{name:'暂停',exact:true}).click();
+ await expect(host.getByRole('button',{name:'继续',exact:true})).toBeVisible();
+ const pausedFrame=await canvas.evaluate((node:HTMLCanvasElement)=>node.toDataURL());
+ await page.waitForTimeout(180);
+ expect(await canvas.evaluate((node:HTMLCanvasElement)=>node.toDataURL())).toBe(pausedFrame);
+ await host.getByRole('button',{name:'从头播放',exact:true}).click();
+ await expect(host.getByRole('button',{name:'暂停',exact:true})).toBeVisible();
  await page.keyboard.press('Escape');
  await expect(canvas).toHaveCount(0);
  expect(await page.evaluate(()=>(window as any).__cottage.blocked)).toBe(false);
