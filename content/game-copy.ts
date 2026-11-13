@@ -1,5 +1,7 @@
 import personal from "./personal.json";
 export const gameCopyDefaults={
+ "doll.dropping": "抓钩慢慢落下……",
+ "doll.rising": "正在收爪，升到顶端后就能移动。",
  "common.eyebrow": "礼物里的小冒险",
  "common.next": "这一关完成了。下一关，慢慢来。",
  "common.pause": "暂停",

@@ -1,3 +1,4 @@
+import * as interactionTargets from '../src/interaction-targets';
 import * as appearanceColors from '../src/appearance-colors';
 import * as wearableArt from '../src/wearable-art';
 import * as calendar from '../src/calendar';
@@ -23,7 +24,7 @@ function loadScene(clock?:{now:()=>number},state=defaults()){
  const code=transformSync(readFileSync('src/scene.ts','utf8'),{loader:'ts',format:'cjs',target:'es2022'}).code;
  const output={exports:{} as any};
  class Scene{sys={};}
- const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:state,persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./online-pets':{OnlinePets:class{update(){}}},'./calendar':calendar,'./wearable-art':wearableArt,'./place-effects':{PlaceEffects:class{trigger(){return false};update(){};rebuild(){}}},'./seat-layers':{SeatLayers:class{rebuild(){};update(){}}},'./appearance-colors':appearanceColors,'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./outdoor-environment':{OutdoorEnvironment:class{update(){}}},'./assets':{textureFiles,additionalTextureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
+ const dependencies:Record<string,unknown>={'./interaction-targets':interactionTargets,phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:state,persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./online-pets':{OnlinePets:class{update(){}}},'./calendar':calendar,'./wearable-art':wearableArt,'./place-effects':{PlaceEffects:class{trigger(){return false};update(){};rebuild(){}}},'./seat-layers':{SeatLayers:class{rebuild(){};update(){}}},'./appearance-colors':appearanceColors,'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./outdoor-environment':{OutdoorEnvironment:class{update(){}}},'./assets':{textureFiles,additionalTextureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
  vm.runInNewContext(code,{...(clock?{performance:clock}:{}),module:output,exports:output.exports,require:(id:string)=>{if(!(id in dependencies))throw new Error(id);return dependencies[id]}});
  const scene=new output.exports.Cottage();
  scene.textures={exists:()=>false};
@@ -131,4 +132,14 @@ test('calendar follows visible elapsed time across slow frames and excludes susp
  scene.calendarPaused=false;scene.resetCalendarClock();now=61000;scene.updateCalendar(16);
  assert.equal(state.calendar.minutes,0);
  now=62000;scene.updateCalendar(16);assert.equal(state.calendar.minutes,1);
+});
+
+
+test('ambiguous touch stops prior travel, exposes both targets, and does not trigger either',()=>{
+ const scene=loadScene();scene.blocked=false;scene.entered=true;scene.player=fakeObject(320,350);scene.boy=fakeObject(360,330);
+ scene.objects=[{id:'tea',name:'tea',x:100,y:100,point:[100,120]},{id:'book',name:'book',x:120,y:100,point:[120,120]}];
+ let ids:string[]=[],approaches=0;scene.approach=()=>approaches++;scene.bridge.on('interaction-choices',(items:any[])=>ids=items.map(i=>i.id));
+ scene.walk({x:400,y:350});assert.ok(scene.path.length);scene.tapWorld(109,100,1,true);
+ assert.deepEqual(ids,['tea','book']);assert.equal(approaches,0);assert.equal(scene.path.length,0);
+ scene.tapWorld(100,100,1,true);assert.equal(approaches,1);
 });

@@ -61,3 +61,14 @@ input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
 #scale-confirm[hidden]{display:none}
 
 .content-update-progress{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px;padding:5px;border:3px solid #a78354;background:#302538}.content-update-progress b{height:12px;background:#65594d}.content-update-progress b.lit{background:#e2b77d;outline:none!important;box-shadow:inset 0 3px #f5d7a3,inset 0 -3px #b98761}.content-updates{border-top:2px solid #b18a5b;margin-top:16px;padding-top:16px}.content-updates input{box-sizing:border-box;width:100%}
+
+/* Compact visual cue; its invisible padding keeps a 44px physical tap target. */
+.interact-hint,.android-client .interact-hint{min-height:28px;max-width:min(240px,calc(100% - 32px));padding:4px 8px;gap:6px;box-sizing:border-box}
+.interact-hint:before{content:'';position:absolute;inset:-8px 0;min-height:calc(44px / var(--ui-scale,1))}
+.cue-name,.android-client .cue-name{font-size:16px;line-height:1.35;max-width:206px}
+.cue-action{padding-left:5px}.cue-action kbd{font-size:12px}
+.android-client .cue-action{display:none}
+#interaction-choices{position:absolute;z-index:25;left:50%;bottom:max(76px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(340px,calc(100% - 180px));max-height:45%;overflow:auto;background:#352b38fa;color:#fff0cc;border:2px solid #d1ae79;padding:8px;box-shadow:3px 4px #201b29;pointer-events:auto}
+.interaction-choice-heading{font-size:16px;line-height:32px;padding-right:38px}.interaction-choice-close{position:absolute;right:4px;top:2px;min-width:var(--control-size,44px);min-height:var(--control-size,44px);background:none;border:0;color:#fff0cc;font-size:24px}
+.interaction-choice{display:block;width:100%;min-height:var(--control-size,44px);margin-top:6px;padding:8px;background:#f4dfb7;color:#553c32;border:2px solid #a78354;border-radius:0;font-size:16px;text-align:left;line-height:1.4}
+.interaction-choice:focus-visible,.interaction-choice:hover{outline:2px solid #fff0cc;background:#fff1cf}

@@ -1,5 +1,7 @@
 import personal from './personal.json';
 export const mainCopyDefaults={
+  "nearby.choose": "想看看哪一个？",
+  "nearby.cancel": "收起物件选择",
   "hud.music-disable": "关闭音乐",
   "hud.music-enable": "开启音乐",
   "hud.music-active": "音乐已开启",

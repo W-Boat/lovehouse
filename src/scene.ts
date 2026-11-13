@@ -1,3 +1,4 @@
+import {interactionTargets} from './interaction-targets';
 import {recolorAppearance,captureRaisedHands,restoreRaisedHands} from './appearance-colors';
 import type {AffectionState} from './online-protocol';
 import {PlaceEffects,effectFrames} from './place-effects';
@@ -137,9 +138,11 @@ export class Cottage extends Phaser.Scene {
  }
  get walkable(){return worlds[this.zone].walkable}
  getItem(id:string){return this.objects.find(item=>item.id===id)}
- tapWorld(x:number,y:number){if(this.seated){this.whenStanding(()=>this.tapWorld(x,y));return;}
-  if(this.blocked||!this.entered||this.seated)return;
-  const candidates=this.objects.filter(item=>(!this.onlineWorld?.active||item.id!=='boy')&&Math.hypot(item.x-x,item.y-y)<(item.id==='boy'?16:30)).sort((a,b)=>(a.id==='boy'?12:0)+Math.hypot(a.x-x,a.y-y)-(b.id==='boy'?12:0)-Math.hypot(b.x-x,b.y-y));
+ tapWorld(x:number,y:number,worldPerPixel=1/Math.max(.01,this.cameras?.main?.zoom??1),coarse=false){
+  if(this.blocked||!this.entered)return;
+  if(this.seated){this.whenStanding(()=>this.tapWorld(x,y,worldPerPixel,coarse));return;}
+  const candidates=interactionTargets(this.objects.filter(item=>!this.onlineWorld?.active||item.id!=='boy'),{x,y},worldPerPixel,coarse);
+  if(candidates.length>1){this.stop();this.bridge.emit('interaction-choices',candidates);return}
   if(candidates[0])this.approach(candidates[0]);else{this.focusId='';this.walk({x,y});this.bridge.emit('destination',{x,y})}
  }
  approachById(id:string){const item=this.getItem(id);if(item)this.approach(item)}
