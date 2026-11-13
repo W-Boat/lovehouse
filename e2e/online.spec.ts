@@ -5,7 +5,7 @@ async function back(page:Page){await page.getByRole('button',{name:'回到小屋
 async function point(page:Page,who:'girl'|'boy'){return page.evaluate(w=>{const s=(window as any).__cottage,p=w==='girl'?s.player:s.boy;return{x:p.x,y:p.y}},who)}
 async function walk(page:Page,key:string){await page.keyboard.down(key);await page.waitForTimeout(550);await page.keyboard.up(key)}
 test('two real players move independently, follow by consent, chat, merge writing, cooperate and resume',async({browser},info)=>{
- test.setTimeout(240000);const hc=await browser.newContext(),gc=await browser.newContext();const host=await hc.newPage(),guest=await gc.newPage();
+ test.setTimeout(240000);const hc=await browser.newContext({baseURL:'http://127.0.0.1:4173'}),gc=await browser.newContext({baseURL:'http://127.0.0.1:4173'});const host=await hc.newPage(),guest=await gc.newPage();
  try{
   await Promise.all([enter(host),enter(guest)]);await panel(host);await host.getByLabel('服务器地址（留空使用默认）').fill('ws://127.0.0.1:8787/online');await host.getByRole('button',{name:'创建双人房间',exact:true}).click();await expect(host.locator('#online-status')).toContainText('已连接双人房间');
   const id=(await host.locator('#online-room-info').innerText()).match(/^房间 ([^ ]+)/)![1];
@@ -19,10 +19,10 @@ test('two real players move independently, follow by consent, chat, merge writin
   await guest.locator('#online-document').fill('副玩家保留的草稿');await host.locator('#online-document').fill('主玩家先写一行');await host.locator('#online-document-save').click();await expect(guest.locator('#online-document-state')).toContainText('对方已更新');await expect(guest.locator('#online-document-save')).toBeDisabled();await expect(guest.locator('#online-document')).toHaveValue('副玩家保留的草稿');await expect(guest.locator('#online-document-latest')).toHaveText('主玩家先写一行');
   await guest.locator('#online-document').fill('主玩家先写一行，副玩家接下一句');await guest.getByRole('button',{name:'我已合并，使用最新版本保存'}).click();await guest.locator('#online-document-save').click();await expect(host.locator('#online-document-latest')).toHaveText('主玩家先写一行，副玩家接下一句');
   const identity=await guest.evaluate(()=>(window as any).__cottage.onlineWorld.playerId);await guest.evaluate(()=>(window as any).__cottage.onlineWorld.client.socket.close(4000,'CI transport interruption'));
-  await expect(guest.locator('#online-status')).toContainText('已连接双人房间',{timeout:15000});await expect.poll(()=>guest.evaluate(()=>(window as any).__cottage.onlineWorld.playerId)).toBe(identity);await expect(host.locator('#online-room-info')).toContainText('副玩家 · 在线');
+  await expect(guest.locator('#online-status')).toContainText('正在重连',{timeout:5000});await expect(guest.locator('#online-status')).toContainText('已连接双人房间',{timeout:15000});await expect.poll(()=>guest.evaluate(()=>(window as any).__cottage.onlineWorld.playerId)).toBe(identity);await expect(host.locator('#online-room-info')).toContainText('副玩家 · 在线');
   await host.getByRole('button',{name:'邀请一起玩',exact:true}).click();await expect(host.locator('#online-game-host')).toBeVisible();await expect(guest.locator('#online-game-host')).toBeVisible();
   for(let round=0;round<3;round++){
-   for(const [page,side]of [[host,0],[guest,1]] as const){const box=page.locator('#online-game-host section').nth(side);const goal=(await box.locator('p').innerText()).replace('目标：','').split(' · ');for(let i=0;i<3;i++)if(goal[i]==='亮'){await box.getByRole('button').nth(i).click();await expect(box.getByRole('button').nth(i)).toHaveAttribute('aria-pressed','true')}}
+   for(const [page,side]of [[host,0],[guest,1]] as const){const box=page.locator('#online-game-host section').nth(side);const goal=(await box.locator('p').innerText()).replace('目标：','').split(' · ');for(let i=0;i<3;i++)if(goal[i]==='亮'){await box.getByRole('button').nth(i).click();await page.waitForTimeout(100)}}
    if(round<2){await expect(host.locator('#online-game-host h2')).toContainText(`第 ${round+2} 道`);await expect(guest.locator('#online-game-host h2')).toContainText(`第 ${round+2} 道`)}
   }
   await expect(host.locator('#online-game-host [role=status]')).toContainText('礼物门打开了');await expect(guest.locator('#online-game-host [role=status]')).toContainText('礼物门打开了');await host.screenshot({path:`test-results/${info.project.name}/online-host-coop.png`});await guest.screenshot({path:`test-results/${info.project.name}/online-guest-coop.png`});
