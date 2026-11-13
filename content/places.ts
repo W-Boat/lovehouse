@@ -85,3 +85,15 @@ places['greenhouse-water']={text:'喷壶里的水晒得温温的。只浇根旁�
 
 places['greenhouse-vent']={text:'天窗的铜扣就在手边。开一点缝，让花房透透气吧。',choice:'打开或关上天窗',response:'窗扇轻轻动了一下。风从叶子间穿过去，花房不再闷着。'};
 places['greenhouse-seat']={text:'软椅旁边留着两杯水，花房的风很轻。',choice:'并肩坐着看花',response:'不急着出门，先在花香里歇一会儿。',sit:'greenhouse-seat'};
+
+places["shichahai-tea"]={"text": "热水瓶还暖，风从湖面吹过。", "choice": "倒两杯茶", "response": "杯口冒起细细的热气。"};
+places["shichahai-bridge"]={"text": "桥洞下面，灯影一截一截地亮着。", "choice": "看水里的桥", "response": "等水静一点，桥和倒影就围成了一个圈。"};
+places["shichahai-lantern"]={"text": "柳枝扫过栏杆，灯还亮着。", "choice": "看一会儿", "response": "风一来，灯影就沿着水面散开。"};
+places["gulou-drum"]={"text": "胡同里的脚步声停了一会儿。", "choice": "听鼓声", "response": "一声低低的鼓，像给今天留了个记号。"};
+places["gulou-postcard"]={"text": "架上有一张画着灰瓦和银杏的明信片。", "choice": "翻到背面", "response": "背面还有足够的空白，可以写两个人的名字。"};
+places["gulou-tea"]={"text": "窗边桌子刚收拾好。", "choice": "喝口茶", "response": "先暖暖手，再去看看糖葫芦。"};
+places["chaya-scope"]={"text": "镜筒正对着一排挨得很近的石峰。", "choice": "转一转镜筒", "response": "左边那块，像不像坐着等人的石猴？"};
+places["chaya-rock"]={"text": "奇石在山脊上露出一个圆圆的脑袋。", "choice": "辨认轮廓", "response": "从这个方向看，像有人抱着膝盖。"};
+places["chaya-tea"]={"text": "野餐篮里有一壶茶和两只杯子。", "choice": "分一杯", "response": "山风一吹，热气就往同一个方向跑。"};
+places["tianmo-boat"]={"text": "小船系在木桩上，随水晃了一下。", "choice": "看水纹", "response": "一圈波纹撞到岸边，又散开了。"};
+places["tianmo-tea"]={"text": "木桌上有一只搪瓷壶。", "choice": "倒两杯", "response": "坐到长椅那边，能看见石山的倒影。"};

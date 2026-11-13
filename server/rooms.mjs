@@ -1,6 +1,6 @@
 import {changeQuiz,publicQuiz} from './quiz.mjs';
 import {randomBytes} from 'node:crypto';
-const zones=new Set('room garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora taoyuan'.split(' '));
+const zones=new Set('room garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora shichahai gulou chaya tianmo tanghulu taoyuan'.split(' '));
 const games=new Set('moon keychain chestnuts earphones band doll chocolate letter notes hat labubu mystery'.split(' '));
 const secret=()=>randomBytes(18).toString('base64url');
 const clean=(v,n)=>typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').trim().slice(0,n):'';

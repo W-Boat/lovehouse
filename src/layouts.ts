@@ -17,6 +17,12 @@ export function furnishingSeats(zone:Zone,id:string){return furnishings[zone]?.f
 export const actorHeights:Partial<Record<Zone,number>>={memory:72,hotspring:96,aurora:88,market:80};
 export type BuiltSeat={id:string;name:string;zone:Zone;hips:[number,number,number,number];facing?:number};
 export const backgroundSeats:BuiltSeat[]=[
+ {id:'shichahai-seat',name:'湖畔长椅',zone:'shichahai',hips:[180,274,222,274]},
+ {id:'gulou-seat',name:'银杏下的长椅',zone:'gulou',hips:[153,285,193,285]},
+ {id:'chaya-seat',name:'山风长椅',zone:'chaya',hips:[151,271,193,271]},
+ {id:'tianmo-seat',name:'湖边木椅',zone:'tianmo',hips:[158,264,202,264]},
+ {id:'tanghulu-seat',name:'等糖衣冷却的木凳',zone:'tanghulu',hips:[32,253,47,229],facing:3},
+
  {id:'chair-left',name:'蛋糕桌左侧大椅子',zone:'room',hips:[253,197,388,197]},
  {id:'chair-right',name:'蛋糕桌右侧大椅子',zone:'room',hips:[388,197,253,197]},
  {id:'sofa',name:'壁炉旁的沙发',zone:'room',hips:[68,281,101,281]},

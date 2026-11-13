@@ -44,6 +44,11 @@
     "recipe": "lossless-rgba-nearest-v1-(512, 256)",
     "source": "f4791659a9d774972d4b3fc0050e8b2ddc3ce7750724e9f300aac2b38d5ea7b5"
   },
+  "chaya.png": {
+    "output": "f178ede3a137a6260ff748eacfc30751068d12ea6fba6557fbfa93872c905736",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "bc4d3a3f301041a03241a63c581149012ec6f7887ba453c31d67fa86c450e025"
+  },
   "cinema.png": {
     "output": "1b1ed58787d2943dd630d3f3b064f3fe08aea2b5d997c8e2101f20bddd21ae6d",
     "recipe": "lossless-rgba-nearest-v1-(768, 512)",
@@ -128,6 +133,11 @@
     "output": "265aa22804aeae256b44d5680e43e998f388638d6298b4220aa72f073d71146f",
     "recipe": "lossless-rgba-nearest-v1-(768, 512)",
     "source": "9a44d492110484c96e134e3ef082555c8794e1881b45f2e0fe72934d4001acda"
+  },
+  "gulou.png": {
+    "output": "da051fa54697bb405f96aa5739fb84ab063486bbaf4e3154ca1849f356380a18",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "8033a7f41de2a2cfc46a67ba9fcd188d9ed5fbba7cbdb7ab52a980c1b4095387"
   },
   "haunted.png": {
     "output": "f3519e2a801649852b45d9e5c7a124dd16db6eec27ea50628124e2b7f9fca1b4",
@@ -579,6 +589,11 @@
     "recipe": "lossless-rgba-nearest-v1-(384, 384)",
     "source": "14fadbf3483b7260eb775bf76bfaa0df8efde26e6dcd24ffb2fde3b9e654fd3a"
   },
+  "shichahai.png": {
+    "output": "45703a5f772282a73a5a34acf08579179f601dab2174409fd7188042ae91fb25",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "567eca5a22d1a29915634f735a1925558f377466120b7a480858bc1c987c6177"
+  },
   "sit-transition.png": {
     "output": "608a6e589042aa5183b83e35301e706d3edf075e7ec5bfb8b58efa1f27f72eb5",
     "recipe": "lossless-rgba-nearest-v1-(768, 256)",
@@ -598,6 +613,16 @@
     "output": "36fdff79831aeba5c0a3953db8414325ae802b8166cdf98c47eb46baf587d83f",
     "recipe": "lossless-rgba-nearest-v1-(768, 512)",
     "source": "93c3b3d2d81ed05b506aaf71e8b324c74a4dfa03df6bbb016738603c9c6882e8"
+  },
+  "tanghulu.png": {
+    "output": "848e1f41ca2b5fb6d65d9bd8efbd3e4c28977990af96ae78663a2ed79e350907",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "9c677f00e1372a08c3ca76a1d27788d42ca234cec5251fec6cbb4c83eb1bf442"
+  },
+  "tianmo.png": {
+    "output": "95ea164d9fb9686aa8550bb5837506125fe81d5dc8edbc438511599cab3772f0",
+    "recipe": "lossless-rgba-nearest-v1-(768, 512)",
+    "source": "1f54e041a87cd5ab4ff02ee11ad93b3a3eeb446b2c9f554741640b7eae16b029"
   },
   "weather-icons-v2.png": {
     "output": "972f0f2a9989cf517cab5bb7c65a775a6f8e11186677c3611b397b367184af04",

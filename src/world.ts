@@ -1,6 +1,6 @@
 import {furnishings,backgroundSeats} from './layouts';
 import {roomWalkable,gardenWalkable,type Point,inside,inPolygon,type Polygon,segmentWalkable,nearestWalkable,type Walkable} from './navigation';
-export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora';
+export type Zone='room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora'|'shichahai'|'gulou'|'chaya'|'tianmo'|'tanghulu';
 export type Item={id:string;name:string;x:number;y:number;point:[number,number];action?:string;kind?:'place'|'collect'|'slot'|'event';collect?:string;prop?:number;texture?:string;to?:Zone};
 export type World={name:string;caption:string;texture:string;spawn:[number,number];boy:[number,number];items:Item[];walkable:(point:Point)=>boolean};
 // Broad walkable floor regions match the painted clearing/deck instead of invisible center lines.
@@ -115,6 +115,52 @@ worlds.aurora={...newRoom('极光玻璃屋','摇椅轻轻晃，天上的光也�
 worlds.camp.items.push({...spot('spring-door','去暖汤足浴屋',530,350,'暖暖脚'),to:'hotspring'});
 worlds.ferris.items.push({...spot('market-door','去云端生日集市',520,365,'逛逛集市'),to:'market'});
 worlds.station.items.push({...spot('aurora-door','去极光玻璃屋',110,340,'等一场极光'),to:'aurora'});
+// Travel scenes use the lower terrace as walkable ground. Art coordinates are in world units.
+const trip=(id:Zone,name:string,caption:string,back:Zone,items:Item[],solid:number[][]=[])=>{
+ worlds[id]={...newRoom(name,caption,id,back,items),walkable:p=>p.x>67&&p.x<575&&p.y>269&&p.y<399
+  &&(p.y<356||p.x>242&&p.x<418)&&!solid.some(([x,y,w,h])=>inside(p,{x,y,w,h},5))};
+};
+const onward=(id:string,to:Zone,name:string,x=515,y=335):Item=>({id,to,name,x,y,action:'前往',point:[x,Math.min(y+8,350)]});
+trip('shichahai','北京 · 什刹海','银锭桥下，灯影摇进水里','station',[
+ spot('shichahai-tea','湖边的两杯茶',350,254,'喝口热茶'),
+ spot('shichahai-bridge','银锭桥',354,122,'看灯影'),
+ spot('shichahai-lantern','柳下的灯',126,216,'看看灯火'),
+ spot('shichahai-photo','湖岸合影',466,305,'拍张照'),
+ spot('shichahai-note','留在北京的一句话',274,282,'写张便签'),
+ onward('to-gulou','gulou','走去鼓楼胡同'),
+],[[300,272,112,45],[150,271,92,27]]);
+trip('gulou','北京 · 鼓楼胡同','灰瓦下面，听见一天慢慢过去','shichahai',[
+ spot('gulou-postcard','胡同明信片架',320,266,'翻一张明信片'),
+ spot('gulou-drum','暮色中的鼓楼',367,100,'听一声鼓'),
+ spot('gulou-tea','窗边茶桌',413,265,'喝杯热茶'),
+ spot('gulou-photo','银杏下的合影',245,316,'拍张照'),
+ spot('heartbeat-cards','心跳斗地主',469,296,'坐下打牌'),
+ onward('to-tanghulu','tanghulu','去糖葫芦车间'),
+],[[130,285,85,27],[296,271,70,25],[378,272,70,27]]);
+trip('chaya','遂平 · 嵖岈山','石峰挤在一起，像在讲悄悄话','station',[
+ spot('chaya-scope','山崖望远镜',348,219,'找找石猴'),
+ spot('chaya-rock','石猴轮廓',384,85,'看奇石'),
+ spot('chaya-tea','山风里的野餐篮',84,254,'歇脚喝茶'),
+ spot('chaya-photo','石林观景台',445,316,'拍张照'),
+ spot('chaya-note','山路便签',252,266,'写句话'),
+ onward('to-tianmo','tianmo','下山去天磨湖'),
+],[[125,272,98,21],[330,269,44,17],[235,264,54,27]]);
+trip('tianmo','遂平 · 天磨湖','湖把一座山轻轻收在怀里','chaya',[
+ spot('tianmo-boat','系好的小船',549,200,'看水纹'),
+ spot('tianmo-tea','野餐桌上的茶',340,239,'倒两杯茶'),
+ spot('tianmo-photo','湖边合影',452,324,'拍张照'),
+ spot('tianmo-note','给湖边的一句话',422,297,'写张便签'),
+ spot('heartbeat-jump','心跳跳一跳',264,323,'开始跳跃'),
+],[[137,265,84,25],[285,246,129,52],[408,291,42,24]]);
+trip('tanghulu','糖葫芦制作车间','铜锅冒着泡，等一串红山楂','gulou',[
+ spot('sugar-prep','山楂与竹签',162,143,'备料串果'),
+ spot('sugar-heat','铜锅与糖浆',317,121,'熬糖裹衣'),
+ spot('sugar-cool','中间的晾糖架',315,222,'检查成品'),
+ spot('sugar-sell','玻璃柜和订单',504,167,'接单经营'),
+ spot('sugar-photo','今日糖葫芦',462,322,'拍张照'),
+],[[235,233,160,39],[12,181,52,117]]);
+worlds.station.items.push(onward('to-shichahai','shichahai','列车去北京',390,350),onward('to-chaya','chaya','列车去遂平',240,350));
+
 // The painted carpet immediately in front of rear seats is usable floor too.
 for(const [zone,rect]of [['memory',{x:75,y:202,w:142,h:32}],['magic',{x:80,y:184,w:92,h:50}],['cinema',{x:65,y:185,w:115,h:49}],['haunted',{x:90,y:195,w:95,h:39}]] as [Zone,{x:number;y:number;w:number;h:number}][]){const prior=worlds[zone].walkable;worlds[zone].walkable=p=>prior(p)||inside(p,rect)}
 for(const seat of backgroundSeats){if(worlds[seat.zone].items.some(i=>i.id===seat.id))continue;worlds[seat.zone].items.push({...spot(seat.id,seat.name,(seat.hips[0]+seat.hips[2])/2,(seat.hips[1]+seat.hips[3])/2,'一起坐下'),kind:'event'})}

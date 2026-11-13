@@ -20,7 +20,7 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npx vite build --mode e2e
-      - run: npx playwright test e2e/tea.spec.ts e2e/display-scale.spec.ts e2e/interaction-props.spec.ts e2e/content-updates.spec.ts e2e/interaction-targets.spec.ts e2e/taoyuan.spec.ts --max-failures=0
+      - run: npx playwright test e2e/tea.spec.ts e2e/display-scale.spec.ts e2e/interaction-props.spec.ts e2e/content-updates.spec.ts e2e/interaction-targets.spec.ts e2e/taoyuan.spec.ts e2e/regional-games.spec.ts --max-failures=0
         env:
           CI: 'true'
       - run: npx playwright test e2e/minigames.spec.ts --grep "claw catches|phone touch controls" --max-failures=0 --output=claw-test-results

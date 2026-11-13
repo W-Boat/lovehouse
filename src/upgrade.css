@@ -72,3 +72,22 @@ input[type=range]:focus-visible{outline:3px solid #b66d82;outline-offset:3px}
 .interaction-choice-heading{font-size:16px;line-height:32px;padding-right:38px}.interaction-choice-close{position:absolute;right:4px;top:2px;min-width:var(--control-size,44px);min-height:var(--control-size,44px);background:none;border:0;color:#fff0cc;font-size:24px}
 .interaction-choice{display:block;width:100%;min-height:var(--control-size,44px);margin-top:6px;padding:8px;background:#f4dfb7;color:#553c32;border:2px solid #a78354;border-radius:0;font-size:16px;text-align:left;line-height:1.4}
 .interaction-choice:focus-visible,.interaction-choice:hover{outline:2px solid #fff0cc;background:#fff1cf}
+
+.side-game .side-status{margin:6px 0;font-size:18px;line-height:1.4}
+.side-board{background:#e9d1a8;border:2px solid #b88958;padding:10px;margin:8px 0;color:#553c32}
+.side-board p{margin:0 0 6px;font-size:18px}
+.side-controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.side-controls button{touch-action:none}
+.cards-hand{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.cards-hand .playing-card{min-width:var(--control-size,44px);min-height:var(--control-size,44px);padding:4px;font-size:16px;background:#fff4d9;color:#352b38}
+.cards-hand .playing-card.red{color:#ab3651}
+.cards-hand .playing-card[aria-pressed=true]{background:#f3acc1;outline:2px solid #8d3b57}
+.cards-log{min-height:52px;line-height:1.35;padding:5px 0}
+.sugar-skewer{font-size:30px;letter-spacing:4px;color:#a63548;text-shadow:2px 2px #643141}
+.sugar-heat{letter-spacing:3px;color:#984822}
+.jump-stage{position:relative;height:clamp(92px,30vh,220px);overflow:hidden;background:linear-gradient(#b6d9c7 0 72%,#8fae90 72%);border:2px solid #738a72;image-rendering:pixelated}
+.jump-platform{position:absolute;top:77%;height:10%;transform:translateX(-50%);background:#d67b85;border:3px solid #974d62;box-shadow:0 4px #774456}
+.jump-current{left:16%;width:17%}
+.jump-actor{position:absolute;z-index:1;height:42%;width:auto;max-width:20%;object-fit:contain;object-position:bottom;transform-origin:bottom;image-rendering:pixelated;pointer-events:none}
+.jump-meter{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;margin-top:7px}
+.jump-meter i{height:9px;background:#b78e72}.jump-meter .filled{background:#b24162}
