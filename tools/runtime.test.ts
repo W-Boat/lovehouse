@@ -25,7 +25,9 @@ function loadScene(){
  class Scene{sys={};}
  const dependencies:Record<string,unknown>={phaser:{__esModule:true,default:{Scene,Math:{Clamp:(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v))}}},'./signals':{Signals},'../content/birthday-config':{birthdayConfig},'./state':{save:defaults(),persist:()=>{}},'./navigation':navigation,'./hand-formation':handFormation,'./window-weather':windowWeather,'./layouts':layouts,'./world':world,'./follow':follow,'./actors':actors,'./online-pets':{OnlinePets:class{update(){}}},'./calendar':calendar,'./wearable-art':wearableArt,'./place-effects':{PlaceEffects:class{trigger(){return false};update(){};rebuild(){}}},'./seat-layers':{SeatLayers:class{rebuild(){};update(){}}},'./appearance-colors':appearanceColors,'./atlas':atlas,'./window-view':{WindowView:class{update(){}}},'./world-motion':{WorldMotion:class{rebuild(){};update(){}}},'./outdoor-environment':{OutdoorEnvironment:class{update(){}}},'./assets':{textureFiles,additionalTextureFiles,coreTextureKeys:['room','room-after','hero','characters','gifts','props','sitting','cake','girl-actions','boy-actions','icons-v2','gifts-v2','girl-walk','boy-walk'],assetUrl:(name:string)=>'/birthday/assets/'+name}};
  vm.runInNewContext(code,{module:output,exports:output.exports,require:(id:string)=>{if(!(id in dependencies))throw new Error(id);return dependencies[id]}});
- return new output.exports.Cottage();
+ const scene=new output.exports.Cottage();
+ scene.textures={exists:()=>false};
+ return scene;
 }
 function fakeObject(x=0,y=0){const target:any={x,y,width:0,height:0,visible:true};const proxy=new Proxy(target,{get:(t,key)=>key in t?t[key]:(...args:any[])=>{if(key==='setPosition'){t.x=args[0];t.y=args[1]}if(key==='setZoom')t.zoom=args[0];return proxy}});return proxy}
 test('cold boot: UI can subscribe before Phaser injects plugins; create releases entry gate',()=>{

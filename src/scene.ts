@@ -164,9 +164,9 @@ export class Cottage extends Phaser.Scene {
  approach(item:Item){
   if(this.blocked)return;if(this.seated){this.whenStanding(()=>this.approach(item));return;}this.focusId=item.id;
   if(inReach(this.controlledActor,item,this.walkable)){this.stop();this.face(item);this.trigger(item);return}
-  this.walk({x:item.point[0],y:item.point[1]},()=>this.trigger(item));this.movingTo=this.path.length?item:undefined;this.bridge.emit('approaching',this.movingTo);
+  this.walk({x:item.point[0],y:item.point[1]},()=>{this.face(item);this.trigger(item)});this.movingTo=this.path.length?item:undefined;this.bridge.emit('approaching',this.movingTo);
  }
- private face(item:Item){const dx=item.x-this.controlledActor.x,dy=item.y-this.controlledActor.y;this.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?1:3):(dy<0?2:0);this.onlineWorld?.active?this.renderMoving(this.controlledActor,this.onlineWorld.role==='guest'?'boy':'girl',this.dir,false,0):this.player.setTexture('girl'+this.dir)}
+ private face(item:Item){const dx=item.x-this.controlledActor.x,dy=item.y-this.controlledActor.y;this.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?1:3):(dy<0?2:0);this.renderMoving(this.controlledActor,this.onlineWorld?.active&&this.onlineWorld.role==='guest'?'boy':'girl',this.dir,false,0)}
  private trigger(item:Item){if(this.blocked||!inReach(this.controlledActor,item,this.walkable))return;this.path=[];this.bridge.emit('interact',item.id)}
  interactNearest(){if(this.nearby)this.approach(this.nearby)}
  clearHint(){this.nearby=undefined;this.bridge.emit('nearby',undefined)}
@@ -205,7 +205,51 @@ export class Cottage extends Phaser.Scene {
 
  affection(kind:string){if(this.onlineWorld?.active){this.approachForAction(kind);return}if(this.seated||this.actionKind)return;this.stop();if(kind==='hand'){this.holding=!this.holding;if(this.holding)this.setFollowing(true);return}const target=nearestWalkable({x:this.player.x+this.actorHeight*.28,y:this.player.y},this.walkable,24);if(!target){this.bridge.emit('unreachable');return}this.actionKind=kind;this.actionTime=0;this.pairReady=false;this.actor.state='preparing';this.buddy.move(this.boy,target,this.walkable,()=>{this.pairReady=true;this.actionTime=0});if(!this.buddy.moving){this.pairReady=true}}
  private pairTexture(index:number,holding=false){const base=(holding?'holding-art-':'pair-art-')+index,key=base+'-'+JSON.stringify(save.appearance)+'-'+save.hat+'-'+save.earphones+'-'+save.band;if(this.textures.exists(key))return key;const source=this.textures.get(base).getSourceImage() as HTMLCanvasElement,c=document.createElement('canvas');c.width=source.width;c.height=source.height;const g=c.getContext('2d')!;for(const [who,left,right]of [['girl',0,c.width*.53],['boy',c.width*.53,c.width]] as const){g.save();g.beginPath();g.rect(left,0,right-left,c.height);g.clip();g.drawImage(this.textures.get(this.appearanceKey(who,base)).getSourceImage() as HTMLCanvasElement,0,0);g.restore()}for(const who of ['girl','boy'] as const){if(save.appearance[who].hair===0)continue;const pose=index%4,front=holding?Math.floor(index/4):0,key=who+'-head-'+(save.appearance[who].hair*4+front);const head=this.textures.get(this.appearanceKey(who,'head-'+key)).getSourceImage() as HTMLCanvasElement;const x=c.width*(who==='girl'?(!holding&&index<4&&pose>0?.34:.25):.74),h=c.height*(who==='girl'?.52:.49),w=h*head.width/head.height;g.drawImage(head,x-w/2,0,w,h)}const girlHead={x:c.width*(!holding&&index<4&&index%4>0?.34:.25),top:0,width:c.width*.43,height:c.height*.52,facing:holding?Math.floor(index/4):0};if(save.hat)drawHat(g,this.textures.get('gift-hat').getSourceImage() as HTMLCanvasElement,girlHead);if(save.earphones)drawEarphones(g,this.textures.get('gift-earphones').getSourceImage() as HTMLCanvasElement,girlHead);if(save.band){g.fillStyle='#e7a7c2';g.fillRect(c.width*.42,c.height*.65,Math.max(2,c.width*.025),Math.max(2,c.height*.025))}this.textures.addCanvas(key,c);return key}
- private updateAction(dt:number){if(!this.pairReady){this.buddy.update(this.boy,dt,this.walkable);return}this.actionTime+=dt;const kind=this.actionKind,duration=actions[kind]?.duration??2.5;const phase=this.actionTime/duration;const hug=['hug','head','shoulder','share','flower'].includes(kind);const frame=kind==='dance'||kind==='scare'?12+Math.floor(this.actionTime*7)%4:8+Math.min(3,Math.floor(phase*4));this.setPose(this.player,'girl','action',frame);this.setPose(this.boy,'boy','action',frame);if(hug&&phase>.12&&phase<.9&&this.pairImage){const group=kind==='head'?4:kind==='flower'||kind==='share'?8:0;const offset=kind==='share'?2+Math.min(1,Math.floor(phase*2)):kind==='flower'?Math.min(1,Math.floor(phase*2)):Math.min(3,Math.floor(phase*4));const key=this.pairTexture(group+offset);this.pairImage.setTexture(key).setPosition((this.player.x+this.boy.x)/2,Math.max(this.player.y,this.boy.y)).setVisible(true).setDepth(10+Math.max(this.player.y,this.boy.y)/1000);const src=this.pairImage.texture.getSourceImage() as HTMLCanvasElement;this.pairImage.setDisplaySize(this.actorHeight*src.width/src.height,this.actorHeight);this.player.setVisible(false);this.boy.setVisible(false)}else{this.pairImage?.setVisible(false);this.player.setVisible(true);this.boy.setVisible(true)}if(hug&&phase>.2&&phase<.8){this.player.setAngle(-4);this.boy.setAngle(4)}if(this.actionTime>=duration){this.pairImage?.setVisible(false);this.player.setVisible(true);this.boy.setVisible(true);this.actionKind='';this.player.setAngle(0);this.boy.setAngle(0);this.actor.cancel();this.setPose(this.player,'girl','idle',0);this.setPose(this.boy,'boy','idle',0);this.syncFollowing()}}
+ private updateAction(dt:number){
+  if(!this.pairReady){this.buddy.update(this.boy,dt,this.walkable);return}
+  this.actionTime+=dt;
+  const kind=this.actionKind;
+  const {duration,contact,recover}=actions[kind]??actions.hug;
+  const phase=this.actionTime/duration;
+  const settling=Math.max(0,Math.min(1,this.actionTime/contact,(duration-this.actionTime)/(duration-recover)));
+  const ease=settling*settling*(3-2*settling);
+  const pair=['hug','head','share','flower'].includes(kind)&&phase>.12&&phase<.9&&this.pairImage;
+  this.player.setVisible(!pair);
+  this.boy.setVisible(!pair);
+  this.pairImage?.setVisible(Boolean(pair));
+  if(pair){
+   const group=kind==='head'?4:kind==='flower'||kind==='share'?8:0;
+   const pose=save.reduced?2:Math.min(3,Math.floor(phase*4));
+   const offset=kind==='share'?2+Math.min(1,Math.floor(phase*2)):kind==='flower'?Math.min(1,Math.floor(phase*2)):pose;
+   const source=this.pairTexture(group+offset);
+   const foot=Math.max(this.player.y,this.boy.y);
+   pair.setTexture(source).setPosition((this.player.x+this.boy.x)/2,foot).setDepth(10+foot/1000);
+   const art=pair.texture.getSourceImage() as HTMLCanvasElement;
+   pair.setDisplaySize(this.actorHeight*art.width/art.height,this.actorHeight);
+  }else if(kind==='shoulder'){
+   this.setPose(this.player,'girl','idle',0);
+   this.setPose(this.boy,'boy','idle',0);
+   const lean=(this.player.x<=this.boy.x?1:-1)*(save.reduced?1:ease);
+   this.player.setAngle(lean*12);
+   this.boy.setAngle(-lean*4);
+  }else{
+   const frame=kind==='dance'?12+(save.reduced?2:Math.floor(this.actionTime*7)%4):
+    kind==='scare'?(phase<.16?8:phase<.45?15:phase<.72?9:0):
+    8+Math.min(3,Math.floor(phase*4));
+   this.setPose(this.player,'girl','action',frame);
+   this.setPose(this.boy,'boy','action',frame);
+   if(kind==='scare'&&!save.reduced){const recoil=Math.sin(Math.PI*ease)*11;this.player.setAngle(-recoil);this.boy.setAngle(recoil)}
+  }
+  if(this.actionTime<duration)return;
+  this.pairImage?.setVisible(false);
+  this.player.setVisible(true).setAngle(0);
+  this.boy.setVisible(true).setAngle(0);
+  this.actionKind='';
+  this.actor.cancel();
+  this.setPose(this.player,'girl','idle',0);
+  this.setPose(this.boy,'boy','idle',0);
+  this.syncFollowing();
+ }
  private environment(){
   const g=this.effects,t=save.reduced?0:this.idleTime,c=this.calendarState,indoor=indoorZones.has(this.zone);this.climateGround?.clear();renderWindowWeather(g,this.zone,this.weather,this.daylight,t);
   if(c.enabled){
