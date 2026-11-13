@@ -17,7 +17,7 @@ import {birthdayConfig as config,type Gift,type GiftId} from '../content/birthda
 import {save,persist,reset,grantItem,restockSnack,useSnack,type Snack} from './state';
 import {music,sound,setAmbience,duckAudio} from './audio';
 import {gameViewport,localPoint,localDelta,requestImmersive} from './viewport';
-import {worlds,actionLabel} from './world';
+import {worlds,actionLabel,inReach} from './world';
 import {mediaUrl} from './assets';
 import {PixelCeremony} from './celebration';
 import {installUI} from './ui';
@@ -213,7 +213,11 @@ function mountSceneActivity(id:string,kind:SceneActivity['kind'],label:string){
 function openWorkshopAt(station:string){
  if(!workshopVisit){
   const activity=mountSceneActivity('side-game-host','workshop','糖葫芦制作车间');
-  workshopVisit=openSugarWorkshop(activity.host,station,id=>scene.approachById(id));
+  workshopVisit=openSugarWorkshop(activity.host,station,id=>scene.approachById(id),id=>{
+   const item=scene.getItem(id);
+   return Boolean(item&&!scene.movingTo&&inReach(scene.controlledActor,item,scene.walkable));
+  });
+  activity.dispose=workshopVisit.dispose;
  }else workshopVisit.arrive(station);
 }
 function startGiftGame(id:GiftId,done?:()=>void){
@@ -246,7 +250,7 @@ async function screenFilm(id:string,activity:SceneActivity){
  const prepared=scene.prepareCinema();
  let cancelled=false;
  activity.dispose=()=>{cancelled=true;void prepared.then(release,release)};
- function release(){if(sceneActivity?.kind!=='film')scene.releaseCinema()}
+ function release(){scene.releaseCinema()}
  try{await prepared}catch{
   if(sceneActivity===activity){closeSceneActivity();toast(mainText('cinema.error'))}
   return;

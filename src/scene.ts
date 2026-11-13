@@ -124,8 +124,26 @@ export class Cottage extends Phaser.Scene {
   }
  const c=save.calendar,key=[c.enabled,c.date,Math.floor(c.minutes*4),c.timeMode,c.timeScale,c.seasonMode,c.season,c.weatherMode,c.weather,c.temperatureMode,c.temperature,save.sky.time,save.sky.weather].join(':');if(key!==this.calendarSignature){this.calendarSignature=key;this.refreshEnvironment()}}
  async prepareBirthday(){await Promise.all([this.ensureTexture('pier'),this.ensureTexture('room-after')])}
- async prepareCinema(){this.filmTextures=[];for(const key of ['garden','forest','pier'] as const){if(!this.textures.exists(key))this.filmTextures.push(key);await this.ensureTexture(key)}}
- releaseCinema(){for(const key of this.filmTextures)if(key!==this.backgroundKey&&!this.sceneCache.includes(key))this.textures.remove(key);this.filmTextures=[]}
+ private filmUsers=0;
+ private filmPreparation?:Promise<void>;
+ prepareCinema(){
+  this.filmUsers++;
+  return this.filmPreparation??=(async()=>{
+   for(const key of ['garden','forest','pier'] as const){
+    if(this.textures.exists(key))continue;
+    await this.ensureTexture(key);
+    this.filmTextures.push(key);
+   }
+  })();
+ }
+ releaseCinema(){
+  if(this.filmUsers===0||--this.filmUsers>0)return;
+  for(const key of this.filmTextures){
+   if(key!==this.backgroundKey&&!this.sceneCache.includes(key))this.textures.remove(key);
+  }
+  this.filmTextures=[];
+  this.filmPreparation=undefined;
+ }
  private async ensureZone(zone:Zone,generation=this.transitionGeneration){if(zone==='memory'||zone==='cinema'){await this.ensureTexture('seats-back');this.sliceAtlas('seats-back',2,2,['seat-rocking-back','seat-cinema-back','seat-memory-back','seat-cream-front'])}if(zone==='hotspring'){await this.ensureTexture('footbath-poses');this.sliceAtlas('footbath-poses',3,2,[...Array.from({length:3},(_,i)=>'girl-soak-'+i),...Array.from({length:3},(_,i)=>'boy-soak-'+i)])}if(furnishings[zone]){await this.ensureTexture('furniture');this.sliceAtlas('furniture',4,4,Array.from({length:16},(_,i)=>'furnishing-'+i))}if(['magic','haunted','ferris'].includes(zone)){await this.ensureTexture('wheel-actors');this.sliceAtlas('wheel-actors',2,2,['motion-wheel','motion-cabin','motion-ghost','motion-book'])}const key=worlds[zone].texture;if(!this.textures.exists(key)){const file=textureFiles[key as keyof typeof textureFiles];if(!file)throw Error(key);await new Promise<void>((resolve,reject)=>{const image=new Image();image.onload=()=>{if(!this.textures.exists(key))this.textures.addImage(key,image);resolve()};image.onerror=reject;image.src=assetUrl(file)})}if(generation!==this.transitionGeneration){if(key!==worlds[this.zone].texture&&key!==worlds[this.transitionTarget].texture&&!coreTextureKeys.includes(key as any))this.textures.remove(key);return}this.sceneCache=this.sceneCache.filter(k=>k!==key);this.sceneCache.push(key);while(this.sceneCache.length>3){const old=this.sceneCache.shift()!;if(!coreTextureKeys.includes(old as any))this.textures.remove(old)}for(const exit of worlds[zone].items.filter(i=>i.to).slice(0,2)){const next=worlds[exit.to!].texture;if(!this.textures.exists(next)){const image=new Image();image.src=assetUrl(textureFiles[next as keyof typeof textureFiles])}}}
  private renderMoving(actor:Phaser.GameObjects.Image,who:'girl'|'boy',dir:number,moving:boolean,phase:number){const base=who+'-stride-'+(dir*4+phase);if(moving&&this.textures.exists(base)){actor.setTexture(this.appearanceKey(who,base));const src=actor.texture.getSourceImage() as HTMLCanvasElement;actor.setDisplaySize(this.actorHeight*src.width/src.height,this.actorHeight)}else this.setPose(actor,who,'idle',dir)}
  private buildActionFrames(){this.sliceAtlas('weather-icons',3,2,['weather-clear','weather-rain','weather-snow','time-dawn','time-day','time-night']);this.sliceAtlas('holding-walk',4,4,Array.from({length:16},(_,i)=>'holding-art-'+i));this.sliceAtlas('furniture',4,4,Array.from({length:16},(_,i)=>'furnishing-'+i));this.sliceAtlas('couple-actions',4,3,Array.from({length:12},(_,i)=>'pair-art-'+i));this.pairImage=this.add.image(0,0,'pair-art-0').setOrigin(.5,1).setDepth(15).setVisible(false);for(const who of ['girl','boy']){this.sliceAtlas(who+'-heads',4,4,Array.from({length:16},(_,i)=>who+'-head-'+i));for(let i=0;i<16;i++)this.textures.addCanvas('head-'+who+'-head-'+i,this.textures.get(who+'-head-'+i).getSourceImage() as HTMLCanvasElement)}this.sliceAtlas('world-actors',4,4,[...Array.from({length:4},(_,i)=>'train-'+i),...Array.from({length:4},(_,i)=>'jelly-'+i),...Array.from({length:4},(_,i)=>'fish-'+i),...Array.from({length:4},(_,i)=>'flame-'+i)]);this.sliceAtlas('wheel-actors',2,2,['motion-wheel','motion-cabin','motion-ghost','motion-book']);for(const who of ['girl','boy'])if(this.textures.exists(who+'-walk'))this.sliceAtlas(who+'-walk',4,4,Array.from({length:16},(_,i)=>who+'-stride-'+i));for(const who of ['girl','boy'])this.sliceAtlas(who+'-actions',4,4,Array.from({length:16},(_,i)=>who+'-pose-'+i));this.sliceAtlas('icons-v2',4,4,['ui-music','ui-journal','ui-photo','ui-fullscreen','ui-settings','ui-map','ui-companion','ui-sky','ui-bag','ui-flower','ui-portrait','ui-letter','ui-sign','ui-door','ui-home','ui-wand']);this.sliceAtlas('gifts-v2',2,2,['red-doll','red-earphones','pink-band','white-hat']);for(const [id,key]of [['doll','red-doll'],['earphones','red-earphones'],['band','pink-band'],['hat','white-hat']]){this.textures.remove('gift-'+id);const source=this.textures.get(key).getSourceImage() as HTMLCanvasElement;this.textures.addCanvas('gift-'+id,source)}}

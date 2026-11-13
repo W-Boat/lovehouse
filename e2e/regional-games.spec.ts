@@ -20,6 +20,13 @@ test('workshop makes, sells and settles one hawthorn order',async({page})=>{
  await host.getByRole('button',{name:/冰糖山楂/}).click();
  await expect(page.locator('#modal-backdrop')).toBeHidden();
  await host.getByRole('button',{name:'去备料台串果'}).click();
+ await expect(host.getByRole('button',{name:'串上一颗'})).toBeVisible();
+ await page.evaluate(()=>{
+  const scene=(window as any).__cottage;
+  scene.walk({x:320,y:370});
+ });
+ await expect(host.getByRole('button',{name:'串上一颗'})).toHaveCount(0);
+ await host.getByRole('button',{name:'去备料台串果'}).click();
  for(let i=0;i<3;i++)await host.getByRole('button',{name:'串上一颗'}).click();
  await host.getByRole('button',{name:'去铜锅熬糖'}).click();
  for(let i=0;i<3;i++)await host.getByRole('button',{name:'添火'}).click();

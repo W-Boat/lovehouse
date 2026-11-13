@@ -20,7 +20,7 @@ function panel(host:HTMLElement,title:string){
  return {status,board,controls};
 }
 
-export function openSugarWorkshop(host:HTMLElement,station:string,go:(id:string)=>void){
+export function openSugarWorkshop(host:HTMLElement,station:string,go:(id:string)=>void,withinReach:(id:string)=>boolean){
  const {status,board,controls}=panel(host,'糖葫芦制作车间');
  const recipes=[{name:'冰糖山楂',cost:3,price:7,heat:3,fruit:'●'},{name:'芝麻山楂',cost:4,price:9,heat:4,fruit:'◉'},{name:'双果糖葫芦',cost:5,price:12,heat:5,fruit:'◆'}];
  let day=save.workshop.day, initial=save.workshop.coins;
@@ -28,14 +28,14 @@ export function openSugarWorkshop(host:HTMLElement,station:string,go:(id:string)
  const ordersForDay=()=>Array.from({length:3},(_,i)=>recipes[(day-1+i*(day%3===0?0:2))%recipes.length]);
  let orders=ordersForDay();
  const cost=(r:typeof recipes[number])=>Math.max(1,r.cost-stove);
- let activeStation=station;
+ let activeStation=station, reached=withinReach(station),frame=0;
  function draw(){
   status.textContent='第 '+day+' 天 · '+cash+' 铜钱 · 已交单 '+served+'/3';
   board.replaceChildren(node('p',message),node('div',recipe.fruit.repeat(fruit),'sugar-skewer'));
   controls.replaceChildren();
   const destinations:Record<string,[string,string]>={order:['sugar-sell','去柜台接单'],string:['sugar-prep','去备料台串果'],heat:['sugar-heat','去铜锅熬糖'],cool:['sugar-cool','去晾糖架'],sell:['sugar-sell','去柜台交单'],done:['sugar-sell','去柜台收摊']};
   const next=destinations[phase];
-  if(next&&activeStation!==next[0]){
+  if(next&&(activeStation!==next[0]||!reached)){
    controls.append(button(next[1],()=>go(next[0])));
    return;
   }
@@ -68,8 +68,18 @@ export function openSugarWorkshop(host:HTMLElement,station:string,go:(id:string)
   message='今天交了 '+served+' 单，净收益 '+profit+' 铜钱。最高单日收益 '+save.workshop.best+'。'+(cash<12?' 明天有 12 铜钱的启动资金。':'');
   draw();
  }
+ const refresh=()=>{
+  if(!host.isConnected)return;
+  const now=withinReach(activeStation);
+  if(now!==reached){reached=now;draw()}
+  frame=requestAnimationFrame(refresh);
+ };
  draw();
- return {arrive(id:string){activeStation=id;draw()}};
+ frame=requestAnimationFrame(refresh);
+ return {
+  arrive(id:string){activeStation=id;reached=withinReach(id);draw()},
+  dispose(){cancelAnimationFrame(frame)},
+ };
 }
 
 const rankLabels=['3','4','5','6','7','8','9','10','J','Q','K','A','2','小王','大王'];
