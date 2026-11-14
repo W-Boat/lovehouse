@@ -47,12 +47,23 @@ final class ContentUpdates {
         try { version = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionCode - 20000L; }
         catch (Exception ignored) { }
         bundledVersion = Math.max(0, version);
-        if (preferences.getBoolean("trial", false)) restore();
+        if (preferences.getBoolean("trial", false)) rejectTrial();
         String active = preferences.getString("active", "");
         if (active.matches("[0-9]+") && !new File(new File(root, active), ".verified.json").isFile()) restore();
         if (activeVersion() <= bundledVersion) preferences.edit().remove("active").remove("previous").remove("trial").commit();
+        String pending = preferences.getString("pending", "");
+        if (!pending.isEmpty()) {
+            SharedPreferences.Editor change = preferences.edit().remove("pending");
+            if (pending.matches("[0-9]+") && Long.parseLong(pending) > Math.max(bundledVersion, activeVersion())
+                    && new File(new File(root, pending), ".verified.json").isFile()) {
+                change.putString("previous", preferences.getString("active", ""))
+                    .putString("active", pending).putBoolean("trial", true);
+            }
+            change.commit();
+        }
         servingVersion = preferences.getString("active", "");
         publish("idle", "可检查资源更新", 0);
+        if (preferences.getBoolean("trial", false)) scheduleTrialTimeout();
     }
 
     private long activeVersion() {
@@ -86,21 +97,23 @@ final class ContentUpdates {
                 String previous = preferences.getString("previous", "");
                 File[] versions = root.listFiles();
                 if (versions != null) for (File version : versions) {
-                    if (version.getName().matches("[0-9]+") && !version.getName().equals(current) && !version.getName().equals(previous)) {
+                    if (version.getName().matches("[0-9]+") && !version.getName().equals(current) && !version.getName().equals(previous) && !version.getName().equals(preferences.getString("pending", ""))) {
                         try { remove(version); } catch (Exception ignored) { }
                     }
                 }
             });
             return;
         }
+        boolean automatic = "auto".equals(action);
+        if (automatic && (preferences.getBoolean("trial", false) || !preferences.getString("pending", "").isEmpty())) return;
         if (!busy.compareAndSet(false, true)) return;
         worker.execute(() -> {
             try {
-                if ("check".equals(action)) {
+                if ("check".equals(action) || automatic) {
                     candidate = null;
                     URL url = secureUrl(message.optString("url"));
-                    preferences.edit().putString("url", url.toString()).commit();
-                    publish("checking", "正在检查资源版本", 0);
+                    if (!automatic) preferences.edit().putString("url", url.toString()).commit();
+                    if (!automatic) publish("checking", "正在检查资源版本", 0);
                     JSONObject envelope = new JSONObject(new String(fetch(url, 3_000_000), StandardCharsets.UTF_8));
                     byte[] payload = Base64.decode(envelope.getString("payload"), Base64.DEFAULT);
                     byte[] signature = Base64.decode(envelope.getString("signature"), Base64.DEFAULT);
@@ -115,7 +128,8 @@ final class ContentUpdates {
                     if (!"index.html".equals(manifest.getString("entry")) || !"lovehouse-content.zip".equals(manifest.getString("archive"))) throw new IOException("资源入口格式不支持");
                     long version = manifest.getLong("version");
                     if (version < 1) throw new IOException("无效资源版本");
-                    if (version <= Math.max(bundledVersion, activeVersion())) { publish("current", "当前已是最新资源", 100); return; }
+                    if (version <= Math.max(bundledVersion, activeVersion())) { if (!automatic) publish("current", "当前已是最新资源", 100); return; }
+                    if (automatic && version == preferences.getLong("failedAutoVersion", -1)) return;
                     if (version > Integer.MAX_VALUE) throw new IOException("无效资源版本");
                     JSONObject files = manifest.getJSONObject("files");
                     if (!files.has("index.html") || files.length() > 4096) throw new IOException("资源清单不完整");
@@ -123,18 +137,22 @@ final class ContentUpdates {
                     candidateBlobs = "blobs/".equals(manifest.optString("blobDirectory"))
                         ? secureUrl(new URL(url, "blobs/").toString()) : null;
                     candidate = manifest;
-                    publish("available", "发现新资源，可下载并重启小屋", 0);
+                    if (automatic) {
+                        if (candidateBlobs != null) install(candidate, candidateUrl, candidateBlobs, true);
+                        candidate = null;
+                    } else publish("available", "发现新资源，可下载并重启小屋", 0);
                 } else if ("install".equals(action)) {
                     if (candidate == null) throw new IOException("请先检查更新");
                     if (candidate.optLong("version") <= Math.max(bundledVersion, activeVersion()))
                         throw new IOException("当前已是最新资源");
-                    install(candidate, candidateUrl, candidateBlobs);
+                    install(candidate, candidateUrl, candidateBlobs, false);
                 } else if ("rollback".equals(action)) {
                     candidate = null;
+                    preferences.edit().remove("pending").commit();
                     restore(); publish("restored", "已恢复上一份离线资源", 100); main.post(this::reloadContent);
                 } else throw new IOException("不支持的更新操作");
             } catch (Exception error) {
-                publish("error", error.getMessage() == null ? "资源更新失败，请重试" : error.getMessage(), 0);
+                if (!automatic) publish("error", error.getMessage() == null ? "资源更新失败，请重试" : error.getMessage(), 0);
             } finally { busy.set(false); }
         });
     }
@@ -175,7 +193,7 @@ final class ContentUpdates {
         } finally { connection.disconnect(); }
     }
 
-    private void stageDelta(JSONObject files, File staging, URL blobs) throws Exception {
+    private void stageDelta(JSONObject files, File staging, URL blobs, boolean automatic) throws Exception {
         String active = preferences.getString("active", "");
         File base = active.matches("[0-9]+") ? new File(root, active) : null;
         byte[] buffer = new byte[65536];
@@ -217,7 +235,7 @@ final class ContentUpdates {
                 } finally { connection.disconnect(); }
             }
             stagedByHash.put(hash, destination);
-            publish("downloading", "正在同步变更的资源", ++done * 100 / files.length());
+            if (!automatic) publish("downloading", "正在同步变更的资源", ++done * 100 / files.length());
         }
     }
 
@@ -237,7 +255,7 @@ final class ContentUpdates {
         }
     }
 
-    private void install(JSONObject manifest, URL url, URL blobs) throws Exception {
+    private void install(JSONObject manifest, URL url, URL blobs, boolean automatic) throws Exception {
         root.mkdirs();
         File archive = new File(root, "download.zip"), staging = new File(root, "staging");
         remove(staging); staging.mkdirs();
@@ -247,7 +265,7 @@ final class ContentUpdates {
         try {
             JSONObject files = manifest.getJSONObject("files");
             if (blobs != null) {
-                stageDelta(files, staging, blobs);
+                stageDelta(files, staging, blobs, automatic);
             } else {
                 connection = connect(url);
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -293,19 +311,30 @@ final class ContentUpdates {
             File destination = new File(root, String.valueOf(manifest.getLong("version")));
             remove(destination);
             if (!staging.renameTo(destination)) throw new IOException("无法保存新资源");
+            if (automatic) {
+                if (!preferences.edit().putString("pending", destination.getName()).commit())
+                    throw new IOException("无法安排资源更新");
+                return;
+            }
             String previous = preferences.getString("active", "");
-            if (!preferences.edit().putString("previous", previous).putString("active", destination.getName()).putBoolean("trial", true).commit()) throw new IOException("无法切换资源版本");
+            if (!preferences.edit().putString("previous", previous).putString("active", destination.getName()).putBoolean("trial", true).remove("pending").commit()) throw new IOException("无法切换资源版本");
             candidate = null;
             publish("installed", "资源已校验，正在重新进入小屋", 100);
             main.post(() -> {
                 reloadContent();
-                main.postDelayed(() -> {
-                    if (!activity.isFinishing() && !activity.isDestroyed() && preferences.getBoolean("trial", false)) {
-                        restore(); publish("restored", "新资源启动未完成，已恢复离线资源", 100); reloadContent();
-                    }
-                }, 120000);
+                scheduleTrialTimeout();
             });
         } finally { if (connection != null) connection.disconnect(); archive.delete(); remove(staging); }
+    }
+
+    private void scheduleTrialTimeout() {
+        main.postDelayed(() -> {
+            if (!activity.isFinishing() && !activity.isDestroyed() && preferences.getBoolean("trial", false)) {
+                rejectTrial();
+                publish("restored", "新资源启动未完成，已恢复离线资源", 100);
+                reloadContent();
+            }
+        }, 120000);
     }
 
     private File safeFile(File directory, String name) throws Exception {
@@ -322,6 +351,11 @@ final class ContentUpdates {
         File[] children = file.listFiles();
         if (children != null) for (File child : children) remove(child);
         if (!file.delete()) throw new IOException("无法清理旧资源");
+    }
+
+    private void rejectTrial() {
+        preferences.edit().putLong("failedAutoVersion", activeVersion()).commit();
+        restore();
     }
 
     private void restore() {

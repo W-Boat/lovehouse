@@ -143,3 +143,51 @@ test('ambiguous touch stops prior travel, exposes both targets, and does not tri
  assert.deepEqual(ids,['tea','book']);assert.equal(approaches,0);assert.equal(scene.path.length,0);
  scene.tapWorld(100,100,1,true);assert.equal(approaches,1);
 });
+test('default hat and band select the integrated walk for all four directions only while worn together',()=>{
+ const state=defaults();
+ const scene=loadScene(undefined,state);
+ const chosen:string[]=[];
+ const actor={setTexture:(key:string)=>chosen.push(key),setScale:()=>{}};
+ scene.textures={exists:()=>true,get:()=>({getSourceImage:()=>({height:300})})};
+ scene.appearanceKey=(_who:string,key:string)=>key;
+ scene.setPose=()=>chosen.push('idle');
+ for(let equipment=0;equipment<8;equipment++){
+  state.hat=Boolean(equipment&1);state.band=Boolean(equipment&2);state.earphones=Boolean(equipment&4);
+  for(let dir=0;dir<4;dir++)for(let frame=0;frame<4;frame++){
+   scene.renderMoving(actor,'girl',dir,true,frame);
+   const prefix=equipment===3?'girl-hat-band-stride-':'girl-stride-';
+   assert.equal(chosen.at(-1),prefix+(dir*4+frame));
+  }
+ }
+ state.hat=state.band=true;state.earphones=false;
+ state.appearance.girl.skin=1;
+ scene.renderMoving(actor,'girl',0,true,0);assert.equal(chosen.at(-1),'girl-stride-0');
+ state.appearance.girl.skin=0;
+ scene.onlineWorld={active:true};
+ scene.renderMoving(actor,'girl',0,true,0);assert.equal(chosen.at(-1),'girl-stride-0');
+ scene.onlineWorld=undefined;
+ scene.renderMoving(actor,'girl',0,false,0);assert.equal(chosen.at(-1),'idle');
+});
+
+test('equipping a gift removes its floor marker and interaction, with map access retained',()=>{
+ const state=defaults();state.opened.push('hat','band');
+ const scene=loadScene(undefined,state);
+ scene.textures={exists:()=>true};
+ scene.add={image:fakeObject,graphics:fakeObject,ellipse:fakeObject,rectangle:fakeObject,text:fakeObject,container:fakeObject};
+ scene.player=fakeObject();scene.boy=fakeObject();scene.hat=fakeObject();scene.band=fakeObject();scene.earwear=fakeObject();
+ scene.trail=fakeObject();
+ scene.rebuild();
+ assert.ok(scene.getItem('hat'));assert.ok(scene.giftMarkers.has('hat'));
+ state.hat=state.band=true;
+ scene.rebuild();
+ assert.equal(scene.getItem('hat'),undefined);assert.equal(scene.giftMarkers.has('hat'),false);
+ assert.equal(scene.getItem('band'),undefined);assert.equal(scene.giftMarkers.has('band'),false);
+ let selected='';
+ scene.bridge.on('interact',(id:string)=>{selected=id});
+ scene.blocked=false;
+ scene.approachById('hat');assert.equal(selected,'hat');
+ state.hat=state.band=false;
+ scene.rebuild();
+ assert.ok(scene.getItem('hat'));assert.ok(scene.giftMarkers.has('hat'));
+ assert.ok(scene.getItem('band'));assert.ok(scene.giftMarkers.has('band'));
+});

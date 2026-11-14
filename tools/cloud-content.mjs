@@ -1,3 +1,5 @@
+import {createAndroidUpdateStore} from './cloud-android-update.mjs';
+import {createPackageStore,isPackagePlatform} from './cloud-packages.mjs';
 import {validateCloudScenes} from '../content/cloud-scenes.mjs';
 import {validatePortalUrl} from '../content/cloud-portal-url.mjs';
 import {validateCloudInteractions,validateGiftGames} from '../content/cloud-interactions.mjs';
@@ -5,8 +7,8 @@ import {validateCloudMedia} from '../content/cloud-media.mjs';
 import {validateCloudPlaylist} from '../content/cloud-playlist.mjs';
 import {createHash, randomUUID, timingSafeEqual} from 'node:crypto';
 import {createServer} from 'node:http';
-import {readFile, rename, rm, stat, writeFile} from 'node:fs/promises';
-import {basename} from 'node:path';
+import {mkdir, readFile, readdir, rename, rm, stat, writeFile} from 'node:fs/promises';
+import {basename,join} from 'node:path';
 import {createAssetStore,isAssetId,prepareAsset,readAssetBody,usesAsset,assetLimit} from './cloud-assets.mjs';
 import {pathToFileURL} from 'node:url';
 
@@ -71,6 +73,63 @@ async function saveSnapshot(output,json) {
  }
 }
 
+const revisionPattern = /^[a-f0-9]{64}$/;
+
+function validatedSnapshot(json) {
+ const parsed=JSON.parse(json);
+ const snapshot=prepareSnapshot(parsed);
+ if(parsed.revision!==snapshot.revision)throw Error('Stored revision does not match its configuration');
+ return snapshot;
+}
+
+async function readCurrent(file) {
+ try { return validatedSnapshot(await readFile(file,'utf8')) }
+ catch(error) { if(error.code==='ENOENT')return; throw error }
+}
+
+async function rememberRevision(file,snapshot) {
+ const directory=file+'.history';
+ await mkdir(directory,{recursive:true});
+ const target=join(directory,snapshot.revision+'.json');
+ try {
+  const previous=validatedSnapshot(await readFile(target,'utf8'));
+  if(previous.revision===snapshot.revision)return;
+ }catch(error){if(error.code!=='ENOENT')throw error}
+ await saveSnapshot(target,snapshot.json);
+}
+
+async function saveRelease(file,json) {
+ const next=validatedSnapshot(json);
+ const previous=await readCurrent(file);
+ if(previous)await rememberRevision(file,previous);
+ await rememberRevision(file,next);
+ await saveSnapshot(file,next.json);
+}
+
+async function revisionHistory(file) {
+ let names=[];
+ try { names=await readdir(file+'.history') }
+ catch(error){if(error.code!=='ENOENT')throw error}
+ const revisions=[];
+ for(const name of names){
+  const revision=name.slice(0,-5);
+  if(!name.endsWith('.json')||!revisionPattern.test(revision))continue;
+  const path=join(file+'.history',name);
+  const info=await stat(path);
+  revisions.push({revision,createdAt:info.mtime.toISOString(),bytes:info.size,current:false});
+ }
+ const current=await readCurrent(file);
+ if(current){
+  const found=revisions.find(item=>item.revision===current.revision);
+  if(found)found.current=true;
+  else{
+   const info=await stat(file);
+   revisions.push({revision:current.revision,createdAt:info.mtime.toISOString(),bytes:info.size,current:true});
+  }
+ }
+ return revisions.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||a.revision.localeCompare(b.revision));
+}
+
 function sendJson(response,status,body) {
  response.writeHead(status,jsonHeaders).end(JSON.stringify(body));
 }
@@ -104,6 +163,8 @@ export function createContentHandler({file,token,publicPrefix=''}) {
  if(!/^(?:\/[a-zA-Z0-9_-]+)*$/.test(publicPrefix))throw Error('Invalid LOVEHOUSE_PUBLIC_PREFIX');
  const publicAsset=asset=>({...asset,path:publicPrefix+asset.path});
  const assets=createAssetStore(file+'.assets');
+ const packages=createPackageStore(file+'.packages',publicPrefix);
+ const androidUpdate=createAndroidUpdateStore(file+'.android-update');
  let pendingWrite=Promise.resolve();
  const serialize=operation=>{
   const result=pendingWrite.then(operation);
@@ -117,7 +178,7 @@ export function createContentHandler({file,token,publicPrefix=''}) {
     catch (error) { if (error.code!=='ENOENT') throw error }
     if (expected!==`"${current}"`) return false;
    }
-   await saveSnapshot(file,json);
+   await saveRelease(file,json);
    return true;
  });
  return async (request,response)=>{
@@ -125,6 +186,22 @@ export function createContentHandler({file,token,publicPrefix=''}) {
   try { url = new URL(request.url,'http://localhost') }
   catch { sendJson(response,400,{error:'Invalid request URL'}); return }
   const {pathname} = url;
+  if(pathname.startsWith('/android-update/')&&['GET','HEAD'].includes(request.method)){
+   try{
+    if(!await androidUpdate.serve(request,response,pathname.slice('/android-update/'.length)))sendJson(response,404,{error:'No update available'});
+   }catch{if(!response.headersSent)sendJson(response,500,{error:'Unable to serve Android update'})}
+   return;
+  }
+  if(request.method==='GET'&&pathname==='/packages.json'){
+   try{response.writeHead(200,{...jsonHeaders,'Access-Control-Allow-Origin':'*'}).end(JSON.stringify(await packages.list()))}
+   catch{sendJson(response,500,{error:'Unable to read package releases'})}
+   return;
+  }
+  if(pathname.startsWith('/packages/')&&['GET','HEAD'].includes(request.method)){
+   try{if(!await packages.serve(request,response,pathname))sendJson(response,404,{error:'Package not found'})}
+   catch{if(!response.headersSent)sendJson(response,500,{error:'Unable to download package'})}
+   return;
+  }
   if (request.method==='GET' && pathname==='/content.json') {
    const headers = {...jsonHeaders,'Access-Control-Allow-Origin':'*','Cache-Control':'no-cache'};
    try {
@@ -176,6 +253,87 @@ export function createContentHandler({file,token,publicPrefix=''}) {
   if (pathname.startsWith('/admin/api/')) {
    if (!token) { sendJson(response,503,{error:'Publisher authentication is not configured'}); return }
    if (!authenticated(request.headers.authorization,token)) { sendJson(response,401,{error:'Invalid publisher token'}); return }
+   if(pathname.startsWith('/admin/api/android-update/')&&request.method==='POST'){
+    const target=pathname.slice('/admin/api/android-update/'.length);
+    try{
+     if(target==='publish')sendJson(response,201,{version:await androidUpdate.publish(request,serialize)});
+     else if(target.startsWith('blobs/')){
+      await androidUpdate.saveBlob(target.slice(6),request);
+      sendJson(response,201,{stored:true});
+     }else sendJson(response,404,{error:'Unknown Android update operation'});
+    }catch(error){sendJson(response,400,{error:error.message})}
+    return;
+   }
+   if(pathname==='/admin/api/packages'&&request.method==='GET'){
+    try{sendJson(response,200,{releases:await packages.history()})}
+    catch{sendJson(response,500,{error:'Unable to read package history'})}
+    return;
+   }
+   if(pathname==='/admin/api/packages/select'&&request.method==='POST'){
+    try{
+     const {platform,path,expected}=await readJson(request);
+     if(!isPackagePlatform(platform)||typeof path!=='string'||!(expected===null||typeof expected==='string'))
+      throw Error('Invalid package selection');
+     const result=await serialize(()=>packages.select(platform,path,expected));
+     if(result.conflict)sendJson(response,412,{error:'当前安装包已变化，请刷新列表'});
+     else if(!result.entry)sendJson(response,404,{error:'找不到该安装包版本'});
+     else sendJson(response,200,result.entry);
+    }catch(error){sendJson(response,400,{error:error.message})}
+    return;
+   }
+   if(pathname==='/admin/api/packages'&&request.method==='POST'){
+    const platform=url.searchParams.get('platform');
+    if(!isPackagePlatform(platform)){sendJson(response,400,{error:'Invalid package platform'});return}
+    try{
+     const entry=await packages.save(platform,url.searchParams.get('version')??'',request,serialize);
+     sendJson(response,201,entry);
+    }catch(error){sendJson(response,400,{error:error.message})}
+    return;
+   }
+   if (pathname==='/admin/api/history' && request.method==='GET') {
+    try { sendJson(response,200,{revisions:await revisionHistory(file)}) }
+    catch { sendJson(response,500,{error:'Unable to read revision history'}) }
+    return;
+   }
+   if (pathname.startsWith('/admin/api/history/') && request.method==='GET') {
+    const revision=pathname.slice('/admin/api/history/'.length);
+    if(!revisionPattern.test(revision)){sendJson(response,404,{error:'Revision not found'});return}
+    try{
+     const current=await readCurrent(file);
+     const snapshot=current?.revision===revision?current:validatedSnapshot(await readFile(join(file+'.history',revision+'.json'),'utf8'));
+     if(snapshot.revision!==revision)throw Error('Revision history is corrupted');
+     sendJson(response,200,JSON.parse(snapshot.json));
+    }catch(error){sendJson(response,error.code==='ENOENT'?404:500,{error:error.code==='ENOENT'?'Revision not found':'Unable to read revision'})}
+    return;
+   }
+   if (pathname==='/admin/api/rollback' && request.method==='POST') {
+    const expected=request.headers['if-match'];
+    if(expected===undefined){sendJson(response,428,{error:'Rollback requires If-Match with the current revision'});return}
+    if(typeof expected!=='string'||!/^"(?:[a-f0-9]{64})?"$/.test(expected)){
+     sendJson(response,400,{error:'Invalid expected revision'});return;
+    }
+    let revision;
+    try{
+     const input=await readJson(request);
+     if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).length!==1||!revisionPattern.test(input.revision))throw Error('Expected a revision');
+     revision=input.revision;
+    }catch(error){sendJson(response,400,{error:error.message});return}
+    try{
+     const result=await serialize(async()=>{
+      const current=await readCurrent(file);
+      if(expected!==JSON.stringify(current?.revision??''))return 412;
+      if(current?.revision===revision)return 200;
+      let target;
+      try{target=validatedSnapshot(await readFile(join(file+'.history',revision+'.json'),'utf8'))}
+      catch(error){if(error.code==='ENOENT')return 404;throw error}
+      if(target.revision!==revision)throw Error('Revision history is corrupted');
+      await saveRelease(file,target.json);
+      return 200;
+     });
+     sendJson(response,result,result===200?{revision}:{error:result===412?'The published configuration changed. Reload it before rolling back.':'Revision not found'});
+    }catch{sendJson(response,500,{error:'Unable to restore revision'})}
+    return;
+   }
    if (pathname==='/admin/api/assets' && request.method==='GET') {
     try {sendJson(response,200,{assets:(await assets.list()).map(publicAsset)})}
     catch {sendJson(response,500,{error:'Unable to list assets'})}
@@ -192,6 +350,30 @@ export function createContentHandler({file,token,publicPrefix=''}) {
     catch {sendJson(response,500,{error:'Unable to store asset'})}
     return;
    }
+   const referenceMatch=/^\/admin\/api\/assets\/([^/]+)\/references$/.exec(pathname);
+   if(referenceMatch && request.method==='GET'){
+    const id=referenceMatch[1];
+    if(!isAssetId(id)){sendJson(response,404,{error:'Asset not found'});return}
+    try{
+     const references=[];
+     const collect=(value,path,revision,current)=>{
+      if(typeof value==='string'){
+       if(usesAsset(value,id,publicPrefix))references.push({path,revision,current});
+      }else if(value&&typeof value==='object'){
+       for(const [key,item] of Object.entries(value))collect(item,path+'/'+key.replace(/~/g,'~0').replace(/\//g,'~1'),revision,current);
+      }
+     };
+     const current=await readCurrent(file);
+     if(current)collect(JSON.parse(current.json),'',current.revision,true);
+     for(const item of await revisionHistory(file)){
+      if(item.revision===current?.revision)continue;
+      const snapshot=validatedSnapshot(await readFile(join(file+'.history',item.revision+'.json'),'utf8'));
+      collect(JSON.parse(snapshot.json),'',item.revision,false);
+     }
+     sendJson(response,200,{references});
+    }catch{sendJson(response,500,{error:'Unable to inspect asset references'})}
+    return;
+   }
    if (pathname.startsWith('/admin/api/assets/') && request.method==='DELETE') {
     const id=pathname.slice('/admin/api/assets/'.length);
     if (!isAssetId(id)) {sendJson(response,404,{error:'Asset not found'});return}
@@ -201,9 +383,14 @@ export function createContentHandler({file,token,publicPrefix=''}) {
       try {snapshot=JSON.parse(await readFile(file,'utf8'))}
       catch(error) {if(error.code!=='ENOENT')throw error}
       if(usesAsset(snapshot,id,publicPrefix))return 409;
+      for(const revision of await revisionHistory(file)){
+       if(revision.current)continue;
+       const stored=validatedSnapshot(await readFile(join(file+'.history',revision.revision+'.json'),'utf8'));
+       if(usesAsset(JSON.parse(stored.json),id,publicPrefix))return 409;
+      }
       return await assets.remove(id)?200:404;
      });
-     sendJson(response,status,status===200?{deleted:id}:{error:status===409?'Asset is still used by the published configuration':'Asset not found'});
+     sendJson(response,status,status===200?{deleted:id}:{error:status===409?'Asset is still used by a published or retained revision':'Asset not found'});
     } catch {sendJson(response,500,{error:'Unable to remove asset'})}
     return;
    }
@@ -249,7 +436,7 @@ export function createContentHandler({file,token,publicPrefix=''}) {
      const contents = await readFile(new URL(asset,adminDir));
      response.writeHead(200,{
       'Content-Type':mime,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
-      'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+      'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data: https:; media-src 'self' https:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
      }).end(contents);
      return;
     } catch {}
@@ -259,11 +446,36 @@ export function createContentHandler({file,token,publicPrefix=''}) {
  };
 }
 
-async function main([command,file='content.json',output='content.json']) {
+async function main([command,file='content.json',output='content.json',expected]) {
  if (command==='check' || command==='publish') {
   const snapshot = prepareSnapshot(JSON.parse((await readFile(file,'utf8')).replace(/^\uFEFF/,'')));
-  if (command==='publish') await saveSnapshot(output,snapshot.json);
+  if (command==='publish') await saveRelease(output,snapshot.json);
   console.log(JSON.stringify(command==='publish'?{revision:snapshot.revision,output}:{revision:snapshot.revision}));
+ } else if (command==='pull' || command==='push') {
+  const token=process.env.LOVEHOUSE_ADMIN_TOKEN;
+  if(!token)throw Error('Set LOVEHOUSE_ADMIN_TOKEN');
+  const base=new URL(validatePortalUrl(command==='pull'?file:output));
+  if(base.search||base.hash)throw Error('Publisher address must be a base URL');
+  base.pathname=base.pathname.replace(/\/?$/,'/');
+  const headers={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+  let body;
+  if(command==='push'){
+   if(expected!=='new'&&!/^[a-f0-9]{64}$/.test(expected??''))throw Error('Pass expected current revision, or new for initial publication');
+   body=prepareSnapshot(JSON.parse((await readFile(file,'utf8')).replace(/^\uFEFF/,''))).json;
+   headers['If-Match']=JSON.stringify(expected==='new'?'':expected);
+  }
+  const response=await fetch(new URL('admin/api/'+(command==='pull'?'snapshot':'publish'),base),{
+   method:command==='pull'?'GET':'POST',headers,body,redirect:'error',signal:AbortSignal.timeout(15000),
+  });
+  const data=await response.json();
+  if(!response.ok)throw Error('HTTP '+response.status+': '+(data.error??'Publisher request failed'));
+  if(command==='pull'){
+   if(Object.keys(data).length){const checked=prepareSnapshot(data);if(checked.revision!==data.revision)throw Error('Snapshot checksum mismatch')}
+   await saveSnapshot(output,JSON.stringify(data,null,2));
+   console.log(JSON.stringify({output,revision:data.revision??''}));
+  }else console.log(JSON.stringify({revision:data.revision}));
+ } else if (command==='history') {
+  console.log(JSON.stringify({revisions:await revisionHistory(file)}));
  } else if (command==='upload') {
   const token=process.env.LOVEHOUSE_ADMIN_TOKEN;
   if(!token)throw Error('Set LOVEHOUSE_ADMIN_TOKEN before uploading');
@@ -286,7 +498,7 @@ async function main([command,file='content.json',output='content.json']) {
   const port = Number(process.env.PORT || 8789);
   const host = process.env.HOST || '127.0.0.1';
   createServer(createContentHandler({file,token:process.env.LOVEHOUSE_ADMIN_TOKEN,publicPrefix:process.env.LOVEHOUSE_PUBLIC_PREFIX})).listen(port,host,()=>console.log(JSON.stringify({host,port,path:'/content.json'})));
- } else throw Error('Usage: node tools/cloud-content.mjs check INPUT | publish INPUT OUTPUT | serve SNAPSHOT | upload FILE HTTPS_ORIGIN');
+ } else throw Error('Usage: node tools/cloud-content.mjs check INPUT | publish INPUT OUTPUT | serve SNAPSHOT | history SNAPSHOT | upload FILE HTTPS_ORIGIN | pull HTTPS_BASE OUTPUT | push INPUT HTTPS_BASE EXPECTED_REVISION');
 }
 if (process.argv[1] && pathToFileURL(process.argv[1]).href===import.meta.url) {
  try { await main(process.argv.slice(2)) }

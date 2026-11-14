@@ -1,3 +1,4 @@
+import {defaultContentServer} from './cloud-content';
 import {createOnlineQuiz} from './online-quiz';
 import {uiCopy,htmlCopy,formatCopy} from '../content/ui-copy';
 import './online.css';
@@ -6,7 +7,7 @@ import type {RoomSnapshot,ServerMessage} from './online-protocol';
 type Context={open:(html:string,kind?:string)=>void;close:()=>void;toast:(text:string)=>void;profile:(role?:'host'|'guest')=>{name:string;appearance?:Record<string,number>};onSnapshot?:(snapshot:RoomSnapshot)=>void;onMessage?:(message:ServerMessage)=>void;onConnection?:(state:ConnectionState)=>void;onGame?:(game:NonNullable<RoomSnapshot['game']>)=>void};
 const preferenceKey='cottage-online-addresses';
 export function installOnlineUI(ctx:Context){
- let addresses={server:'',defaultServer:''};try{const p=JSON.parse(localStorage.getItem(preferenceKey)||'{}');for(const k of ['server','defaultServer'] as const)if(typeof p[k]==='string')addresses[k]=p[k].slice(0,2048)}catch{}
+ let addresses={server:'',defaultServer:defaultContentServer()?new URL('online',defaultContentServer()).href:''};try{const p=JSON.parse(localStorage.getItem(preferenceKey)||'{}');for(const k of ['server','defaultServer'] as const)if(typeof p[k]==='string')addresses[k]=p[k].slice(0,2048)||addresses[k]}catch{}
  let snapshot:RoomSnapshot|undefined,playerId='',status:ConnectionState='offline',statusMessage='',draft='',draftRevision=0,dirty=false,pendingText:string|undefined,conflict=false,lastGame='';
  const chat:{name:string;text:string}[]=[];let host:HTMLElement|undefined;
  const client=new OnlineClient(raw=>receive(raw as ServerMessage),(state,message)=>{status=state;statusMessage=message||'';ctx.onConnection?.(state);paintStatus();if(state==='offline'){snapshot=undefined;playerId='';lastGame='';paintRoom()}});

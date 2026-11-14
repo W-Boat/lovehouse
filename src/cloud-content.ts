@@ -7,6 +7,7 @@ import {validateCloudPlaylist} from '../content/cloud-playlist.mjs';
 import {parseMusicConfig,type MusicRoomConfig} from './music-config';
 
 declare const __CONTENT_SERVER__: string;
+export function defaultContentServer(){return typeof __CONTENT_SERVER__==='string'?__CONTENT_SERVER__:''}
 type Portal = {label:string;url:string};
 export let cloudPortals: Portal[] = [];
 export let cloudGiftGames:NonNullable<ReturnType<typeof validateGiftGames>>={};
@@ -31,13 +32,23 @@ function readSnapshot(raw:unknown) {
  return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames)};
 }
 
+export async function verifyCloudSnapshot(raw:unknown){
+ const snapshot=readSnapshot(raw);
+ const body={schema:1,texts:snapshot.texts,portals:snapshot.portals,musicRoom:snapshot.musicRoom,
+  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames};
+ const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(body)));
+ const revision=Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,'0')).join('');
+ if(revision!==snapshot.revision)throw Error('Content checksum mismatch');
+ return snapshot;
+}
+
 export async function syncCloudContent(){
  if(typeof __CONTENT_SERVER__!=='string'||!__CONTENT_SERVER__)return;
  let endpoint:URL;
  try{endpoint=new URL('content.json',__CONTENT_SERVER__.replace(/\/?$/,'/'));if(endpoint.protocol!=='https:')throw Error('HTTPS required')}catch{document.body.dataset.cloudOffline='true';return}
  const key='cottage-cloud:'+endpoint.href;
  let snapshot:ReturnType<typeof readSnapshot>|undefined;
- try {snapshot=readSnapshot(JSON.parse(localStorage.getItem(key)??'null'))}catch{}
+ try {snapshot=await verifyCloudSnapshot(JSON.parse(localStorage.getItem(key)??'null'))}catch{}
  try {
   if(snapshot)endpoint.searchParams.set('revision',snapshot.revision);
   const response=await fetch(endpoint,{signal:AbortSignal.timeout(2200),credentials:'omit',cache:'no-store'});
@@ -46,7 +57,7 @@ export async function syncCloudContent(){
    const reader=response.body?.getReader();if(!reader)throw Error('Missing body');
    const decoder=new TextDecoder();let bytes=0,raw='';
    try{while(true){const {value,done}=await reader.read();if(done)break;bytes+=value.length;if(bytes>1_000_000)throw Error('Content too large');raw+=decoder.decode(value,{stream:true})}raw+=decoder.decode()}catch(error){void reader.cancel();throw error}
-   snapshot=readSnapshot(JSON.parse(raw));
+   snapshot=await verifyCloudSnapshot(JSON.parse(raw));
    try {localStorage.setItem(key,JSON.stringify(snapshot))}catch{}
   }else if(!snapshot)throw Error('Missing local snapshot');
  }catch{document.body.dataset.cloudOffline='true'}

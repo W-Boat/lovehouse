@@ -11,7 +11,7 @@ import type {Cottage} from './scene';
 import {save,persist,grantItem,placeItem,importSave,isSnack,type Snack} from './state';
 import {worlds,routeBetween,type Zone,type Item} from './world';
 import {birthdayConfig as config} from '../content/birthday-config';
-import {assetUrl,textureFiles} from './assets';
+import {assetUrl} from './assets';
 import {music} from './audio';
 export type UIContext={scene:Cottage;open:(html:string,kind?:string)=>void;close:()=>void;toast:(s:string)=>void;travel:(zone:Zone)=>void;enter:()=>void;photo:()=>void;act:(kind:string)=>void;showGift:(id:string)=>void;shareSnack:(id:Snack)=>void;canUse?:()=>boolean};
 const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));const $=(id:string)=>document.getElementById(id)!;
@@ -38,13 +38,14 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
  function worldMap(selected?:Zone){
   const z=selected??scene.zone;
   const world=worlds[z];
-  const nodes=(Object.keys(worlds) as Zone[]).map(id=>{
+  const retainedMap=document.querySelector<HTMLElement>('.world-map');
+  const nodes=retainedMap?'':(Object.keys(worlds) as Zone[]).map(id=>{
    const entry=worlds[id];
    const current=id===scene.zone;
    const visited=save.cheat||save.visited.includes(id);
    const status=current?'map.current':visited?'map.visited':'map.unvisited';
    return `<button class="world-node ${current?'current':''} ${visited?'visited':''}" id="zone-${id}" aria-pressed="${id===z}">
-    <img loading="lazy" src="${esc(entry.backgroundUrl??assetUrl(textureFiles[entry.texture as keyof typeof textureFiles]))}" alt="">
+    <img loading="lazy" decoding="async" width="160" height="107" src="${esc(entry.backgroundUrl??assetUrl('map-thumbnails/'+entry.texture+'.webp'))}" alt="">
     ${current?`<span class="map-avatars"><img src="${scene.avatar('girl')}" alt="${esc(save.names.girl)}"><img src="${scene.avatar('boy')}" alt="${esc(save.names.boy)}"></span>`:''}
     <b>${esc(entry.name)}</b><small>${esc(isSnack(id)?formatCopy('bag.portions',{count:save.snackPortions[id]}):uiCopy(status))}</small>${mapProgress(id)}
    </button>`;
@@ -56,14 +57,21 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
    return `<button id="item-${item.id}" class="secondary"><span class="item-category">${esc(uiCopy(`map.category.${category}`))}</span>${esc(item.name)}</button>`;
   }).join('');
   const path=routeBetween(scene.zone,z);
-  open(`<div class="subheading">${esc(uiCopy('map.eyebrow'))}</div><h2 id="modal-title">${esc(uiCopy('map.title'))}</h2>
-   <div class="world-map">${nodes}</div><h3>${esc(world.name)}</h3><p>${esc(world.caption)}</p>
+  const details=`<div id="world-map-details"><h3>${esc(world.name)}</h3><p>${esc(world.caption)}</p>
    <p class="route-label">${esc(formatCopy('map.route-label',{route:path.map(id=>worlds[id].name).join(' → ')}))}</p>
    <div class="modal-actions">${z!==scene.zone?button((save.cheat||save.visited.includes(z))?uiCopy('map.travel'):uiCopy('map.route'),'world-go','primary'):''}</div>
    ${giftList?`<h3>${esc(uiCopy('map.gifts-title'))}</h3><div class="local-items">${giftList}</div>`:''}
-   <h3>${esc(uiCopy('map.items-title'))}</h3><div class="local-items">${items}</div>`,'world-map');
-  drawConnections();
-  for(const id of Object.keys(worlds) as Zone[])on('zone-'+id,()=>worldMap(id));
+   <h3>${esc(uiCopy('map.items-title'))}</h3><div class="local-items">${items}</div></div>`;
+  if(retainedMap){
+   $('world-map-details').outerHTML=details;
+   retainedMap.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.setAttribute('aria-pressed','false');
+   $('zone-'+z).setAttribute('aria-pressed','true');
+  }else{
+   open(`<div class="subheading">${esc(uiCopy('map.eyebrow'))}</div><h2 id="modal-title">${esc(uiCopy('map.title'))}</h2>
+    <div class="world-map">${nodes}</div>${details}`,'world-map');
+   drawConnections();
+   for(const id of Object.keys(worlds) as Zone[])on('zone-'+id,()=>worldMap(id));
+  }
   on('world-go',()=>{
    close();
    if(save.cheat||save.visited.includes(z)){ctx.travel(z);return}
@@ -79,7 +87,32 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
   for(const gift of gifts)on('map-gift-'+gift.id,()=>approach(gift.id));
   for(const item of world.items)on('item-'+item.id,()=>approach(item.id));
  }
- function drawConnections(){const map=document.querySelector<HTMLElement>('.world-map');if(!map)return;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('map-links');map.prepend(svg);const r=map.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);const seen=new Set<string>();for(const [zone,w]of Object.entries(worlds))for(const item of w.items){if(!item.to)continue;const key=[zone,item.to].sort().join(':');if(seen.has(key))continue;seen.add(key);const a=$('zone-'+zone).getBoundingClientRect(),b=$('zone-'+item.to).getBoundingClientRect(),line=document.createElementNS('http://www.w3.org/2000/svg','line');for(const [k,v]of Object.entries({x1:a.x+a.width/2-r.x,y1:a.y+a.height/2-r.y,x2:b.x+b.width/2-r.x,y2:b.y+b.height/2-r.y}))line.setAttribute(k,String(v));svg.append(line)}}
+ function drawConnections(){
+  const map=document.querySelector<HTMLElement>('.world-map');
+  if(!map)return;
+  const positions=new Map<string,{x:number;y:number}>();
+  // The canvas can rotate and scale independently of the map's own coordinate system.
+  for(const id of Object.keys(worlds)){
+   const node=$('zone-'+id);
+   positions.set(id,{x:node.offsetLeft+node.offsetWidth/2,y:node.offsetTop+node.offsetHeight/2});
+  }
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.classList.add('map-links');
+  svg.setAttribute('viewBox',`0 0 ${map.clientWidth} ${map.clientHeight}`);
+  const seen=new Set<string>();
+  for(const [zone,world]of Object.entries(worlds))for(const item of world.items){
+   if(!item.to)continue;
+   const key=[zone,item.to].sort().join(':');
+   if(seen.has(key))continue;
+   seen.add(key);
+   const from=positions.get(zone),to=positions.get(item.to);
+   if(!from||!to)continue;
+   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+   for(const [name,value]of Object.entries({x1:from.x,y1:from.y,x2:to.x,y2:to.y}))line.setAttribute(name,String(value));
+   svg.append(line);
+  }
+  map.prepend(svg);
+ }
  const gearSlots=['hat','earphones','band'] as const;
  const bagCategories=['all','keepsake','snack','gear'] as const;
  type BagCategory=(typeof bagCategories)[number];

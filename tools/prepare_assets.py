@@ -8,10 +8,10 @@ assets=root/'public/assets';art_stamp=assets/'art-version.txt';rebuild_all=not a
 for p in list(assets.glob('*.png')):
  dest=source/p.name
  if not dest.exists():p.replace(dest)
-sizes={'wearables-v1':(256,128),'birthday-cake-v2':(768,512),'gift-opening-v1':(1024,1024),'tea-pour-v1':(1024,1024),'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(1024,1024),'boy-walk':(1024,1024),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
+sizes={'holding-walk-allgear-v1':(768,768),'wearables-v1':(256,128),'birthday-cake-v2':(768,512),'gift-opening-v1':(1024,1024),'tea-pour-v1':(1024,1024),'season-views':(768,512),'footbath-poses-v2':(384,256),'seats-back':(384,384),'weather-icons-v2':(192,128),'window-views':(640,426),'furniture':(512,512),'holding-walk-v2':(512,512),'holding-walk':(768,768),'loading-cottage':(384,384),'hero':(512,512),'characters':(512,256),'gifts':(512,384),'props':(512,256),'sitting':(256,256),'birthday-cake':(384,384),'girl-actions':(512,512),'boy-actions':(512,512),'girl-walk':(1024,1024),'boy-walk':(1024,1024),'icons-v2':(256,256),'gifts-v2':(256,256),'world-actors':(640,640),'wheel-actors':(512,512),'girl-heads':(512,512),'boy-heads':(512,512),'couple-actions':(768,576),'sit-transition':(768,256)}
 # Restore original resolution for the FINAL selected sources; retain normalized animations.
 active_stems={Path(name).stem for name in re.findall(r"['\"]([^'\"]+\.webp)['\"]",(root/'src/assets.ts').read_text(encoding='utf8'))}|{'loading-cottage'}
-normalized_animations={'wearables-v1','gift-opening-v1','tea-pour-v1'}
+normalized_animations={'holding-walk-allgear-v1','wearables-v1','gift-opening-v1','tea-pour-v1'}
 cache_path=assets/'art-content-cache.json'
 try:art_cache=json.loads(cache_path.read_text())
 except (OSError,ValueError):art_cache={}
@@ -66,6 +66,22 @@ icon_master=source/'icons-v3.png' if (source/'icons-v3.png').exists() else sourc
 if icon_master.exists():
  im=Image.open(icon_master);w,h=im.size;icon=im.crop((w//2,h*3//4,w*3//4,h));icon.thumbnail((64,64),Image.Resampling.NEAREST);icon.save(assets/'favicon.webp','WEBP',lossless=True)
  icons=root/'src-tauri/icons';icons.mkdir(exist_ok=True);icon.resize((256,256),Image.Resampling.NEAREST).save(icons/'icon.ico',format='ICO',sizes=[(32,32),(64,64),(128,128),(256,256)])
+# Map cards use small previews instead of decoding every native scene background.
+map_textures=set('room room-after garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora shichahai gulou chaya tianmo tanghulu catcottage highschool musicroom'.split())
+texture_source=(root/'src/assets.ts').read_text(encoding='utf8')
+texture_entries=re.findall(r"(?:'([^']+)'|([\w-]+))\s*:\s*'([^']+\.webp)'",texture_source)
+preview_folder=assets/'map-thumbnails'
+preview_folder.mkdir(exist_ok=True)
+for quoted,key,filename in texture_entries:
+ name=quoted or key
+ if name not in map_textures:continue
+ original=assets/filename
+ if not original.is_file():continue
+ target=preview_folder/(name+'.webp')
+ if target.exists() and target.stat().st_mtime>=original.stat().st_mtime:continue
+ preview=Image.open(original).convert('RGB')
+ preview.thumbnail((192,128),Image.Resampling.LANCZOS)
+ preview.save(target,'WEBP',quality=82,method=6)
 if '--art-only' in sys.argv:raise SystemExit(0)
 font_source=next((root/'tools/font-source').glob('*zh_hans*.woff2'),None)
 if font_source:

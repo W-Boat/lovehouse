@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Readable} from 'node:stream';
-import {mkdtemp,rm} from 'node:fs/promises';
+import {mkdtemp,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createContentHandler,prepareSnapshot} from './cloud-content.mjs';
@@ -81,11 +81,18 @@ test('publisher manages public inert assets and protects active references',asyn
   const published=await request(handler,'POST','/admin/api/publish',{...auth,'content-type':'application/json'},
     JSON.stringify({musicRoom:{mode:'offline',localTracks:[{name:'Song',artist:'Artist',url:'https://example.org/song.mp3',cover:'',lrc:'https://example.org'+asset.path}]}}));
   assert.equal(published.status,200);
+  const refs=JSON.parse((await request(handler,'GET','/admin/api/assets/'+asset.id+'/references',auth)).body).references;
+  assert.equal(refs.length,1);
+  assert.equal(refs[0].current,true);
+  assert.equal(refs[0].path,'/musicRoom/localTracks/0/lrc');
   const removal='/admin/api/assets/'+asset.id;
   assert.equal((await request(handler,'DELETE',removal,auth)).status,409);
   assert.equal((await request(handler,'POST','/admin/api/publish',{...auth,'content-type':'application/json'},'{}')).status,200);
-  assert.equal((await request(handler,'DELETE',removal,auth)).status,200);
-  assert.equal((await request(handler,'GET',asset.path)).status,404);
+  assert.equal((await request(handler,'DELETE',removal,auth)).status,409);
+  assert.equal((await request(handler,'GET',asset.path)).status,200);
+  const unused=JSON.parse((await request(handler,'POST','/admin/api/assets',{...auth,'x-asset-name':'unused.lrc'},'[00:01]Unused')).body).asset;
+  assert.equal((await request(handler,'DELETE','/admin/api/assets/'+unused.id,auth)).status,200);
+  assert.equal((await request(handler,'GET',unused.path)).status,404);
  }finally{await rm(directory,{recursive:true,force:true})}
 });
 
@@ -105,3 +112,64 @@ test('prefixed publisher preserves asset links and protects published references
  }finally{await rm(directory,{recursive:true,force:true})}
 });
 
+
+
+test('published revisions survive restart and rollback requires a matching current revision',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lovehouse-history-'));
+ const file=join(directory,'content.json');
+ const auth={authorization:'Bearer fixture','content-type':'application/json'};
+ try{
+  let handler=createContentHandler({file,token:'fixture'});
+  assert.equal((await request(handler,'GET','/admin/api/history')).status,401);
+  assert.deepEqual(JSON.parse((await request(handler,'GET','/admin/api/history',auth)).body),{revisions:[]});
+  const first=prepareSnapshot({texts:{welcome:'Version one'}});
+  const second=prepareSnapshot({texts:{welcome:'Version two'}});
+  assert.equal((await request(handler,'POST','/admin/api/publish',auth,first.json)).status,200);
+  assert.equal((await request(handler,'POST','/admin/api/publish',auth,second.json)).status,200);
+  handler=createContentHandler({file,token:'fixture'});
+  const history=JSON.parse((await request(handler,'GET','/admin/api/history',auth)).body).revisions;
+  assert.equal(history.length,2);
+  assert.deepEqual(history.filter((entry:any)=>entry.current).map((entry:any)=>entry.revision),[second.revision]);
+  assert.ok(history.every((entry:any)=>entry.bytes>0&&!Number.isNaN(Date.parse(entry.createdAt))));
+  assert.equal(JSON.parse((await request(handler,'GET','/admin/api/history/'+first.revision,auth)).body).texts.welcome,'Version one');
+  assert.equal((await request(handler,'GET','/admin/api/history/'+('0'.repeat(64)),auth)).status,404);
+  const target=JSON.stringify({revision:first.revision});
+  assert.equal((await request(handler,'POST','/admin/api/rollback',auth,target)).status,428);
+  assert.equal((await request(handler,'POST','/admin/api/rollback',{...auth,'if-match':JSON.stringify(first.revision)},target)).status,412);
+  const current={...auth,'if-match':JSON.stringify(second.revision)};
+  assert.equal((await request(handler,'POST','/admin/api/rollback',current,JSON.stringify({revision:'../content'}))).status,400);
+  assert.equal((await request(handler,'POST','/admin/api/rollback',current,JSON.stringify({revision:'0'.repeat(64)}))).status,404);
+  assert.equal((await request(handler,'POST','/admin/api/rollback',current,target)).status,200);
+  const published=JSON.parse((await request(handler,'GET','/content.json')).body);
+  assert.equal(published.texts.welcome,'Version one');
+  assert.equal((await request(handler,'GET','/content.json?revision='+first.revision)).status,304);
+  const restored=JSON.parse((await request(handler,'GET','/admin/api/history',auth)).body).revisions;
+  assert.equal(restored.length,2);
+  assert.equal(restored.find((entry:any)=>entry.current).revision,first.revision);
+  await writeFile(join(file+'.history',second.revision+'.json'),first.json);
+  assert.equal((await request(handler,'POST','/admin/api/rollback',{...auth,'if-match':JSON.stringify(first.revision)},JSON.stringify({revision:second.revision}))).status,500);
+  assert.equal(JSON.parse((await request(handler,'GET','/content.json')).body).revision,first.revision);
+ }finally{await rm(directory,{recursive:true,force:true})}
+});
+
+test('package release requires authorization and a failed upload preserves the current version',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lovehouse-packages-'));
+ try{
+  const handler=createContentHandler({file:join(directory,'content.json'),token:'fixture',publicPrefix:'/lovehouse'});
+  const url='/admin/api/packages?platform=android&version=v1';
+  const archive=Buffer.from([0x50,0x4b,3,4,1,2,3]);
+  const auth={authorization:'Bearer fixture'};
+  assert.equal((await request(handler,'POST',url,{},archive)).status,401);
+  assert.equal((await request(handler,'POST',url,auth,archive)).status,201);
+  const getCatalog=async()=>JSON.parse((await request(handler,'GET','/packages.json')).body);
+  const release=(await getCatalog()).android;
+  assert.match(release.sha256,/^[a-f0-9]{64}$/);
+  assert.equal(release.bytes,archive.length);
+  assert.equal(release.path,'/lovehouse/packages/'+release.sha256+'/lovehouse-android-v1.apk');
+  assert.equal((await request(handler,'POST',url.replace('v1','v2'),auth,'invalid')).status,400);
+  assert.equal((await getCatalog()).android.version,'v1');
+  const head=await request(handler,'HEAD',release.path.slice('/lovehouse'.length),{range:'bytes=0-3'});
+  assert.equal(head.status,206);
+  assert.equal(head.headers['Content-Range'],'bytes 0-3/7');
+ }finally{await rm(directory,{recursive:true,force:true})}
+});

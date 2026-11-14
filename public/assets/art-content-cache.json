@@ -149,6 +149,11 @@
     "recipe": "lossless-rgba-native-v2",
     "source": "bb662e6ee7e08933fc06fceea72752bb246ac2b5192464a9105a20ebbcf9ad6b"
   },
+  "girl-walk-hat-band-v1.png": {
+    "output": "c3575c3816882ba6888f8716160bdecc10dfec8c4c833170daeff173fe885b59",
+    "recipe": "lossless-rgba-native-v2",
+    "source": "cd2e8cd0eb565247da374266767573ff51ed035155c3171b299fae277eac9245"
+  },
   "girl-walk.png": {
     "output": "bcd2ddc2247f106d089513a97117151f59c2be4938429c60263122a95f638324",
     "recipe": "lossless-rgba-native-v2",
@@ -178,6 +183,11 @@
     "output": "bba8a2e94fb38226207318f590757c229c1f189dc09e338a870b739b89e3c5e2",
     "recipe": "lossless-rgba-native-v2",
     "source": "67ad6de466e334a2639a32f7746c52d3aaf38acc94426bfdc50b87ab80612214"
+  },
+  "holding-walk-allgear-v1.png": {
+    "output": "33ad2ebfde30df9a548d8db23640e8433f9f16911532fe4110c9e834f332e3f9",
+    "recipe": "normalized-animation-nearest-v1-(768, 768)",
+    "source": "ae5f08aee48f46524fa92b26cf18ad5ef232022122b58497132c4fc31d443c80"
   },
   "holding-walk-v2.png": {
     "output": "18ffd999a85fc3abfb26cfca093053365dccb4fe01f9456126d836aafd1bec15",
