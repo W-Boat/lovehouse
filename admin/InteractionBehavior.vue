@@ -1,4 +1,5 @@
 <script setup>
+import ResourceLink from "./ResourceLink.vue";
 import {NForm,NInput} from 'naive-ui';
 import {PublisherAlert,PublisherFormItem,PublisherOption,PublisherSelect} from './publisher-components.js';
 import {computed} from 'vue';
@@ -63,7 +64,7 @@ const urlError=computed(()=>{
     </publisher-select>
    </publisher-form-item>
    <publisher-form-item v-else-if="behavior==='external'||behavior==='page'" :label="behavior==='external'?'独立小游戏地址':'网页地址'" :error="urlError">
-    <n-input :value="record[field]||''" placeholder="https://…" clearable :aria-label="behavior==='external'?'独立小游戏地址':'网页地址'" @update:value="update"/>
+    <ResourceLink accept=".html" :value="record[field]||''" placeholder="https://…" clearable :aria-label="behavior==='external'?'独立小游戏地址':'网页地址'" @update:value="update"/>
    </publisher-form-item>
   </n-form>
   <p v-if="behavior==='message'">点击后显示此条目的反馈短句。</p>

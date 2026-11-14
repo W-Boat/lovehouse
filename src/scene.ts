@@ -1,3 +1,4 @@
+import {preparedResource} from './release-resources';
 import {loadCloudBackground} from './cloud-background';
 import {interactionTargets} from './interaction-targets';
 import {recolorAppearance,captureRaisedHands,restoreRaisedHands} from './appearance-colors';
@@ -48,7 +49,7 @@ export class Cottage extends Phaser.Scene {
  preload(){
   this.failedAssets.clear();this.readyToEnter=false;
   for(const key of this.bootKeys)this.load.image(key,assetUrl(textureFiles[key]));
-  for(const gift of config.gifts as Gift[])if(gift.image)this.load.image('cloud-gift-'+gift.id,gift.image);
+  for(const gift of config.gifts as Gift[])if(gift.image)this.load.image('cloud-gift-'+gift.id,preparedResource(gift.image));
   this.load.on('progress',(progress:number)=>this.bridge.emit('load-progress',progress));
   this.load.on('loaderror',(file:{key:string})=>{if(file.key.startsWith('cloud-gift-'))return;this.failedAssets.add(file.key);this.bridge.emit('asset-error',file.key)});
  }
@@ -232,9 +233,12 @@ export class Cottage extends Phaser.Scene {
   try{await this.ensureZone(zone,generation)}catch{if(generation===this.transitionGeneration){this.transitioning=false;this.blocked=false;this.cameras.main.fadeIn(200,19,17,28);this.bridge.emit('zone-error')}return}
   if(generation!==this.transitionGeneration)return;
   this.blocked=true;this.stop();this.clearHint();const camera=this.cameras.main,duration=save.reduced?1:300;
-  const arrived=()=>{if(generation!==this.transitionGeneration)return;this.transitionCleanup?.();this.transitionCleanup=undefined;this.transitioning=false;this.blocked=false;done()};
-  const covered=()=>{if(generation!==this.transitionGeneration)return;this.changeZone(zone);this.resizeView();camera.once('camerafadeincomplete',arrived);camera.fadeIn(duration,19,17,28)};
-  this.transitionCleanup=()=>{camera.off('camerafadeoutcomplete',covered);camera.off('camerafadeincomplete',arrived)};
+  let switched=false;
+  let fadeInFallback:ReturnType<typeof setTimeout>|undefined;
+  const arrived=()=>{if(generation!==this.transitionGeneration||!this.transitioning)return;this.transitionCleanup?.();this.transitionCleanup=undefined;this.transitioning=false;this.blocked=false;done()};
+  const covered=()=>{if(generation!==this.transitionGeneration||switched)return;switched=true;this.changeZone(zone);this.resizeView();camera.once('camerafadeincomplete',arrived);fadeInFallback=setTimeout(arrived,duration+500);camera.fadeIn(duration,19,17,28)};
+  const fadeOutFallback=setTimeout(covered,duration+500);
+  this.transitionCleanup=()=>{clearTimeout(fadeOutFallback);clearTimeout(fadeInFallback);camera.off('camerafadeoutcomplete',covered);camera.off('camerafadeincomplete',arrived)};
   camera.once('camerafadeoutcomplete',covered);camera.fadeOut(duration,19,17,28);
  }
 

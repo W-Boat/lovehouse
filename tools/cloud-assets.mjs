@@ -6,13 +6,23 @@ export const assetLimit = 16 * 1024 * 1024;
 const formats = new Map([
  ['png','image/png'],['webp','image/webp'],['jpg','image/jpeg'],['avif','image/avif'],
  ['mp3','audio/mpeg'],['wav','audio/wav'],['ogg','audio/ogg'],['m4a','audio/mp4'],
- ['lrc','text/plain; charset=utf-8'],
+ ['lrc','text/plain; charset=utf-8'],['html','text/html; charset=utf-8'],['zip','application/zip'],['json','application/json'],['gif','image/gif'],['flac','audio/flac'],['mp4','video/mp4'],
 ]);
-const idPattern = /^[a-f0-9]{64}\.(png|webp|jpg|avif|mp3|wav|ogg|m4a|lrc)$/;
+const idPattern = /^[a-f0-9]{64}\.(png|webp|jpg|avif|mp3|wav|ogg|m4a|lrc|html|zip|json|gif|flac|mp4)$/;
 export const isAssetId = id => idPattern.test(id);
 
 function matchesFormat(bytes,ext) {
  const at = (offset,signature) => bytes.subarray(offset,offset+signature.length).equals(Buffer.from(signature,'binary'));
+ if(ext==='zip')return at(0,'PK\x03\x04');
+ if(ext==='gif')return at(0,'GIF87a')||at(0,'GIF89a');
+ if(ext==='flac')return at(0,'fLaC');
+ if(ext==='mp4')return at(4,'ftyp');
+ if(ext==='html'||ext==='json'){
+  try{const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+   if(ext==='json'){JSON.parse(text);return true}
+   return /<(?:!doctype html|html|head|body|div|script|main|meta|style|title)[\s>]/i.test(text);
+  }catch{return false}
+ }
  if (ext==='png') return at(0,'\x89PNG\r\n\x1a\n') && at(12,'IHDR');
  if (ext==='jpg') return at(0,'\xff\xd8\xff');
  if (ext==='webp') return at(0,'RIFF') && at(8,'WEBP');

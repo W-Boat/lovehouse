@@ -1,3 +1,4 @@
+import {preparedPage} from './release-resources';
 import {showFrameLoading} from './frame-loading';
 import {checkPackageOnEntry} from './content-updates';
 import {uiCopy} from '../content/ui-copy';
@@ -370,7 +371,7 @@ function openExternalGame(label:string,url:string,finish?:(status:'won'|'skipped
  frame.title=label;
  frame.setAttribute('sandbox','allow-scripts');
  frame.referrerPolicy='no-referrer';
- frame.src=url;
+ void preparedPage(url).then(page=>{if(page.html)frame.srcdoc=page.html;else frame.src=page.url});
  activity.host.append(frame);
  showFrameLoading(frame,activity.host,'正在加载小游戏…');
  if(!finish)return;
@@ -400,9 +401,9 @@ function openExternalGame(label:string,url:string,finish?:(status:'won'|'skipped
 }
 function openPortalPage(label:string,url:string,response?:string){
  showModal('<h2 id="modal-title">'+esc(label)+'</h2>'+(response?'<p class="body-copy">'+esc(response)+'</p>':'')+
-  '<iframe title="'+esc(label)+'" sandbox="allow-scripts" referrerpolicy="no-referrer" src="'+esc(url)+'" style="width:100%;height:55vh;border:0"></iframe>','portal-page');
+  '<iframe title="'+esc(label)+'" sandbox="allow-scripts" referrerpolicy="no-referrer" style="width:100%;height:55vh;border:0"></iframe>','portal-page');
  const host=$('modal-content'),frame=host.querySelector('iframe');
- if(frame)showFrameLoading(frame,host,'正在加载传送门…');
+ if(frame){showFrameLoading(frame,host,'正在加载传送门…');void preparedPage(url).then(page=>{if(page.html)frame.srcdoc=page.html;else frame.src=page.url})}
 }
 function enterTaoyuan(){
  if(taoyuan||!started)return;scene.stop();scene.blocked=true;cinematic=true;duckAudio(true);

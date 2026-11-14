@@ -1,3 +1,4 @@
+import {preparedResource} from './release-resources';
 const cacheName='lovehouse-cloud-backgrounds-v1';
 const limit=4*1024*1024;
 const imageTypes=new Set(['image/webp','image/png','image/jpeg','image/avif']);
@@ -15,6 +16,7 @@ async function decode(blob:Blob){
 }
 
 export async function loadCloudBackground(url:string,progress?:(ratio:number|null)=>void){
+ url=preparedResource(url);
  const cache=await globalThis.caches?.open(cacheName).catch(()=>undefined);
  const cached=await cache?.match(url).catch(()=>undefined);
  if(cached){

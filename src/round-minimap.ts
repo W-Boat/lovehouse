@@ -9,7 +9,7 @@ export function installRoundMinimap(scene:Cottage,openWorld:()=>void){
  const button=document.createElement('button');button.id='round-minimap';button.type='button';button.title='附近的小地图 · 点击打开世界地图';button.setAttribute('aria-label',button.title);
  const canvas=document.createElement('canvas');canvas.width=192;canvas.height=192;canvas.setAttribute('aria-hidden','true');button.append(canvas);document.getElementById('game-hud')!.append(button);
  const g=canvas.getContext('2d')!;let last=0,previousGirl={x:0,y:0},direction={x:0,y:1},frame=0;
- button.onclick=()=>{if(scene.entered&&!scene.transitioning)openWorld()};
+ button.onclick=openWorld;
  function refresh(){button.hidden=!save.settings.minimap;document.body.classList.toggle('has-round-minimap',save.settings.minimap)}
  function picture(key:string,x:number,y:number,size:number){if(!scene.textures.exists(key))return;const source=scene.textures.get(key).getSourceImage() as HTMLImageElement;const r=size/Math.max(source.width,source.height);g.drawImage(source,x-source.width*r/2,y-source.height*r/2,source.width*r,source.height*r)}
  function draw(time:number){

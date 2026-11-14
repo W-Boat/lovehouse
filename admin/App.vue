@@ -1,4 +1,5 @@
 <script setup>
+import ResourceLink from "./ResourceLink.vue";
 import IconButton from './IconButton.vue';
 import PageLoading from './page-loading.js';
 import checkIcon from '@iconify-icons/mdi/check-decagram-outline';
@@ -19,7 +20,7 @@ const SceneInteractions=defineAsyncComponent({loader:()=>import('./SceneInteract
 const interactionZone=ref('');
 const MusicForm=defineAsyncComponent({loader:()=>import('./MusicForm.vue'),loadingComponent:PageLoading,delay:120});
 const MediaForm=defineAsyncComponent({loader:()=>import('./MediaForm.vue'),loadingComponent:PageLoading,delay:120});
-import { computed, ref, watch, onBeforeUnmount, onMounted, defineAsyncComponent } from 'vue';
+import { computed, ref, watch, onBeforeUnmount, onMounted, defineAsyncComponent, provide } from 'vue';
 
 const sections = [
  ['texts','文案','按稳定 ID 修改对白、赠言和界面文字。',{}],
@@ -27,6 +28,7 @@ const sections = [
  ['interactions','互动','配置场景点位、反馈和小游戏入口。',[]],
  ['bundled','包内配置','查看随客户端发布的完整配置和点位。',null],
  ['gifts','礼物配置','按礼物 ID 修改内容、HTTPS 配图、坐标 x/y 和落脚点 point。',{}],
+ ['resources','启动资源包','进入游戏时预下载这些文件。',[]],
  ['statistics','在线统计','启用后采集 IP、基础设备和访问时间，每 5 分钟更新一次在线状态。',{enabled:false}],
  ['notification','系统通知','游戏运行期间会定期同步。填写标题、正文并启用后发布。',{enabled:false,title:'',body:''}],
  ['announcement','游戏私告','启用后在玩家进入小屋时显示。',{enabled:false,title:'',body:''}],
@@ -43,7 +45,7 @@ const sections = [
 
 const sectionGroups=[
  ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','notification','statistics','bundled','musicRoom','media','portals','all']],
- ['发布与资源',['history','packages','assets']],
+ ['发布与资源',['history','packages','assets','resources']],
  ['帮助',['guide']],
 ];
 const labels=Object.fromEntries(sections.map(([id,label])=>[id,label]));
@@ -52,6 +54,7 @@ const base=import.meta.env.BASE_URL;
 const structuredFields={
  scenes:[['id','场景 ID'],['parent','父场景 ID'],['name','名称'],['caption','简介'],['background','背景 HTTPS 地址'],['entrance','父场景入口',2],['spawn','到达点',2],['exit','返回点',2],['floor','行走范围（左上 / 右下）',4]],
  interactions:[['id','互动 ID'],['zone','场景 ID'],['name','名称'],['action','按钮文案'],['response','反馈'],['x','图标 X',1],['y','图标 Y',1],['point','落脚点',2],['game','内置小游戏 ID'],['gameUrl','独立小游戏 HTTPS 地址'],['url','网页 HTTPS 地址']],
+ resources:[['label','名称'],['url','资源地址']],
  portals:[['label','名称'],['url','网页 HTTPS 地址']],
 };
 const formSections=['texts','giftGames','musicRoom','media','gifts','announcement','notification','statistics',...Object.keys(structuredFields)];
@@ -66,6 +69,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   const selected=ref('texts'), token=ref(savedSession()), draft=ref({}), revision=ref('');
   const bundled=ref({}),baseline=ref({}),summary=ref([]),savedAt=ref(''),draftAvailable=ref(false);
   const storageKey='lovehouse-publisher-draft:'+import.meta.env.BASE_URL;
+  provide('publisherToken',token);
   const username=ref(''),password=ref(''),loginError=ref(''),loggingIn=ref(false);
   async function login(){
    if(loggingIn.value)return;
@@ -422,7 +426,8 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
      <div class="record-fields">
       <div v-for="[key,label,size] in fields" :key="key" class="field">
        <span>{{label}}</span>
-       <n-input v-if="!size" v-model:value="record[key]" :aria-label="label"/>
+       <ResourceLink v-if="!size && ['url','background'].includes(key)" v-model:value="record[key]" :accept="key==='background'?'image/*':selected==='resources'?undefined:'.html'"/>
+       <n-input v-else-if="!size" v-model:value="record[key]" :aria-label="label"/>
        <n-input-number v-else-if="size===1" v-model:value="record[key]" :aria-label="label" :controls="false" :min="0" :max="key==='x'?640:426"/>
        <div v-else class="coordinates">
         <n-input-number v-for="n in size" :key="n" v-model:value="record[key][n-1]" :aria-label="label+' '+n" :controls="false" :min="0" :max="n%2?640:426"/>
@@ -436,7 +441,8 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    <div v-else-if="form && !specialForm" class="entry-list">
     <div v-for="row in visibleEntries" :key="entries.indexOf(row)" class="entry">
      <n-input v-model:value="row.key" aria-label="稳定 ID" placeholder="稳定 ID"/>
-     <n-input v-model:value="row.value" :type="selected==='texts'?'textarea':'text'" aria-label="内容" :placeholder="selected==='texts'?'文字':'HTTPS 地址'"/>
+     <ResourceLink v-if="selected==='giftGames'" v-model:value="row.value" accept=".html"/>
+     <n-input v-else v-model:value="row.value" :type="selected==='texts'?'textarea':'text'" aria-label="内容" :placeholder="selected==='texts'?'文字':'HTTPS 地址'"/>
      <n-button text type="error" @click="entries.splice(entries.indexOf(row),1)">移除</n-button>
     </div>
     <n-pagination v-if="matchingEntries.length>entryPageSize" v-model:page="entryPage" :page-size="entryPageSize" :item-count="matchingEntries.length" :page-slot="5"/>
@@ -446,7 +452,8 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     <n-collapse-item v-for="id in giftIds" :key="id" :name="id" :title="objectValue[id]?.name||builtinGift(id).name||id">
      <n-form label-placement="top">
       <n-form-item v-for="[key,label] in giftFields" :key="key" :label="label">
-       <n-input :value="objectValue[id]?.[key]??''" :placeholder="builtinGift(id)[key]||'填写覆盖值'" :type="key==='message'?'textarea':'text'" @update:value="value=>setGift(id,key,value)"/>
+       <ResourceLink v-if="key==='image'" :value="objectValue[id]?.image??''" accept="image/*" @update:value="value=>setGift(id,key,value)"/>
+       <n-input v-else :value="objectValue[id]?.[key]??''" :placeholder="builtinGift(id)[key]||'填写覆盖值'" :type="key==='message'?'textarea':'text'" @update:value="value=>setGift(id,key,value)"/>
       </n-form-item>
       <div class="coordinates">
        <n-form-item v-for="[axis,max] in [['x',640],['y',426]]" :key="axis" :label="'展示 '+axis.toUpperCase()">

@@ -1,4 +1,5 @@
 <script setup>
+import ResourceLink from "./ResourceLink.vue";
 import {NButton,NEmpty,NForm,NInput,NTag} from 'naive-ui';
 import {PublisherAlert,PublisherDate,PublisherFormItem} from './publisher-components.js';
 import {computed,ref} from 'vue';
@@ -41,7 +42,7 @@ function fail(url){errors.value={...errors.value,[url]:true}}
     <div class="media-label"><h3>{{field.label}}</h3><n-tag type="info" size="small">{{status(field.key)}}</n-tag></div>
     <p>{{field.help}}</p>
     <publisher-form-item :label="field.label+'链接'" :error="media[field.key]&&!safeUrl(media[field.key])?'请输入不含账号密码的 HTTPS 地址':''">
-     <n-input :value="media[field.key]||''" clearable placeholder="https://…" :aria-label="field.label+'链接'" @update:value="update(field.key,$event)"/>
+     <ResourceLink accept="image/*" :value="media[field.key]||''" clearable placeholder="https://…" :aria-label="field.label+'链接'" @update:value="update(field.key,$event)"/>
     </publisher-form-item>
     <div v-if="safeUrl(media[field.key])" class="media-preview">
      <img v-if="!errors[safeUrl(media[field.key])]" :key="safeUrl(media[field.key])" :src="safeUrl(media[field.key])" :alt="field.label+'预览'" loading="lazy" referrerpolicy="no-referrer" @error="fail(safeUrl(media[field.key]))">
@@ -52,7 +53,7 @@ function fail(url){errors.value={...errors.value,[url]:true}}
    <section class="media-card">
     <div class="media-label"><h3>火星演唱会音源</h3><n-tag type="info" size="small">{{status('concertAudio')}}</n-tag></div>
     <publisher-form-item label="演唱会音频链接" :error="media.concertAudio&&!safeUrl(media.concertAudio)?'请输入不含账号密码的 HTTPS 地址':''">
-     <n-input :value="media.concertAudio||''" clearable placeholder="https://…" aria-label="演唱会音频链接" @update:value="update('concertAudio',$event)"/>
+     <ResourceLink accept="audio/*" :value="media.concertAudio||''" clearable placeholder="https://…" aria-label="演唱会音频链接" @update:value="update('concertAudio',$event)"/>
     </publisher-form-item>
     <audio v-if="safeUrl(media.concertAudio)" :key="safeUrl(media.concertAudio)" :src="safeUrl(media.concertAudio)" controls preload="none" aria-label="演唱会音频预览" @error="fail(safeUrl(media.concertAudio))"/>
     <publisher-alert v-if="errors[safeUrl(media.concertAudio)]" type="warning" :closable="false" title="音频暂时无法播放，请检查链接或格式。"/>
@@ -67,7 +68,7 @@ function fail(url){errors.value={...errors.value,[url]:true}}
       <span v-else>{{index+1}}</span>
      </div>
      <publisher-form-item :label="'照片 '+(index+1)" :error="!safeUrl(photo)?'请填写有效 HTTPS 地址':errors[safeUrl(photo)]?'图片暂时无法预览':''">
-      <n-input :value="photo" placeholder="https://…" :aria-label="'照片 '+(index+1)+' 链接'" @update:value="changePhoto(index,$event)"/>
+      <ResourceLink accept="image/*" :value="photo" placeholder="https://…" :aria-label="'照片 '+(index+1)+' 链接'" @update:value="changePhoto(index,$event)"/>
      </publisher-form-item>
      <n-button text type="error" @click="removePhoto(index)">移除</n-button>
     </div>

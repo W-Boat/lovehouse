@@ -1,3 +1,4 @@
+import {prepareReleaseResources} from './release-resources';
 import {validateCloudMedia} from '../content/cloud-media.mjs';
 import {validateCloudInteractions,validateGiftGames,type CloudInteraction} from '../content/cloud-interactions.mjs';
 import {validatePortalUrl} from '../content/cloud-portal-url.mjs';
@@ -35,13 +36,13 @@ function readSnapshot(raw:unknown) {
   if(!item || typeof item.label!=='string'||item.label.length>32) throw Error('Invalid portal');
   return {label:item.label,url:validatePortalUrl(item.url)};
  });
- return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames),gifts:validateGiftOverrides(data.gifts),announcement:validateAnnouncement(data.announcement),notification:validateAnnouncement(data.notification),statistics:readStatistics(data.statistics)};
+ return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames),gifts:validateGiftOverrides(data.gifts),announcement:validateAnnouncement(data.announcement),notification:validateAnnouncement(data.notification),statistics:readStatistics(data.statistics),resources:readResources(data.resources)};
 }
 
 export async function verifyCloudSnapshot(raw:unknown){
  const snapshot=readSnapshot(raw);
  const body={schema:1,texts:snapshot.texts,portals:snapshot.portals,musicRoom:snapshot.musicRoom,
-  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames,gifts:snapshot.gifts,announcement:snapshot.announcement,notification:snapshot.notification,statistics:snapshot.statistics};
+  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames,gifts:snapshot.gifts,announcement:snapshot.announcement,notification:snapshot.notification,statistics:snapshot.statistics,resources:snapshot.resources};
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(body)));
  const revision=Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,'0')).join('');
  if(revision!==snapshot.revision)throw Error('Content checksum mismatch');
@@ -73,6 +74,7 @@ export async function syncCloudContent(){
   cloudAnnouncement=snapshot.announcement;
   initialNotification=snapshot.notification;
   statisticsEnabled=snapshot.statistics?.enabled===true;
+  await prepareReleaseResources(snapshot,endpoint);
   for(const gift of birthdayConfig.gifts){
    const override=snapshot.gifts?.[gift.id];
    if(!override)continue;
@@ -138,4 +140,13 @@ function readStatistics(value:unknown){
  if(value===undefined)return;
  if(!value||typeof value!=='object'||!('enabled' in value)||typeof value.enabled!=='boolean')throw Error('Invalid statistics configuration');
  return {enabled:value.enabled};
+}
+
+function readResources(value:unknown){
+ if(value===undefined)return;
+ if(!Array.isArray(value)||value.length>100)throw Error('Invalid resource list');
+ return value.map(resource=>{
+  if(typeof resource?.label!=='string'||resource.label.length>80)throw Error('Invalid resource name');
+  return {label:resource.label,url:validatePortalUrl(resource.url)};
+ });
 }

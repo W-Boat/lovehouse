@@ -151,7 +151,7 @@ onBeforeUnmount(()=>{disposed=true;uploadRequest?.abort();previewController?.abo
  <div class="asset-toolbar">
   <n-input v-model:value="search" clearable placeholder="搜索文件名或素材 ID" aria-label="搜索素材" class="asset-search"/>
   <publisher-select v-model:value="category" aria-label="素材类型" class="asset-category"><publisher-option label="全部类型" value="all"/><publisher-option v-for="(label,value) in labels" :key="value" :label="label" :value="value"/></publisher-select>
-  <label class="import" :class="{disabled:busy}">上传素材<input type="file" multiple :disabled="busy" accept="image/png,image/jpeg,image/webp,image/avif,.mp3,.wav,.ogg,.m4a,.lrc" @change="upload"></label>
+  <label class="import" :class="{disabled:busy}">上传素材<input type="file" multiple :disabled="busy" accept="image/png,image/jpeg,image/webp,image/avif,.mp3,.wav,.ogg,.m4a,.lrc,.html,.zip,.json,.gif,.flac,.mp4" @change="upload"></label>
   <n-button :disabled="busy" @click="run(load)">刷新列表</n-button>
  </div>
  <publisher-alert v-if="notice" :title="notice" :type="failed?'error':'success'" :closable="false" show-icon />

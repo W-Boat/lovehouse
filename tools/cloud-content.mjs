@@ -17,11 +17,20 @@ import {pathToFileURL} from 'node:url';
 
 const limit = 1_000_000;
 const builtInZones = new Set('room garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora shichahai gulou chaya tianmo tanghulu catcottage highschool musicroom'.split(' '));
-const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames','gifts','announcement','notification','statistics']);
+const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames','gifts','announcement','notification','statistics','resources']);
 const jsonHeaders = {'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff'};
 
 function insideFloor([x,y],[[left,top],[right,bottom]]) {
  return x>=left && x<=right && y>=top && y<=bottom;
+}
+
+function validateResources(value){
+ if(value===undefined)return;
+ if(!Array.isArray(value)||value.length>100)throw Error('Expected up to 100 resources');
+ return value.map(resource=>{
+  if(typeof resource?.label!=='string'||resource.label.length>80)throw Error('Invalid resource name');
+  return {label:resource.label,url:validatePortalUrl(resource.url)};
+ });
 }
 
 export function prepareSnapshot(input) {
@@ -63,6 +72,7 @@ export function prepareSnapshot(input) {
   announcement: validateAnnouncement(input.announcement),
   notification: validateAnnouncement(input.notification),
   statistics: validateStats(input.statistics),
+  resources: validateResources(input.resources),
  };
  const revision = createHash('sha256').update(JSON.stringify(body)).digest('hex');
  const json = JSON.stringify({...body,revision});
@@ -248,10 +258,11 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
      const data=await assets.read(id);
      if(data){
       const total=data.bytes.length;
+      const html=id.endsWith('.html');
       const headers={
        'Content-Type':data.mime,'Cache-Control':'public, max-age=300','Accept-Ranges':'bytes',
        'Access-Control-Allow-Origin':'*','X-Content-Type-Options':'nosniff',
-       'Content-Security-Policy':"default-src 'none'; sandbox",
+       'Content-Security-Policy':html?"sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline' https:; style-src 'unsafe-inline' https:; img-src https: data: blob:; media-src https: data: blob:; connect-src https:; font-src https: data:":"default-src 'none'; sandbox",
       };
       const range=request.headers.range;
       let body=data.bytes,status=200;

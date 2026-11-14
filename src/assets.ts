@@ -5,6 +5,7 @@ export function resolveAssetUrl(filename:string,moduleUrl:string,development=fal
  return new URL(development?`${publicBase}assets/${filename}`:filename,development?new URL('../',moduleUrl):moduleUrl).href;
 }
 export function assetUrl(filename:string){return resolveAssetUrl(filename,import.meta.url,import.meta.env.DEV,import.meta.env.BASE_URL)}
-export function mediaUrl(value:string){const match=/^\.?\/?assets\/(.+)$/.exec(value);return match?assetUrl(match[1]):value}
+import {preparedResource} from './release-resources';
+export function mediaUrl(value:string){value=preparedResource(value);const match=/^\.?\/?assets\/(.+)$/.exec(value);return match?assetUrl(match[1]):value}
 
 export const coreTextureKeys=['rack-background','rack-ivory','rack-navy','wearables','pet-cat','room','hero','gifts','props','girl-actions','boy-actions','girl-walk','girl-walk-hat-band','boy-walk','icons-v2','gifts-v2','world-actors','girl-heads','boy-heads','couple-actions','holding-walk','holding-walk-allgear','window-views','weather-icons'] as const;

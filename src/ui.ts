@@ -37,8 +37,9 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
   return labels.map(label=>`<small class="map-collection">${esc(label)}</small>`).join('');
  }
  function worldMap(selected?:Zone){
+  if(!scene.entered||scene.transitioning||ctx.canUse&&!ctx.canUse())return;
   const z=selected??scene.zone;
-  const world=worlds[z];
+  const world=worlds[z]??worlds.room;
   const retainedMap=document.querySelector<HTMLElement>('.world-map');
   const nodes=retainedMap?'':(Object.keys(worlds) as Zone[]).map(id=>{
    const entry=worlds[id];
