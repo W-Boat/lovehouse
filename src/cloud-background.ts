@@ -14,7 +14,7 @@ async function decode(blob:Blob){
  }finally{URL.revokeObjectURL(objectUrl)}
 }
 
-export async function loadCloudBackground(url:string){
+export async function loadCloudBackground(url:string,progress?:(ratio:number|null)=>void){
  const cache=await globalThis.caches?.open(cacheName).catch(()=>undefined);
  const cached=await cache?.match(url).catch(()=>undefined);
  if(cached){
@@ -25,6 +25,7 @@ export async function loadCloudBackground(url:string){
  const mime=response.headers.get('content-type')?.split(';')[0].trim().toLowerCase()??'';
  if(!response.ok||!imageTypes.has(mime)||Number(response.headers.get('content-length'))>limit||!response.body)
   throw Error('Scene image unavailable');
+ const total=Number(response.headers.get('content-length'));
  const reader=response.body.getReader();
  const chunks:Uint8Array<ArrayBuffer>[]=[];
  let bytes=0;
@@ -35,9 +36,11 @@ export async function loadCloudBackground(url:string){
    bytes+=value.byteLength;
    if(bytes>limit)throw Error('Scene image exceeds 4 MiB');
    chunks.push(new Uint8Array(value));
+   progress?.(total>0?Math.min(.95,bytes/total*.95):null);
   }
  }catch(error){void reader.cancel().catch(()=>{});throw error}
  const blob=new Blob(chunks,{type:mime});
+ progress?.(.98);
  const image=await decode(blob);
  if(cache){
   try{

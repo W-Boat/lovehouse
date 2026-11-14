@@ -1,3 +1,4 @@
+import {isCollected} from './state';
 declare const __BUILD_INFO__: {version:string; builtAt:string};
 import {DEFAULT_DPI,DPI_STEPS} from './display';
 import {mountContentUpdates,sendContentUpdate} from './content-updates';
@@ -52,7 +53,7 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
   }).join('');
   const gifts=z==='room'?config.gifts:[];
   const giftList=gifts.map(gift=>`<button id="map-gift-${gift.id}" class="secondary"><span class="item-category">${esc(uiCopy(save.opened.includes(gift.id)?'map.gift-opened':'map.gift-wrapped'))}</span>${esc(gift.name)}</button>`).join('');
-  const items=world.items.map(item=>{
+  const items=world.items.filter(item=>!isCollected(item)).map(item=>{
    const category=item.to?'exit':item.kind==='collect'?'collect':item.kind==='slot'?'place':isSeatItem(z,item)?'seat':'interact';
    return `<button id="item-${item.id}" class="secondary"><span class="item-category">${esc(uiCopy(`map.category.${category}`))}</span>${esc(item.name)}</button>`;
   }).join('');
@@ -195,5 +196,5 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
  }
  scene.bridge.on('climate-asset-error',()=>toast(uiCopy('climate.load-error')));
  scene.bridge.on('calendar',(s:CalendarSnapshot)=>{paintClimate(s);updateCalendarPanel(s)});
- return {begin,customize,settings,worldMap,bag,refresh,collect(item:Item){if(!item.collect)return;grantItem(item.collect);scene.remember(item.id);toast(formatCopy('bag.collect-toast',{name:itemNames[item.collect]??item.collect}));scene.refresh()},ready:()=>unlocked};
+ return {begin,customize,settings,worldMap,bag,refresh,collect(item:Item){if(!item.collect||isCollected(item))return;grantItem(item.collect);scene.remember(item.id);toast(formatCopy('bag.collect-toast',{name:itemNames[item.collect]??item.collect}));scene.refresh()},ready:()=>unlocked};
 }

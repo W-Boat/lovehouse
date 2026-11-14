@@ -1,6 +1,6 @@
 import {isSeatItem} from './item-category';
 import type {Cottage} from './scene';
-import {save} from './state';
+import {save,isCollected} from './state';
 import {worlds,type Item,type Zone} from './world';
 
 /** Nearby overview is deliberately separate from the world/fast-travel map. */
@@ -19,7 +19,7 @@ export function installRoundMinimap(scene:Cottage,openWorld:()=>void){
   g.clearRect(0,0,192,192);g.save();g.beginPath();g.arc(96,96,88,0,Math.PI*2);g.clip();g.imageSmoothingEnabled=false;g.fillStyle='#383b40';g.fillRect(0,0,192,192);
   const world=worlds[scene.zone],back=pos(0,0);scene.drawEnvironment(g,back.x,back.y,640*scale,426.667*scale);
   g.fillStyle='#231c3540';g.fillRect(0,0,192,192);
-  for(const item of world.items){const point=pos(item.x,item.y);if(Math.hypot(point.x-96,point.y-96)>77)continue;g.fillStyle='#f5dfb8ee';g.beginPath();g.arc(point.x,point.y,9,0,Math.PI*2);g.fill();picture(minimapIcon(item,scene.zone),point.x,point.y,13)}
+  for(const item of world.items){if(isCollected(item))continue;const point=pos(item.x,item.y);if(Math.hypot(point.x-96,point.y-96)>77)continue;g.fillStyle='#f5dfb8ee';g.beginPath();g.arc(point.x,point.y,9,0,Math.PI*2);g.fill();picture(minimapIcon(item,scene.zone),point.x,point.y,13)}
   const other=p===scene.player?scene.boy:scene.player,buddy=pos(other.x,other.y),boy=other.visible?other.texture.getSourceImage() as HTMLCanvasElement:undefined;if(boy){const r=25/Math.max(boy.width,boy.height);g.drawImage(boy,buddy.x-boy.width*r/2,buddy.y-boy.height*r, boy.width*r,boy.height*r)}
   g.fillStyle='#f9d7a2';g.beginPath();g.arc(96,96,14,0,Math.PI*2);g.fill();const source=p.texture.getSourceImage() as HTMLCanvasElement;if(source){const r=26/Math.max(source.width,source.height);g.drawImage(source,96-source.width*r/2,96-source.height*r/2,source.width*r,source.height*r)}
   const a=Math.atan2(direction.y,direction.x);g.save();g.translate(96,96);g.rotate(a);g.fillStyle='#fff6ce';g.beginPath();g.moveTo(24,0);g.lineTo(16,-5);g.lineTo(16,5);g.closePath();g.fill();g.restore();g.restore();

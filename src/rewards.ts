@@ -84,11 +84,13 @@ export function installRewards(ctx:Context){
  }
  document.addEventListener('open-wishes',wishes);document.addEventListener('open-achievements',achievementPanel);
  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&layer){event.stopImmediatePropagation();close()}},true);
+ document.getElementById('progress')!.onclick=wishes;
  const tools=document.querySelector('.hud-tools')!;
- for(const [label,id,fn]of [['许愿','wishes',wishes],['成就','achievements',achievementPanel]] as const){const b=document.createElement('button');b.id=id;b.className='icon-button';b.title=label;b.setAttribute('aria-label',label);const img=document.createElement('img');img.src=assetUrl('favicon.webp');img.alt='';img.className='pixel-icon';b.append(img);b.onclick=fn;if(id==='wishes'){
-  b.classList.add('wish-toolbar-button');
-  document.querySelector('.place-plaque')!.append(b);
- }else tools.append(b)}
+ const achievement=document.createElement('button');
+ achievement.id='achievements';achievement.className='icon-button';achievement.title='成就';achievement.setAttribute('aria-label','成就');
+ const icon=document.createElement('img');
+ icon.src=assetUrl('favicon.webp');icon.alt='';icon.className='pixel-icon';
+ achievement.append(icon);achievement.onclick=achievementPanel;tools.append(achievement);
  document.addEventListener('unlock-everything',()=>{if(!save.cheat||!ctx.canUse())return;for(const gift of config.gifts)unlockGift(save,gift.id);save.visited=Object.keys(worlds);save.moments=[...new Set([...save.moments,...Object.values(worlds).flatMap(w=>w.items.map(i=>i.id))])];persist();ctx.refresh();ctx.toast('所有地图、互动与礼物已解锁。')});
  window.setInterval(()=>{if(!ctx.scene.entered)return;for(const a of achievements)if(a.check(save)&&!seen.has(a.id)){seen.add(a.id);const toast=document.createElement('div');toast.className='achievement-toast';toast.textContent='成就达成 · '+a.name;document.getElementById('app')!.append(toast);setTimeout(()=>toast.remove(),4000);break}},1600);
  return {close};

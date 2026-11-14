@@ -205,3 +205,14 @@ body[data-cloud-offline=true] .game-hud::before{content:'离线';position:absolu
 .hat-fit-hat{width:38%;height:35%;top:1%;transform:translateX(calc(-50% + var(--hat-offset,0%)))}
 .hat-fit-hat.hat-fitted{top:19%}
 .hat-fit-guide{position:absolute;left:32%;top:17%;width:36%;height:12%;border:2px dashed #a77462}
+#app button.hud-progress{pointer-events:auto;cursor:pointer;font-family:inherit;touch-action:manipulation}
+#app button.hud-progress:focus-visible{outline:2px solid #ffe7ac;outline-offset:3px}
+#cloud-scene-loading{position:absolute;inset:0;z-index:80;display:grid;place-items:center;background:#251c29e8;color:#fff0cf;pointer-events:auto}
+#cloud-scene-loading section,.package-update-dialog{padding:24px;max-width:min(360px,85%);border:3px solid #c59863;background:#362b39;color:#fff0cf;box-shadow:0 0 0 4px #201826}
+#cloud-scene-loading section{width:85%;display:grid;gap:12px}
+#cloud-scene-loading progress{width:100%;height:16px;accent-color:#e9b471}
+.package-update-dialog::backdrop{background:#231a27b0}
+.frame-loading{display:grid;gap:6px;padding:10px;background:#342838;color:#fff0cf}
+.frame-loading progress{width:100%;accent-color:#e9b471}
+.system-notification{position:absolute;z-index:79;right:12px;top:calc(60px / var(--ui-scale,1));width:min(340px,calc(100% - 24px));padding:12px;box-sizing:border-box;background:#362b39;color:#fff0cf;border:2px solid #c59863}
+.system-notification p{white-space:pre-wrap;max-height:40vh;overflow:auto;overflow-wrap:anywhere}

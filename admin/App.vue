@@ -15,6 +15,7 @@ const sections = [
  ['interactions','互动','配置场景点位、反馈和小游戏入口。',[]],
  ['bundled','包内配置','查看随客户端发布的完整配置和点位。',null],
  ['gifts','礼物配置','按礼物 ID 修改内容、HTTPS 配图、坐标 x/y 和落脚点 point。',{}],
+ ['notification','系统通知','游戏运行期间会定期同步。填写标题、正文并启用后发布。',{enabled:false,title:'',body:''}],
  ['announcement','游戏私告','启用后在玩家进入小屋时显示。',{enabled:false,title:'',body:''}],
  ['giftGames','礼物小游戏','以礼物 ID 绑定独立游戏的 HTTPS 地址。',{}],
  ['musicRoom','唱片房','设置在线歌单或自选曲目。',null],
@@ -27,7 +28,7 @@ const sections = [
 ];
 
 const sectionGroups=[
- ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','bundled','musicRoom','media','portals','all']],
+ ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','notification','bundled','musicRoom','media','portals','all']],
  ['发布与资源',['history','packages','assets']],
 ];
 const labels=Object.fromEntries(sections.map(([id,label])=>[id,label]));

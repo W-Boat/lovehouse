@@ -16,7 +16,7 @@ import {pathToFileURL} from 'node:url';
 
 const limit = 1_000_000;
 const builtInZones = new Set('room garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora shichahai gulou chaya tianmo tanghulu catcottage highschool musicroom'.split(' '));
-const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames','gifts','announcement']);
+const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames','gifts','announcement','notification']);
 const jsonHeaders = {'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff'};
 
 function insideFloor([x,y],[[left,top],[right,bottom]]) {
@@ -60,6 +60,7 @@ export function prepareSnapshot(input) {
   giftGames: validateGiftGames(input.giftGames),
   gifts: validateGiftOverrides(input.gifts),
   announcement: validateAnnouncement(input.announcement),
+  notification: validateAnnouncement(input.notification),
  };
  const revision = createHash('sha256').update(JSON.stringify(body)).digest('hex');
  const json = JSON.stringify({...body,revision});

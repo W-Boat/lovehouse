@@ -1,3 +1,4 @@
+import {showFrameLoading} from './frame-loading';
 import type {TaoyuanField} from './online-protocol';
 import {uiCopy} from '../content/ui-copy';
 export type TaoyuanEnvelope=({kind:'field'}&TaoyuanField)|{kind:'state';save:string;route:string}|{kind:'command';route:string;index:number;text:string};
@@ -11,6 +12,7 @@ export function openTaoyuan(options:{role:'host'|'guest'|'offline';identity:{nam
  native?.postMessage(JSON.stringify({kind:'orientation',value:'portrait'}));
  if(options.role==='guest')url.searchParams.set('lovehouse-role','guest');
  frame.src=url.href;frame.style.cssText='flex:1;width:100%;border:0;background:#211e21';const toolbar=document.createElement('nav');toolbar.className='taoyuan-toolbar';const exportButton=document.createElement('button');exportButton.className='taoyuan-return';exportButton.textContent='导出存档';exportButton.disabled=true;toolbar.append(exit,exportButton);panel.append(toolbar,frame);document.body.append(panel);
+ showFrameLoading(frame,panel,'正在加载桃源乡…');
  let connected=true;let ready=false,pending:TaoyuanEnvelope|undefined;
  const origin=new URL(frame.src).origin;
  const send=(message:unknown)=>frame.contentWindow?.postMessage({channel:'lovehouse-taoyuan',...message as object},origin);

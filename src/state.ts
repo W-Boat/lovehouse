@@ -44,6 +44,7 @@ export let save:Save;try{save=parseSave(localStorage.getItem(SAVE_KEY)||localSto
 export function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save))}catch{if(typeof document!=='undefined')document.dispatchEvent(new CustomEvent('save-error'))}}
 export function reset(){delete save.resume;delete save.workshopDraft;Object.assign(save,defaults());persist()}
 export function importSave(raw:string){const d=JSON.parse(raw);if(!d||![1,2].includes(d.version))throw Error('不支持的存档');delete save.resume;delete save.workshopDraft;Object.assign(save,parseSave(raw));persist()}
+export function isCollected(item:{id:string;kind?:string;collect?:string}){return item.kind==='collect'&&Boolean(item.collect&&(save.inventory.includes(item.collect)||save.moments.includes(item.id)))}
 export function grantItem(id:string){if(!save.inventory.includes(id))save.inventory.push(id);persist()}
 export function restockSnack(id:Snack){
  if(!save.inventory.includes(id))save.inventory.push(id);

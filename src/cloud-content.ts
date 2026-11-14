@@ -12,6 +12,7 @@ import {parseMusicConfig,type MusicRoomConfig} from './music-config';
 declare const __CONTENT_SERVER__: string;
 export function defaultContentServer(){return typeof __CONTENT_SERVER__==='string'?__CONTENT_SERVER__:''}
 type Portal = {label:string;url:string};
+let initialNotification:ReturnType<typeof validateAnnouncement>;
 export let cloudAnnouncement:ReturnType<typeof validateAnnouncement>;
 export let cloudPortals: Portal[] = [];
 export let cloudGiftGames:NonNullable<ReturnType<typeof validateGiftGames>>={};
@@ -33,13 +34,13 @@ function readSnapshot(raw:unknown) {
   if(!item || typeof item.label!=='string'||item.label.length>32) throw Error('Invalid portal');
   return {label:item.label,url:validatePortalUrl(item.url)};
  });
- return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames),gifts:validateGiftOverrides(data.gifts),announcement:validateAnnouncement(data.announcement)};
+ return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames),gifts:validateGiftOverrides(data.gifts),announcement:validateAnnouncement(data.announcement),notification:validateAnnouncement(data.notification)};
 }
 
 export async function verifyCloudSnapshot(raw:unknown){
  const snapshot=readSnapshot(raw);
  const body={schema:1,texts:snapshot.texts,portals:snapshot.portals,musicRoom:snapshot.musicRoom,
-  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames,gifts:snapshot.gifts,announcement:snapshot.announcement};
+  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames,gifts:snapshot.gifts,announcement:snapshot.announcement,notification:snapshot.notification};
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(body)));
  const revision=Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,'0')).join('');
  if(revision!==snapshot.revision)throw Error('Content checksum mismatch');
@@ -69,6 +70,7 @@ export async function syncCloudContent(){
   Object.assign(personal.texts,snapshot.texts);
   Object.assign(personal,snapshot.media);
   cloudAnnouncement=snapshot.announcement;
+  initialNotification=snapshot.notification;
   for(const gift of birthdayConfig.gifts){
    const override=snapshot.gifts?.[gift.id];
    if(!override)continue;
@@ -86,3 +88,36 @@ export async function syncCloudContent(){
  }
 }
 
+
+export function watchSystemNotifications(display:(title:string,body:string)=>void){
+ const server=defaultContentServer();
+ if(!server)return;
+ const endpoint=new URL('content.json',server.replace(/\/?$/,'/'));
+ if(endpoint.protocol!=='https:')return;
+ let revision='',checking=false,seen='';
+ const show=(notice:ReturnType<typeof validateAnnouncement>)=>{
+  if(!notice?.enabled||!notice.body.trim())return;
+  const key=JSON.stringify([notice.title,notice.body]);
+  try{seen=localStorage.getItem('cottage-system-notification')??seen}catch{}
+  if(seen===key)return;
+  seen=key;
+  try{localStorage.setItem('cottage-system-notification',key)}catch{}
+  display(notice.title||'系统通知',notice.body);
+ };
+ show(initialNotification);
+ async function poll(){
+  if(checking||document.hidden)return;
+  checking=true;
+  try{
+   const url=new URL(endpoint);
+   if(revision)url.searchParams.set('revision',revision);
+   const response=await fetch(url,{signal:AbortSignal.timeout(2500),credentials:'omit',cache:'no-store'});
+   if(response.status!==304&&response.status!==204&&response.ok){
+    const snapshot=await verifyCloudSnapshot(await response.json());
+    revision=snapshot.revision;show(snapshot.notification);
+   }
+  }catch{}finally{checking=false}
+ }
+ window.setInterval(poll,60000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll()});
+}
