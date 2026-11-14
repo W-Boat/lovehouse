@@ -60,7 +60,8 @@ const structuredFields={
 };
 const formSections=['texts','giftGames','musicRoom','media','gifts','announcement','notification','statistics',...Object.keys(structuredFields)];
 
-  const statisticsColumns=[['ip','IP'],['platform','设备'],['userAgent','客户端'],['enteredAt','进入时间'],['lastSeenAt','最后在线']].map(([key,title])=>({key,title,ellipsis:{tooltip:true}}));
+  const durationLabel=seconds=>{const minutes=Math.floor((seconds??0)/60);return minutes>=60?Math.floor(minutes/60)+' 小时 '+minutes%60+' 分钟':minutes+' 分钟'};
+  const statisticsColumns=[['ip','IP'],['platform','设备'],['userAgent','客户端'],['visits','进入次数'],['enteredAt','进入时间'],['lastSeenAt','最后在线']].map(([key,title])=>({key,title,ellipsis:{tooltip:true}})).concat([{key:'estimatedSeconds',title:'估算在线时长',render:row=>durationLabel(row.estimatedSeconds)}]);
   const statisticsReport=ref(null);
   async function readStatistics(){
    try{const response=await fetch(import.meta.env.BASE_URL+'api/statistics',{headers:{Authorization:'Bearer '+token.value.trim()}});if(!response.ok)throw Error('读取失败');statisticsReport.value=await response.json()}catch{statisticsReport.value={error:'暂时无法读取统计'}}
@@ -476,7 +477,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     <n-form-item label="标题"><n-input v-model:value="objectValue.title" :maxlength="80"/></n-form-item>
     <n-form-item label="正文"><n-input v-model:value="objectValue.body" type="textarea" :maxlength="4000" :autosize="{minRows:5,maxRows:12}"/></n-form-item>
    </n-form>
-   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch v-model:value="objectValue.enabled"/> 启用统计</label><IconButton label="刷新在线统计" :icon="refreshIcon" @click="readStatistics"/><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
+   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch v-model:value="objectValue.enabled"/> 启用统计</label><IconButton label="刷新在线统计" :icon="refreshIcon" @click="readStatistics"/><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 台设备 · 7 天内 '+statisticsReport.sessions.length+' 台去重设备 · 估算总在线 '+durationLabel(statisticsReport.totalEstimatedSeconds))}}</p><small>按 IP、设备和客户端合并，重叠会话不重复累计。每次心跳最多推算后续 5 分钟，统计保留 7 天。</small><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
    <section v-else-if="selected==='bundled'" class="bundled-browser">
     <n-tabs v-model:value="bundledTab" type="line">
      <n-tab-pane v-for="[id,title] in [['texts','文案'],['worlds','场景与互动'],['gifts','礼物'],['media','媒体'],['musicRoom','歌单'],['announcement','游戏私告']]" :key="id" :name="id" :tab="title"/>

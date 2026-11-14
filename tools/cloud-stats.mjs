@@ -4,6 +4,42 @@ import {randomUUID} from 'node:crypto';
 
 const retention=7*86400000;
 const onlineWindow=6*60000;
+export function clientIp(request){
+ const peer=request.socket.remoteAddress??'';
+ const forwarded=request.headers['x-real-ip'];
+ const address=/^(?:::ffff:)?127\.|^::1$/.test(peer)&&typeof forwarded==='string'&&isIP(forwarded)?forwarded:peer;
+ return address.replace(/^::ffff:/,'');
+}
+function unionDuration(intervals){
+ const sorted=intervals.sort((a,b)=>a[0]-b[0]);
+ let total=0,start=0,end=0;
+ for(const [from,to] of sorted){
+  if(from>end){total+=end-start;start=from;end=to}
+  else end=Math.max(end,to);
+ }
+ return total+end-start;
+}
+export function summarizeSessions(rows,now=Date.now()){
+ const groups=new Map();
+ for(const row of rows){
+  const key=JSON.stringify([row.ip,row.platform,row.userAgent,row.screen??'']);
+  let group=groups.get(key);
+  if(!group){
+   group={ip:row.ip,platform:row.platform,userAgent:row.userAgent,screen:row.screen,enteredAt:row.enteredAt,lastSeenAt:row.lastSeenAt,visits:0,intervals:[]};
+   groups.set(key,group);
+  }
+  group.enteredAt=Math.min(group.enteredAt,row.enteredAt);
+  group.lastSeenAt=Math.max(group.lastSeenAt,row.lastSeenAt);
+  group.visits++;
+  const periods=Array.isArray(row.periods)?row.periods:[[row.enteredAt,row.lastSeenAt]];
+  for(const [start,end] of periods)group.intervals.push([Math.max(now-retention,start),Math.min(now,end+300000)]);
+ }
+ const sessions=[...groups.values()].sort((a,b)=>b.lastSeenAt-a.lastSeenAt).map(({intervals,...row})=>({
+  ...row,online:now-row.lastSeenAt<onlineWindow,estimatedSeconds:Math.round(unionDuration(intervals)/1000),
+  enteredAt:new Date(row.enteredAt).toISOString(),lastSeenAt:new Date(row.lastSeenAt).toISOString(),
+ }));
+ return {online:sessions.filter(row=>row.online).length,totalEstimatedSeconds:sessions.reduce((sum,row)=>sum+row.estimatedSeconds,0),sessions};
+}
 export function validateStats(value){
  if(value===undefined)return;
  if(!value||typeof value!=='object'||typeof value.enabled!=='boolean')throw Error('Invalid statistics configuration');
@@ -35,15 +71,18 @@ export function createStats(file){
     for await(const chunk of request){raw+=chunk.toString();if(raw.length>512){end(413);return}}
     const fields=new URLSearchParams(raw),id=fields.get('session');
     if(!id||!/^[a-f0-9-]{36}$/.test(id)){end(400);return}
-    const peer=request.socket.remoteAddress??'';
-    const forwarded=request.headers['x-real-ip'];
-    const ip=/^(?:::ffff:)?127\.|^::1$/.test(peer)&&typeof forwarded==='string'&&isIP(forwarded)?forwarded:peer;
+    const ip=clientIp(request);
     await queue(async()=>{
      const now=Date.now(),rows=(await load()).filter(row=>now-row.lastSeenAt<retention);
      const existing=rows.find(row=>row.id===id);
      if(existing&&now-existing.lastSeenAt<60000)return;
-     if(existing)existing.lastSeenAt=now;
-     else rows.unshift({id,ip,platform:fields.get('platform')?.slice(0,80)??'',screen:fields.get('screen')?.slice(0,20)??'',language:fields.get('language')?.slice(0,24)??'',userAgent:String(request.headers['user-agent']??'').slice(0,240),enteredAt:now,lastSeenAt:now});
+     if(existing){
+      const periods=existing.periods??[[existing.enteredAt,existing.lastSeenAt]];
+      if(now-existing.lastSeenAt<=onlineWindow)periods[periods.length-1][1]=now;
+      else periods.push([now,now]);
+      existing.periods=periods;existing.lastSeenAt=now;
+     }
+     else rows.unshift({id,ip,platform:fields.get('platform')?.slice(0,80)??'',screen:fields.get('screen')?.slice(0,20)??'',language:fields.get('language')?.slice(0,24)??'',userAgent:String(request.headers['user-agent']??'').slice(0,240),enteredAt:now,lastSeenAt:now,periods:[[now,now]]});
      await save(rows.slice(0,10000));
     });
     end(204);
@@ -52,8 +91,7 @@ export function createStats(file){
   summary:()=>queue(async()=>{
    const now=Date.now(),all=await load(),rows=all.filter(row=>now-row.lastSeenAt<retention);
    if(rows.length!==all.length)await save(rows);
-   rows.sort((a,b)=>b.lastSeenAt-a.lastSeenAt);
-   return {online:rows.filter(row=>now-row.lastSeenAt<onlineWindow).length,sessions:rows.map(({id,...row})=>({...row,enteredAt:new Date(row.enteredAt).toISOString(),lastSeenAt:new Date(row.lastSeenAt).toISOString()}))};
+   return summarizeSessions(rows,now);
   }),
  };
 }

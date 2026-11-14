@@ -110,16 +110,15 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
  }
  void sendOnlineStatus();
  window.setInterval(sendOnlineStatus,300000);
- const show=(notice:ReturnType<typeof validateAnnouncement>)=>{
+ const show=async(notice:ReturnType<typeof validateAnnouncement>)=>{
   if(!notice?.enabled||!notice.body.trim())return;
   const key=JSON.stringify([notice.title,notice.body]);
-  try{seen=localStorage.getItem('cottage-system-notification')??seen}catch{}
   if(seen===key)return;
-  seen=key;
-  try{localStorage.setItem('cottage-system-notification',key)}catch{}
-  display(notice.title||'系统通知',notice.body);
+  const claimed=await claimNotice('notification');
+  if(!claimed)return;
+  seen=key;display(claimed.title||'系统通知',claimed.body);
  };
- show(initialNotification);
+ void show(initialNotification);
  async function poll(){
   if(checking||document.hidden)return;
   checking=true;
@@ -129,7 +128,7 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
    const response=await fetch(url,{signal:AbortSignal.timeout(2500),credentials:'omit',cache:'no-store'});
    if(response.status!==304&&response.status!==204&&response.ok){
     const snapshot=await verifyCloudSnapshot(await response.json());
-    revision=snapshot.revision;show(snapshot.notification);
+    revision=snapshot.revision;void show(snapshot.notification);
     const enabled=snapshot.statistics?.enabled===true;
     if(enabled&&!statisticsEnabled){statisticsEnabled=true;void sendOnlineStatus()}else statisticsEnabled=enabled;
    }
@@ -152,4 +151,15 @@ function readResources(value:unknown){
   if(typeof resource?.label!=='string'||resource.label.length>80)throw Error('Invalid resource name');
   return {label:resource.label,url:validatePortalUrl(resource.url)};
  });
+}
+
+export async function claimNotice(kind:'announcement'|'notification'){
+ const server=defaultContentServer();
+ if(!server)return;
+ try{
+  const response=await fetch(new URL('announcement-claim',server.replace(/\/?$/,'/')),{method:'POST',body:new URLSearchParams({kind}),credentials:'omit',signal:AbortSignal.timeout(2500)});
+  if(!response.ok)return;
+  const data=await response.json();
+  return validateAnnouncement(data.notice);
+ }catch{return}
 }

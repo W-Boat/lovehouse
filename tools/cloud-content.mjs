@@ -1,3 +1,4 @@
+import {createAnnouncementClaims} from './cloud-announcements.mjs';
 import {createStats,validateStats} from './cloud-stats.mjs';
 import {validateGiftOverrides,validateAnnouncement} from '../content/cloud-gifts.mjs';
 import {createBundledCatalog} from './cloud-bundled.mjs';
@@ -183,6 +184,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
  const assets=createAssetStore(file+'.assets');
  const packages=createPackageStore(file+'.packages',publicPrefix);
  const stats=createStats(file);
+ const claimAnnouncement=createAnnouncementClaims(file);
  const androidUpdate=createAndroidUpdateStore(file+'.android-update');
  const loginUser=process.env.LOVEHOUSE_ADMIN_USER;
  const loginHash=process.env.LOVEHOUSE_ADMIN_PASSWORD_HASH;
@@ -215,6 +217,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   try { url = new URL(request.url,'http://localhost') }
   catch { sendJson(response,400,{error:'Invalid request URL'}); return }
   const {pathname} = url;
+  if(pathname==='/announcement-claim'&&request.method==='POST'){await claimAnnouncement(request,response);return}
   if(pathname==='/statistics'&&request.method==='POST'){await stats.record(request,response);return}
   if(pathname.startsWith('/android-update/')&&['GET','HEAD'].includes(request.method)){
    try{
