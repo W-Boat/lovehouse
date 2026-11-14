@@ -61,7 +61,9 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   async function readStatistics(){
    try{const response=await fetch(import.meta.env.BASE_URL+'api/statistics',{headers:{Authorization:'Bearer '+token.value.trim()}});if(!response.ok)throw Error('读取失败');statisticsReport.value=await response.json()}catch{statisticsReport.value={error:'暂时无法读取统计'}}
   }
-  const selected=ref('texts'), token=ref(''), draft=ref({}), revision=ref('');
+  const sessionKey='lovehouse-publisher-session:'+base;
+  function savedSession(){try{return sessionStorage.getItem(sessionKey)||''}catch{return ''}}
+  const selected=ref('texts'), token=ref(savedSession()), draft=ref({}), revision=ref('');
   const bundled=ref({}),baseline=ref({}),summary=ref([]),savedAt=ref(''),draftAvailable=ref(false);
   const storageKey='lovehouse-publisher-draft:'+import.meta.env.BASE_URL;
   const username=ref(''),password=ref(''),loginError=ref(''),loggingIn=ref(false);
@@ -213,6 +215,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
      body:action==='snapshot'?undefined:JSON.stringify(draft.value),
     });
     const data=await response.json();
+    if(response.status===401){loginError.value='登录已过期，请重新登录。';token.value='';return}
     if(!response.ok){
      if(response.status===412){await connect();throw Error('线上版本已经变化，请核对后确认草稿基准。')}
      throw Error(data.error||'请求失败');
@@ -301,6 +304,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
      headers:{Authorization:'Bearer '+token.value.trim()},signal:controller.signal,cache:'no-store',
     });
     const data=await response.json();
+    if(response.status===401&&!controller.signal.aborted){loginError.value='登录已过期，请重新登录。';token.value='';return}
     if(!response.ok)throw Error(data.error||'认证失败');
     if(controller.signal.aborted)return;
     const {schema,revision:current,...config}=data;
@@ -317,10 +321,11 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    }
   }
   watch(token,()=>{
+   try{if(token.value)sessionStorage.setItem(sessionKey,token.value);else sessionStorage.removeItem(sessionKey)}catch{}
    authController?.abort();clearTimeout(authTimer);loaded.value=false;status.value='';
    authState.value=token.value.trim()?'checking':'idle';
    if(token.value.trim())void connect();
-  },{flush:'sync'});
+  },{flush:'sync',immediate:true});
   function rebaseDraft(){
    try{
     collect();saveLocal(true);draftRevision.value=revision.value;saveLocal();
