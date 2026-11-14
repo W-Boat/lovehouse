@@ -12,6 +12,7 @@ import {parseMusicConfig,type MusicRoomConfig} from './music-config';
 declare const __CONTENT_SERVER__: string;
 export function defaultContentServer(){return typeof __CONTENT_SERVER__==='string'?__CONTENT_SERVER__:''}
 type Portal = {label:string;url:string};
+let statisticsEnabled=false;
 let initialNotification:ReturnType<typeof validateAnnouncement>;
 export let cloudAnnouncement:ReturnType<typeof validateAnnouncement>;
 export let cloudPortals: Portal[] = [];
@@ -34,13 +35,13 @@ function readSnapshot(raw:unknown) {
   if(!item || typeof item.label!=='string'||item.label.length>32) throw Error('Invalid portal');
   return {label:item.label,url:validatePortalUrl(item.url)};
  });
- return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames),gifts:validateGiftOverrides(data.gifts),announcement:validateAnnouncement(data.announcement),notification:validateAnnouncement(data.notification)};
+ return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames),gifts:validateGiftOverrides(data.gifts),announcement:validateAnnouncement(data.announcement),notification:validateAnnouncement(data.notification),statistics:readStatistics(data.statistics)};
 }
 
 export async function verifyCloudSnapshot(raw:unknown){
  const snapshot=readSnapshot(raw);
  const body={schema:1,texts:snapshot.texts,portals:snapshot.portals,musicRoom:snapshot.musicRoom,
-  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames,gifts:snapshot.gifts,announcement:snapshot.announcement,notification:snapshot.notification};
+  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames,gifts:snapshot.gifts,announcement:snapshot.announcement,notification:snapshot.notification,statistics:snapshot.statistics};
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(body)));
  const revision=Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,'0')).join('');
  if(revision!==snapshot.revision)throw Error('Content checksum mismatch');
@@ -71,6 +72,7 @@ export async function syncCloudContent(){
   Object.assign(personal,snapshot.media);
   cloudAnnouncement=snapshot.announcement;
   initialNotification=snapshot.notification;
+  statisticsEnabled=snapshot.statistics?.enabled===true;
   for(const gift of birthdayConfig.gifts){
    const override=snapshot.gifts?.[gift.id];
    if(!override)continue;
@@ -95,6 +97,14 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
  const endpoint=new URL('content.json',server.replace(/\/?$/,'/'));
  if(endpoint.protocol!=='https:')return;
  let revision='',checking=false,seen='';
+ const session=crypto.randomUUID();
+ async function sendOnlineStatus(){
+  if(!statisticsEnabled||document.hidden)return;
+  const form=new URLSearchParams({session,platform:navigator.platform,screen:screen.width+'x'+screen.height,language:navigator.language});
+  try{await fetch(new URL('statistics',endpoint),{method:'POST',body:form,credentials:'omit',signal:AbortSignal.timeout(4000)})}catch{}
+ }
+ void sendOnlineStatus();
+ window.setInterval(sendOnlineStatus,300000);
  const show=(notice:ReturnType<typeof validateAnnouncement>)=>{
   if(!notice?.enabled||!notice.body.trim())return;
   const key=JSON.stringify([notice.title,notice.body]);
@@ -115,9 +125,17 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
    if(response.status!==304&&response.status!==204&&response.ok){
     const snapshot=await verifyCloudSnapshot(await response.json());
     revision=snapshot.revision;show(snapshot.notification);
+    const enabled=snapshot.statistics?.enabled===true;
+    if(enabled&&!statisticsEnabled){statisticsEnabled=true;void sendOnlineStatus()}else statisticsEnabled=enabled;
    }
   }catch{}finally{checking=false}
  }
  window.setInterval(poll,60000);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll()});
+}
+
+function readStatistics(value:unknown){
+ if(value===undefined)return;
+ if(!value||typeof value!=='object'||!('enabled' in value)||typeof value.enabled!=='boolean')throw Error('Invalid statistics configuration');
+ return {enabled:value.enabled};
 }

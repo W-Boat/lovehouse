@@ -15,6 +15,7 @@ const sections = [
  ['interactions','互动','配置场景点位、反馈和小游戏入口。',[]],
  ['bundled','包内配置','查看随客户端发布的完整配置和点位。',null],
  ['gifts','礼物配置','按礼物 ID 修改内容、HTTPS 配图、坐标 x/y 和落脚点 point。',{}],
+ ['statistics','在线统计','启用后采集 IP、基础设备和访问时间，每 5 分钟更新一次在线状态。',{enabled:false}],
  ['notification','系统通知','游戏运行期间会定期同步。填写标题、正文并启用后发布。',{enabled:false,title:'',body:''}],
  ['announcement','游戏私告','启用后在玩家进入小屋时显示。',{enabled:false,title:'',body:''}],
  ['giftGames','礼物小游戏','以礼物 ID 绑定独立游戏的 HTTPS 地址。',{}],
@@ -28,7 +29,7 @@ const sections = [
 ];
 
 const sectionGroups=[
- ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','notification','bundled','musicRoom','media','portals','all']],
+ ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','notification','statistics','bundled','musicRoom','media','portals','all']],
  ['发布与资源',['history','packages','assets']],
 ];
 const labels=Object.fromEntries(sections.map(([id,label])=>[id,label]));
@@ -41,6 +42,10 @@ const structuredFields={
 };
 const formSections=['texts','giftGames','musicRoom','media',...Object.keys(structuredFields)];
 
+  const statisticsReport=ref(null);
+  async function readStatistics(){
+   try{const response=await fetch(import.meta.env.BASE_URL+'api/statistics',{headers:{Authorization:'Bearer '+token.value.trim()}});if(!response.ok)throw Error('读取失败');statisticsReport.value=await response.json()}catch{statisticsReport.value={error:'暂时无法读取统计'}}
+  }
   const selected=ref('texts'), token=ref(''), draft=ref({}), revision=ref('');
   const bundled=ref({}),baseline=ref({}),summary=ref([]),savedAt=ref(''),draftAvailable=ref(false);
   const storageKey='lovehouse-publisher-draft:'+import.meta.env.BASE_URL;
@@ -335,6 +340,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
     </div>
     <p v-if="!visibleEntries.length" class="empty">{{search?'没有匹配条目':'暂无条目，可新增或导入草稿。'}}</p>
    </div>
+   <template v-else-if="selected==='statistics'"><el-switch :model-value="JSON.parse(text).enabled" active-text="启用统计" @change="value=>text=JSON.stringify({enabled:value})"/><el-button @click="readStatistics">刷新在线统计</el-button><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><el-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions"><el-table-column prop="ip" label="IP"/><el-table-column prop="platform" label="设备"/><el-table-column prop="userAgent" label="客户端" show-overflow-tooltip/><el-table-column prop="enteredAt" label="进入时间"/><el-table-column prop="lastSeenAt" label="最后在线"/></el-table></template></template>
    <el-input v-else-if="selected==='bundled'" :model-value="JSON.stringify(bundled,null,2)" readonly type="textarea" :rows="20"/>
    <el-input v-else v-model="text" type="textarea" :rows="17" resize="vertical" aria-label="配置 JSON" class="code"/>
    <div class="publish"><div class="actions">

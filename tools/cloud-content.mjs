@@ -1,3 +1,4 @@
+import {createStats,validateStats} from './cloud-stats.mjs';
 import {validateGiftOverrides,validateAnnouncement} from '../content/cloud-gifts.mjs';
 import {createBundledCatalog} from './cloud-bundled.mjs';
 import {createAndroidUpdateStore} from './cloud-android-update.mjs';
@@ -16,7 +17,7 @@ import {pathToFileURL} from 'node:url';
 
 const limit = 1_000_000;
 const builtInZones = new Set('room garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora shichahai gulou chaya tianmo tanghulu catcottage highschool musicroom'.split(' '));
-const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames','gifts','announcement','notification']);
+const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames','gifts','announcement','notification','statistics']);
 const jsonHeaders = {'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff'};
 
 function insideFloor([x,y],[[left,top],[right,bottom]]) {
@@ -61,6 +62,7 @@ export function prepareSnapshot(input) {
   gifts: validateGiftOverrides(input.gifts),
   announcement: validateAnnouncement(input.announcement),
   notification: validateAnnouncement(input.notification),
+  statistics: validateStats(input.statistics),
  };
  const revision = createHash('sha256').update(JSON.stringify(body)).digest('hex');
  const json = JSON.stringify({...body,revision});
@@ -170,6 +172,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
  const publicAsset=asset=>({...asset,path:publicPrefix+asset.path});
  const assets=createAssetStore(file+'.assets');
  const packages=createPackageStore(file+'.packages',publicPrefix);
+ const stats=createStats(file);
  const androidUpdate=createAndroidUpdateStore(file+'.android-update');
  let pendingWrite=Promise.resolve();
  const serialize=operation=>{
@@ -192,6 +195,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   try { url = new URL(request.url,'http://localhost') }
   catch { sendJson(response,400,{error:'Invalid request URL'}); return }
   const {pathname} = url;
+  if(pathname==='/statistics'&&request.method==='POST'){await stats.record(request,response);return}
   if(pathname.startsWith('/android-update/')&&['GET','HEAD'].includes(request.method)){
    try{
     if(!await androidUpdate.serve(request,response,pathname.slice('/android-update/'.length)))sendJson(response,404,{error:'No update available'});
@@ -301,6 +305,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
     }catch(error){sendJson(response,400,{error:error.message})}
     return;
    }
+   if(pathname==='/admin/api/statistics'&&request.method==='GET'){try{sendJson(response,200,await stats.summary())}catch{sendJson(response,500,{error:'Unable to read statistics'})}return}
    if(pathname==='/admin/api/bundled'&&request.method==='GET'){
     try{const {baseline,assets}=await bundled.load();sendJson(response,200,{baseline,assets})}
     catch{sendJson(response,503,{error:'Bundled catalog unavailable'})}
