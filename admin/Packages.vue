@@ -1,7 +1,7 @@
 <script setup>
 import {NButton,NCard,NEmpty,NForm,NInput,NProgress,NSwitch,NTabPane,NTabs,NTag} from 'naive-ui';
 import {PublisherAlert,PublisherColumn,PublisherDialog,PublisherFormItem,PublisherOption,PublisherSelect,PublisherTable} from './publisher-components.js';
-import {computed, ref} from 'vue';
+import {computed, ref, onMounted} from 'vue';
 import AndroidUpdate from './AndroidUpdate.vue';
 
 const props=defineProps({token:{type:String,required:true}});
