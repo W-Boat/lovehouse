@@ -176,10 +176,6 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
     key,size>1?Array(size).fill(undefined):size?undefined:key==='id'?'cloud-':'',
    ])));
   }
-  function toggleEditor(){
-   try{collect();form.value=!form.value;refreshText()}
-   catch(error){report(error.message)}
-  }
   form.value=true;
   function report(message,ok=false){status.value=message;success.value=ok}
   let catalogToken='';

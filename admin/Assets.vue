@@ -1,7 +1,7 @@
 <script setup>
 import {NButton,NInput,NPagination,NProgress,NTag} from 'naive-ui';
 import {PublisherAlert,PublisherColumn,PublisherDialog,PublisherOption,PublisherSelect,PublisherTable} from './publisher-components.js';
-import {computed,onBeforeUnmount,ref,watch} from 'vue';
+import {computed,onBeforeUnmount,onMounted,ref,watch} from 'vue';
 
 import {NCard} from 'naive-ui';
 const gallery=ref(true);
@@ -53,6 +53,7 @@ async function load(){
  assets.value=[...online.assets,...(catalog.ok?(await catalog.json()).assets:[])];
  loaded.value=true;
 }
+onMounted(()=>{if(props.token.trim())void run(load)});
 function uploadOne(file){
  return new Promise((resolve,reject)=>{
   const request=new XMLHttpRequest();
@@ -158,9 +159,9 @@ onBeforeUnmount(()=>{disposed=true;uploadRequest?.abort();previewController?.abo
   <div>正在上传 {{uploadIndex}} / {{uploadTotal}} · {{uploadName}}</div><n-progress type="line" :percentage="uploadPercent"/>
  </section>
  <details v-if="uploads.length" class="asset-upload-results"><summary>本次上传结果</summary><div v-for="(item,index) in uploads" :key="index"><n-tag :type="item.ok?'success':'danger'" size="small">{{item.ok?'成功':'失败'}}</n-tag><span>{{item.name}}</span><small>{{item.text}}</small></div></details>
- <div v-if="gallery" class="asset-gallery"><n-card v-for="asset in rows" :key="asset.id" size="small"><button v-if="kind(asset)==='image'" type="button" class="gallery-preview" @click="showPreview(asset)"><img :src="assetUrl(asset)" :alt="asset.name" loading="lazy"></button><strong>{{asset.name}}</strong><p>{{asset.source==='bundled'?'包内':'云端'}} · {{formatSize(asset.bytes)}}</p><n-button size="small" @click="showPreview(asset)">预览</n-button> <n-button size="small" @click="copy(asset)">复制链接</n-button></n-card></div>
+ <div v-if="gallery" class="asset-gallery"><n-card v-for="asset in rows" :key="asset.id" size="small"><button v-if="kind(asset)==='image'" type="button" class="gallery-preview" @click="showPreview(asset)"><img :src="assetUrl(asset)" :alt="asset.name" loading="lazy" decoding="async"></button><strong>{{asset.name}}</strong><p>{{asset.source==='bundled'?'包内':'云端'}} · {{formatSize(asset.bytes)}}</p><n-button size="small" @click="showPreview(asset)">预览</n-button> <n-button size="small" @click="copy(asset)">复制链接</n-button></n-card></div>
  <publisher-table v-else :data="rows" :empty-text="loaded?'没有匹配的素材':'点击刷新列表，读取已上传素材'" class="asset-table">
-  <publisher-column label="素材" min-width="200"><template #default="{row}"><div class="asset-name"><button v-if="kind(row)==='image'" type="button" class="asset-thumbnail" :aria-label="'预览 '+row.name" @click="showPreview(row)"><img :src="assetUrl(row)" alt="" loading="lazy"></button><div><strong>{{row.name}}<small v-if="row.source==='bundled'"> · 包内</small></strong><small>{{labels[kind(row)]}} · {{formatSize(row.bytes)}}</small></div></div></template></publisher-column>
+  <publisher-column label="素材" min-width="200"><template #default="{row}"><div class="asset-name"><button v-if="kind(row)==='image'" type="button" class="asset-thumbnail" :aria-label="'预览 '+row.name" @click="showPreview(row)"><img :src="assetUrl(row)" alt="" loading="lazy" decoding="async"></button><div><strong>{{row.name}}<small v-if="row.source==='bundled'"> · 包内</small></strong><small>{{labels[kind(row)]}} · {{formatSize(row.bytes)}}</small></div></div></template></publisher-column>
   <publisher-column label="链接" min-width="190"><template #default="{row}"><n-input :value="assetUrl(row)" readonly aria-label="素材地址" @focus="event=>event.target.select()"/></template></publisher-column>
   <publisher-column label="操作" width="220"><template #default="{row}"><n-button text @click="showPreview(row)">预览</n-button><n-button text @click="copy(row)">复制</n-button><n-button text @click="inspectReferences(row)">引用</n-button><n-button text type="error" :disabled="busy" v-if="row.source!=='bundled'" @click="selected=row">删除</n-button></template></publisher-column>
  </publisher-table>
