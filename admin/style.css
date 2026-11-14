@@ -158,3 +158,4 @@ body { margin: 0; }
   .top-actions { width: 100%; }
   .top-actions .el-input { flex: 1; width: auto; }
 }
+.naive-admin{min-height:100vh}.naive-sidebar{position:sticky;top:0;height:100vh}.naive-brand{height:64px;display:flex;align-items:center;gap:12px;padding-inline:18px;white-space:nowrap}.naive-header{display:flex;align-items:center;gap:16px;padding:12px 22px;min-height:64px;border-bottom:1px solid #e2e8e4;background:white}.naive-header .top-actions{margin-left:auto}.naive-header .top-actions .n-input{width:min(240px,38vw)}.naive-content{min-height:calc(100vh - 65px);background:#f2f5f2;padding:20px}.stats-switch{display:inline-flex;align-items:center;gap:8px;margin-right:14px}.naive-content .workspace-main{width:100%;max-width:1400px;margin:auto}@media(max-width:720px){.naive-content{padding:10px}.naive-header{padding:8px;gap:5px}.naive-header .identity{display:none}}

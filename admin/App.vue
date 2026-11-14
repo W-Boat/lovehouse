@@ -1,4 +1,6 @@
 <script setup>
+import AdminLayout from './AdminLayout.vue';
+import {NButton,NInput,NTag,NSwitch,NDataTable} from 'naive-ui';
 import Assets from './Assets.vue';
 import Packages from './Packages.vue';
 import History from './History.vue';
@@ -42,6 +44,7 @@ const structuredFields={
 };
 const formSections=['texts','giftGames','musicRoom','media',...Object.keys(structuredFields)];
 
+  const statisticsColumns=[['ip','IP'],['platform','设备'],['userAgent','客户端'],['enteredAt','进入时间'],['lastSeenAt','最后在线']].map(([key,title])=>({key,title,ellipsis:{tooltip:true}}));
   const statisticsReport=ref(null);
   async function readStatistics(){
    try{const response=await fetch(import.meta.env.BASE_URL+'api/statistics',{headers:{Authorization:'Bearer '+token.value.trim()}});if(!response.ok)throw Error('读取失败');statisticsReport.value=await response.json()}catch{statisticsReport.value={error:'暂时无法读取统计'}}
@@ -273,21 +276,14 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
 </script>
 
 <template>
-<header class="top">
- <div class="identity"><span class="mark" aria-hidden="true">小</span><div><strong>生日小屋</strong><small>内容发布后台</small></div></div>
- <div class="top-actions">
-  <el-tag effect="light" :type="authState==='ready'?'success':authState==='error'?'danger':'info'">{{{idle:'访客',checking:'正在验证',ready:'已认证',error:'认证失败'}[authState]}}</el-tag>
-  <el-input v-model="token" type="password" show-password autocomplete="off" placeholder="输入发布令牌" aria-label="发布令牌"/>
- </div>
-</header>
-<main class="workspace">
- <aside aria-label="后台导航">
-  <el-menu :default-active="selected" @select="choose">
-   <el-menu-item-group v-for="[label,ids] in sectionGroups" :key="label" :title="label">
-    <el-menu-item v-for="id in ids" :key="id" :index="id">{{labels[id]}}</el-menu-item>
-   </el-menu-item-group>
-  </el-menu>
- </aside>
+<AdminLayout :groups="sectionGroups" :labels="labels" :selected="selected" @select="choose">
+ <template #header>
+  <div class="identity"><div><strong>{{labels[selected]}}</strong><small>内容发布后台</small></div></div>
+  <div class="top-actions">
+   <n-tag :type="authState==='ready'?'success':authState==='error'?'error':'info'">{{{idle:'访客',checking:'正在验证',ready:'已认证',error:'认证失败'}[authState]}}</n-tag>
+   <n-input v-model:value="token" type="password" show-password-on="click" placeholder="输入发布令牌" :input-props="{autocomplete:'off','aria-label':'发布令牌'}"/>
+  </div>
+ </template>
  <div class="workspace-main">
   <div class="release-summary" aria-label="线上版本">
    <div><span>内容版本</span><strong>{{publicRevision.slice(0,12)||'—'}}</strong></div>
@@ -340,7 +336,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
     </div>
     <p v-if="!visibleEntries.length" class="empty">{{search?'没有匹配条目':'暂无条目，可新增或导入草稿。'}}</p>
    </div>
-   <template v-else-if="selected==='statistics'"><el-switch :model-value="JSON.parse(text).enabled" active-text="启用统计" @change="value=>text=JSON.stringify({enabled:value})"/><el-button @click="readStatistics">刷新在线统计</el-button><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><el-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions"><el-table-column prop="ip" label="IP"/><el-table-column prop="platform" label="设备"/><el-table-column prop="userAgent" label="客户端" show-overflow-tooltip/><el-table-column prop="enteredAt" label="进入时间"/><el-table-column prop="lastSeenAt" label="最后在线"/></el-table></template></template>
+   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch :value="JSON.parse(text).enabled" @update:value="value=>text=JSON.stringify({enabled:value})"/> 启用统计</label><n-button @click="readStatistics">刷新在线统计</n-button><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
    <el-input v-else-if="selected==='bundled'" :model-value="JSON.stringify(bundled,null,2)" readonly type="textarea" :rows="20"/>
    <el-input v-else v-model="text" type="textarea" :rows="17" resize="vertical" aria-label="配置 JSON" class="code"/>
    <div class="publish"><div class="actions">
@@ -352,7 +348,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
    </template>
   </section>
  </div>
-</main>
+</AdminLayout>
  <el-dialog v-model="replaceConfirm" title="载入线上配置？" width="min(440px,94vw)"><p>当前草稿会先保存到本机，然后载入线上内容。</p><template #footer><el-button @click="replaceConfirm=false">取消</el-button><el-button type="primary" @click="saveLocal(true); replaceConfirm=false; request('snapshot')">载入</el-button></template></el-dialog>
  <el-dialog v-model="confirm" title="发布当前草稿？" width="min(440px, 94vw)"><p>玩家下次启动时会同步此配置。</p><p>变更分区 {{summary.map(id=>labels[id]||id).join('、') || '无变更'}}</p><template #footer><el-button @click="confirm=false">取消</el-button><el-button type="primary" @click="confirm=false; request('publish')">确认发布</el-button></template></el-dialog>
  </template>
