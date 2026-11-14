@@ -55,6 +55,7 @@ const themeOverrides={common:{primaryColor:'#28624e',primaryColorHover:'#397d64'
      <IconButton quaternary label="切换后台导航" :icon="menuIconData" :aria-expanded="mobile?drawer:!collapsed" @click="toggle"/>
      <slot name="header"/>
     </header>
+    <div class="publisher-status-banner"><slot name="status"/></div>
     <main class="naive-content"><slot/></main>
    </n-layout>
   </n-layout>

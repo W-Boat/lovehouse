@@ -389,18 +389,20 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    <IconButton label="修改密码" :icon="keyIcon" size="small" @click="passwordOpen=true"/><IconButton label="退出登录" :icon="logoutIcon" size="small" @click="logout"/>
   </div>
  </template>
- <div class="workspace-main">
-  <div class="release-summary" aria-label="线上版本">
-   <div><span>内容版本</span><strong>{{publicRevision.slice(0,12)||'—'}}</strong></div>
-   <div><span>Android 安装包</span><strong>{{publicPackages.android?.version||'—'}}</strong></div>
-   <div><span>Windows 便携包</span><strong>{{publicPackages.windows?.version||'—'}}</strong></div>
+ <template #status>
+  <div class="banner-versions" aria-label="线上版本">
+   <span>内容 <b>{{publicRevision.slice(0,12)||'—'}}</b></span>
+   <span>Android <b>{{publicPackages.android?.version||'—'}}</b></span>
+   <span>Windows <b>{{publicPackages.windows?.version||'—'}}</b></span>
   </div>
+  <div v-if="authState==='checking'" class="banner-item" role="status"><n-spin :size="14"/><span>正在同步配置</span></div>
+  <n-tag v-if="status" size="small" :type="success?'success':'error'">{{status}}</n-tag>
+  <n-tag v-if="conflict" size="small" type="warning">发布基准已变化 <n-button text size="tiny" @click="rebaseDraft">确认基准</n-button></n-tag>
+  <n-tag v-if="draftAvailable" size="small" type="info">有未发布草稿 <n-button text size="tiny" @click="restoreLocal">恢复</n-button><n-button text size="tiny" :disabled="!loaded" @click="discardConfirm=true">放弃</n-button></n-tag>
+  <small v-if="savedAt" class="draft-status">草稿保存于 {{savedAt}}</small>
+ </template>
+ <div class="workspace-main">
   <section class="editor">
-   <div v-if="authState==='checking'" class="admin-loading" role="status"><n-spin size="small"/><span>正在加载线上配置…</span></div>
-   <publisher-alert v-if="conflict" title="草稿与线上版本的基准不同，请核对后确认发布基准。" type="warning" :closable="false"/>
-   <publisher-alert v-if="status" :title="status" :type="success?'success':'error'" :closable="false" show-icon />
-   <publisher-alert v-if="draftAvailable" title="发现本机未发布草稿" type="info" :closable="false"><n-button @click="restoreLocal">恢复草稿</n-button></publisher-alert>
-   <small v-if="savedAt" class="draft-status">本机草稿已保存 {{savedAt}}</small>
    <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div></div>
    <template v-if="selected==='guide'"><Guide/></template>
    <template v-else-if="selected==='packages'">
