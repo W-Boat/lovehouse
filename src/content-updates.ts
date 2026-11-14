@@ -36,9 +36,17 @@ export function mountContentUpdates(parent:HTMLElement){
  element('p',uiCopy('updates.help'));
  const label=element('label',uiCopy('updates.address'));
  const input=element('input','',label);input.id='content-update-url';input.type='url';input.maxLength=2048;input.placeholder='https://';input.value=latest?.url||defaultAndroidUpdateUrl();
- const auto=element('label',' 启动时自动下载并校验资源');auto.id='content-update-auto';auto.hidden=true;
- const autoInput=document.createElement('input');autoInput.type='checkbox';auto.prepend(autoInput);
- autoInput.onchange=()=>sendContentUpdate({action:'set-auto',enabled:autoInput.checked});
+ const auto=element('button','启动时自动下载并校验资源');
+ auto.id='content-update-auto';
+ auto.type='button';
+ auto.className='secondary';
+ auto.hidden=true;
+ auto.setAttribute('aria-label','启动时自动下载并校验资源');
+ auto.onclick=()=>{
+  if(typeof latest?.autoUpdate==='boolean'){
+   sendContentUpdate({action:'set-auto',enabled:!latest.autoUpdate});
+  }
+ };
  const version=element('p');version.id='content-update-version';
  const status=element('output');status.id='content-update-status';status.setAttribute('role','status');
  const progress=element('div');progress.id='content-update-progress';progress.className='content-update-progress';progress.setAttribute('role','progressbar');progress.setAttribute('aria-label',uiCopy('updates.progress'));progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax','100');
@@ -154,7 +162,9 @@ function paint(){
  const status=latest,busy=Boolean(status&&['checking','downloading','installed','busy'].includes(status.phase));
  get('status').textContent=status?.message??uiCopy('updates.idle');
  const auto=get('auto');auto.hidden=!(status?.nativeBase&&currentPlatform()==='android'&&typeof status.autoUpdate==='boolean');
- (auto.querySelector('input') as HTMLInputElement).checked=status?.autoUpdate===true;
+ const autoEnabled=status?.autoUpdate===true;
+ auto.textContent='启动时自动下载并校验资源：'+(autoEnabled?'开启':'关闭');
+ auto.setAttribute('aria-pressed',String(autoEnabled));
  get('version').textContent=status?formatCopy('updates.version',{version:status.version}):'';
  const input=get('url') as HTMLInputElement;
  if(!input.value&&status?.url&&document.activeElement!==input)input.value=status.url;
