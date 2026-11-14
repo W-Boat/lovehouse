@@ -216,3 +216,5 @@ body[data-cloud-offline=true] .game-hud::before{content:'离线';position:absolu
 .frame-loading progress{width:100%;accent-color:#e9b471}
 .system-notification{position:absolute;z-index:79;right:12px;top:calc(60px / var(--ui-scale,1));width:min(340px,calc(100% - 24px));padding:12px;box-sizing:border-box;background:#362b39;color:#fff0cf;border:2px solid #c59863}
 .system-notification p{white-space:pre-wrap;max-height:40vh;overflow:auto;overflow-wrap:anywhere}
+#release-download-status{position:absolute;z-index:10;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:grid;gap:4px;padding:6px 10px;background:#35283bed;color:#fff0cf;font-size:12px;pointer-events:none}
+#release-download-status progress{width:100%;height:6px;accent-color:#e9b471}

@@ -74,7 +74,10 @@ export async function syncCloudContent(){
   cloudAnnouncement=snapshot.announcement;
   initialNotification=snapshot.notification;
   statisticsEnabled=snapshot.statistics?.enabled===true;
-  await prepareReleaseResources(snapshot,endpoint);
+  const resources=prepareReleaseResources(snapshot,endpoint).catch(()=>{});
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  await Promise.race([resources,new Promise<void>(resolve=>{timer=setTimeout(resolve,1400)})]);
+  clearTimeout(timer);
   for(const gift of birthdayConfig.gifts){
    const override=snapshot.gifts?.[gift.id];
    if(!override)continue;

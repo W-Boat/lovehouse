@@ -23,15 +23,14 @@ export async function prepareReleaseResources(snapshot:unknown,server:URL){
  const report=()=>document.dispatchEvent(new CustomEvent('cottage-cloud-progress',{detail:{done,total:urls.size,failed}}));
  report();
  const remaining=[...urls];
- const deadline=Date.now()+12000;
+
  await Promise.all(Array.from({length:Math.min(3,remaining.length)},async()=>{
   while(remaining.length){
    const url=remaining.shift()!;
    try{
-    if(Date.now()>=deadline)throw Error('Startup resource budget exhausted');
     let response=await cache?.match(url);
     if(!response){
-     response=await fetch(url,{credentials:'omit',signal:AbortSignal.timeout(Math.max(1,deadline-Date.now()))});
+     response=await fetch(url,{credentials:'omit',signal:AbortSignal.timeout(120000)});
      if(!response.ok||Number(response.headers.get('content-length'))>16*1024*1024)throw Error('Resource unavailable');
     }
     const reader=response.body?.getReader();
