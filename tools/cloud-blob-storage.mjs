@@ -85,13 +85,19 @@ export function createBucket(config,{probe=false}={}){
    const {getSignedUrl}=await import('@aws-sdk/s3-request-presigner');
    return getSignedUrl(client,new s3.PutObjectCommand({Bucket:bucket,Key:key,ContentLength:size,ContentType:mime,ChecksumSHA256:Buffer.from(sha256,'hex').toString('base64')}),{expiresIn:900,signableHeaders:new Set(['content-length','content-type']),unhoistableHeaders:new Set(['x-amz-checksum-sha256'])});
   },
-  async signDownload(key,name,mime,{head=false}={}){
+  async signDownload(key,name,mime,{head=false,disposition="attachment"}={}){
    await command('HeadObjectCommand',{Key:key});
+   // Some S3 providers accept APK uploads and HEAD but forbid GET. Honor
+   // the configured local fallback instead of redirecting to a known 403.
+   if(name.endsWith('.apk')){
+    const probe=await command('GetObjectCommand',{Key:key,Range:'bytes=0-0'});
+    probe?.Body?.destroy();
+   }
    const {client,s3}=await sdk;
    const {getSignedUrl}=await import('@aws-sdk/s3-request-presigner');
    const operation=head?s3.HeadObjectCommand:s3.GetObjectCommand;
    return getSignedUrl(client,new operation({Bucket:bucket,Key:key,
-    ResponseContentDisposition:'attachment; filename="'+name+'"',ResponseContentType:mime}),{expiresIn:900});
+    ResponseContentDisposition:disposition+'; filename="'+name+'"',ResponseContentType:mime}),{expiresIn:900});
   },
   async put(key,body,size,mime){
    const uploaded=await command('PutObjectCommand',{Key:key,Body:body,ContentLength:size,ContentType:mime},300000);

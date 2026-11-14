@@ -332,7 +332,12 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
    const id=pathname.slice('/media/'.length);
    if(isAssetId(id)){
     try {
-     const data=await assets.read(id);
+     const data=await assets.download(id,{head:request.method==='HEAD'});
+     if(data?.location){
+      response.writeHead(302,{Location:data.location,'Cache-Control':'private, no-store',
+       'Access-Control-Allow-Origin':'*','Referrer-Policy':'no-referrer','Content-Length':'0'}).end();
+      return;
+     }
      if(data){
       const total=data.bytes.length;
       const html=id.endsWith('.html');

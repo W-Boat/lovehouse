@@ -101,6 +101,14 @@ export function createAndroidUpdateStore(directory,bucket,rules){
   if(!target)return false;
   const size=hash?await storage.size(hash,target):await stat(target).then(info=>info.size).catch(error=>{if(error.code!=='ENOENT')throw error});
   if(size===undefined)return false;
+  if(hash){
+   const location=await storage.downloadUrl(hash,target,size,hash,'application/octet-stream',{head:request.method==='HEAD'});
+   if(location){
+    response.writeHead(302,{Location:location,'Cache-Control':'private, no-store',
+     'Access-Control-Allow-Origin':'*','Referrer-Policy':'no-referrer','Content-Length':'0'}).end();
+    return true;
+   }
+  }
   const body=request.method==='HEAD'?undefined:hash?await storage.stream(hash,target,size):createReadStream(target);
   response.writeHead(200,{'Content-Type':hash?'application/octet-stream':'application/json',
    'Content-Length':size,'Cache-Control':hash?'public, max-age=31536000, immutable':'no-store',

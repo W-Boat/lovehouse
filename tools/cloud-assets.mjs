@@ -105,6 +105,14 @@ export function createAssetStore(directory,bucket,rules) {
    await rm(record(id));
    return true;
   },
+  async download(id,{head=false}={}){
+   const asset=await get(id);
+   if(!asset)return;
+   const mime=formats.get(id.split('.').at(-1));
+   const location=await blobs.downloadUrl(id,blob(id),asset.bytes,id,mime,{head,disposition:'inline'});
+   if(location)return {location,mime};
+   return {bytes:await blobs.bytes(id,blob(id),asset.bytes),mime};
+  },
   async read(id){
    const asset=await get(id);
    if(!asset)return;
