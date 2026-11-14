@@ -5,6 +5,7 @@ import {mountContentUpdates,sendContentUpdate} from './content-updates';
 import {drawClimateView} from './climate-art';
 import {isSeatItem} from './item-category';
 import {uiCopy,formatCopy,wardrobeOptionIds,settingsTabCopyIds} from '../content/ui-copy';
+import {preparedResource} from './release-resources';
 import {installRoundMinimap} from './round-minimap';
 import {renderCalendarPanel,updateCalendarPanel} from './calendar-ui';
 import {calendarSnapshot,clockLabel,weekdayName,seasonNames,weatherNames,periodNames,type CalendarSnapshot} from './calendar';
@@ -40,14 +41,14 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
   if(!scene.entered||scene.transitioning||ctx.canUse&&!ctx.canUse())return;
   const z=selected??scene.zone;
   const world=worlds[z]??worlds.room;
-  const retainedMap=document.querySelector<HTMLElement>('.world-map');
+  const retainedMap=$('modal-backdrop').classList.contains('hidden')?null:document.querySelector<HTMLElement>('.world-map');
   const nodes=retainedMap?'':(Object.keys(worlds) as Zone[]).map(id=>{
    const entry=worlds[id];
    const current=id===scene.zone;
    const visited=save.cheat||save.visited.includes(id);
    const status=current?'map.current':visited?'map.visited':'map.unvisited';
    return `<button class="world-node ${current?'current':''} ${visited?'visited':''}" id="zone-${id}" aria-pressed="${id===z}">
-    <img loading="lazy" decoding="async" width="160" height="107" src="${esc(entry.backgroundUrl??assetUrl('map-thumbnails/'+entry.texture+'.webp'))}" alt="">
+    <img loading="lazy" decoding="async" width="160" height="107" src="${esc((entry.backgroundUrl?preparedResource(entry.backgroundUrl):undefined)??assetUrl('map-thumbnails/'+entry.texture+'.webp'))}" alt="">
     ${current?`<span class="map-avatars"><img src="${scene.avatar('girl')}" alt="${esc(save.names.girl)}"><img src="${scene.avatar('boy')}" alt="${esc(save.names.boy)}"></span>`:''}
     <b>${esc(entry.name)}</b><small>${esc(isSnack(id)?formatCopy('bag.portions',{count:save.snackPortions[id]}):uiCopy(status))}</small>${mapProgress(id)}
    </button>`;
@@ -96,6 +97,7 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
   // The canvas can rotate and scale independently of the map's own coordinate system.
   for(const id of Object.keys(worlds)){
    const node=$('zone-'+id);
+   if(!node)continue;
    positions.set(id,{x:node.offsetLeft+node.offsetWidth/2,y:node.offsetTop+node.offsetHeight/2});
   }
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');

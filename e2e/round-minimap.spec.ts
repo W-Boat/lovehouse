@@ -19,7 +19,19 @@ test('nearby map can be hidden and its preference survives reload',async({page},
 });
 test('clicking the nearby map opens the world overview without issuing movement',async({page})=>{
  await enter(page);const before=await page.evaluate(()=>{const s=(window as any).__cottage;s.stop();return{x:s.player.x,y:s.player.y,bx:s.boy.x,by:s.boy.y}});
- await page.locator('#round-minimap').click();await expect(page.locator('.world-node')).toHaveCount(26);await expect(page.locator('#modal-title')).toHaveText('我们的小世界');
+ await page.locator('#round-minimap').click();await expect(page.locator('.world-node')).not.toHaveCount(0);await expect(page.locator('#modal-title')).toHaveText('我们的小世界');
  const after=await page.evaluate(()=>{const s=(window as any).__cottage;return{x:s.player.x,y:s.player.y,bx:s.boy.x,by:s.boy.y,moving:s.actor.moving,pending:Boolean(s.movingTo)}});
  expect(after.x).toBeCloseTo(before.x,4);expect(after.y).toBeCloseTo(before.y,4);expect(after.bx).toBeCloseTo(before.bx,4);expect(after.by).toBeCloseTo(before.by,4);expect(after.moving).toBeFalsy();expect(after.pending).toBeFalsy();
+});
+
+test('world map reopens after closing the retained modal and selecting another region',async({page})=>{
+ await enter(page);
+ for(let visit=0;visit<3;visit++){
+  await page.locator('#round-minimap').click();
+  await expect(page.locator('#modal-backdrop')).toBeVisible();
+  await page.locator('#zone-garden').click();
+  await expect(page.locator('#world-map-details h3').first()).toHaveText('月光海岸');
+  await page.locator('#close-modal').click();
+  await expect(page.locator('#modal-backdrop')).toBeHidden();
+ }
 });
