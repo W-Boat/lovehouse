@@ -1,4 +1,6 @@
 fn main() {
+    println!("cargo:rerun-if-env-changed=GITHUB_SHA");
+    println!("cargo:rerun-if-env-changed=LOVEHOUSE_CONTENT_SERVER");
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
     println!("cargo:rustc-env=LOVEHOUSE_BUILD_EPOCH={}", now);
     let server = std::env::var("LOVEHOUSE_CONTENT_SERVER").ok().filter(|s| !s.is_empty())
