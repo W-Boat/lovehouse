@@ -27,3 +27,7 @@ selection.json 按 API 填 platform 和 path，参见 packages 输出。通用 r
 HTML 可直接上传并绑定沙盒网页或小游戏入口。ZIP 作为文件下载与预缓存，当前不会自动解压成可执行网页。多文件 HTML 应先提供可访问的资源链接，或使用后续原生版本打包。
 
 CLI Skill 下载在后台项目文档页。开工先读 Agent.MD，每次交付更新 HANDOFF.md。
+
+定时开放用 `opening-get` 查看，用 `opening-set rules.json` 保存。规则文件包含 `enabled`、ISO 8601 格式的 `opensAt` 和 `allowIps` 数组。开放规则立即生效，独立于内容草稿和版本回滚。IP 白名单只在鉴权后的后台和 CLI 可见。
+
+GitHub runner 能直连发布服务器时，可在仓库变量中设置 `LOVEHOUSE_DIRECT_PUBLISH=true`。当前部署可以在能同时访问 GitHub 和发布服务器的电脑上运行 `python tools/actions_release_relay.py --sha 完整提交号 --token-file 本机令牌文件`。工具等待该提交的构件，分段读取并发布 Android、Windows 与签名资源更新。令牌从本机文件读取。

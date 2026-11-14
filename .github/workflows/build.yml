@@ -108,6 +108,7 @@ jobs:
             文案.md
             需替换内容.md
       - name: Package and publish Windows portable
+        if: ${{ vars.LOVEHOUSE_DIRECT_PUBLISH == 'true' }}
         shell: pwsh
         env:
           LOVEHOUSE_PUBLISHER_TOKEN: ${{ secrets.LOVEHOUSE_PUBLISHER_TOKEN }}
