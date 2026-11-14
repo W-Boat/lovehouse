@@ -60,7 +60,7 @@ async function sendFile(path,filename,headers={}){
 }
 const help={
  usage:'node tools/cloud-cli.mjs COMMAND [arguments] [--env .ENV] [--base HTTPS_BASE] [--token-file FILE] [--if-match REVISION] [--output FILE]',
- commands:{'opening-get':'查看定时开放规则','opening-set INPUT.json':'保存定时开放规则，文件包含 enabled、opensAt、allowIps',version:'CLI、Skill 与源码版本',
+ commands:{'storage-set INPUT.json':'保存存储阈值与路由规则',storage:'查看发布服务器的存储模式','opening-get':'查看定时开放规则','opening-set INPUT.json':'保存定时开放规则，文件包含 enabled、opensAt、allowIps',version:'CLI、Skill 与源码版本',
   snapshot:'读取线上配置',catalog:'全部包内素材和配置',assets:'素材列表',stats:'去重在线统计',
   history:'远程发布历史','history-show REVISION':'读取历史配置',packages:'安装包与历史','update-manifest':'公开签名资源清单',
   'check INPUT.json':'本地完整校验','publish INPUT.json --if-match REVISION':'校验并发布全部配置',
@@ -79,9 +79,14 @@ try{
   print({name:'lovehouse-cli',version:versions.cli,skillVersion:versions.skill,revision:git.status===0?git.stdout.trim():'unknown'});process.exit(0);
  }
  if(!command||command==='help'){print(help);process.exit(0)}
- const reads={snapshot:'snapshot',catalog:'bundled',assets:'assets',stats:'statistics','opening-get':'opening',history:'history',packages:'packages'};
+ const reads={snapshot:'snapshot',catalog:'bundled',assets:'assets',stats:'statistics',storage:'storage','opening-get':'opening',history:'history',packages:'packages'};
  let result;
  if(command in reads){requireArgs(0);result=await request('GET','admin/api/'+reads[command])}
+ else if(command==='storage-set'){
+  requireArgs(1);
+  const {rules:current}=await request('GET','admin/api/storage');
+  result=await request('POST','admin/api/storage',JSON.stringify({current,next:await getJson(args[0])}),{'Content-Type':'application/json'});
+ }
  else if(command==='opening-set'){
   requireArgs(1);
   const current=await request('GET','admin/api/opening');

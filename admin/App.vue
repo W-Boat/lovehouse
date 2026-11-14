@@ -10,6 +10,7 @@ import logoutIcon from '@iconify-icons/mdi/logout';
 import refreshIcon from '@iconify-icons/mdi/refresh';
 import {NInputNumber} from 'naive-ui';
 import {PublisherAlert,PublisherDialog} from './publisher-components.js';
+const StorageRules=defineAsyncComponent(()=>import('./StorageRules.vue'));
 const OpeningRules=defineAsyncComponent(()=>import('./OpeningRules.vue'));
 const Guide=defineAsyncComponent({loader:()=>import('./Guide.vue'),loadingComponent:PageLoading,delay:120});
 import AdminLayout from './AdminLayout.vue';
@@ -42,6 +43,7 @@ const sections = [
  ['portals','传送门','配置桃源乡旁的两个网页入口。',[]],
  ['history','发布历史','查看历史、导入旧稿或回滚线上配置。',null],
  ['guide','项目文档','开发方法、发布 CLI、架构和构建说明。',null],
+ ['storage','存储规则','设置大小阈值以及上传、下载的首选和备用位置。',null],
  ['packages','安装包','发布已构建的客户端，并提供下载入口。',null],
  ['assets','素材库','上传图片、音频和歌词，复制链接到发布配置。',null],
  ['all','配置总览','按栏目查看和修改配置。',{}],
@@ -49,7 +51,7 @@ const sections = [
 
 const sectionGroups=[
  ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','notification','opening','statistics','bundled','musicRoom','media','portals','all']],
- ['发布与资源',['history','packages','assets','resources']],
+ ['发布与资源',['history','packages','assets','resources','storage']],
  ['帮助',['guide']],
 ];
 const labels=Object.fromEntries(sections.map(([id,label])=>[id,label]));
@@ -68,6 +70,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   const durationLabel=seconds=>{const minutes=Math.floor((seconds??0)/60);return minutes>=60?Math.floor(minutes/60)+' 小时 '+minutes%60+' 分钟':minutes+' 分钟'};
   const statisticsColumns=[['ip','IP'],['platform','设备'],['userAgent','客户端'],['visits','进入次数'],['enteredAt','进入时间'],['lastSeenAt','最后在线']].map(([key,title])=>({key,title,ellipsis:{tooltip:true}})).concat([{key:'estimatedSeconds',title:'估算在线时长',render:row=>durationLabel(row.estimatedSeconds)}]);
   const statisticsReport=ref(null);
+  const storageMode=ref('');
   async function readStatistics(){
    try{const response=await fetch(import.meta.env.BASE_URL+'api/statistics',{headers:{Authorization:'Bearer '+token.value.trim()}});if(!response.ok)throw Error('读取失败');statisticsReport.value=await response.json()}catch{statisticsReport.value={error:'暂时无法读取统计'}}
   }
@@ -327,6 +330,10 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     loaded.value=true;authState.value='ready';
     report('已载入线上配置。',true);
     void readBundled();
+    storageMode.value='';
+    void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+token.value.trim()},signal:controller.signal,cache:'no-store'})
+     .then(async response=>{if(response.ok&&!controller.signal.aborted)storageMode.value=(await response.json()).mode})
+     .catch(()=>{});
    }catch(error){
     if(controller.signal.aborted)return;
     authState.value='error';report(error.message);
@@ -405,6 +412,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    <span>内容 <b>{{publicRevision.slice(0,12)||'—'}}</b></span>
    <span>Android <b>{{publicPackages.android?.version||'—'}}</b></span>
    <span>Windows <b>{{publicPackages.windows?.version||'—'}}</b></span>
+   <span v-if="storageMode">存储 <b>{{storageMode==='s3'?'对象存储':'本地磁盘'}}</b></span>
   </div>
   <div v-if="authState==='checking'" class="banner-item" role="status"><n-spin :size="14"/><span>正在同步配置</span></div>
   <n-tag v-if="status" size="small" :type="success?'success':'error'">{{status}}</n-tag>
@@ -416,6 +424,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   <section class="editor">
    <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div></div>
    <template v-if="selected==='guide'"><Guide/></template>
+   <StorageRules v-else-if="selected==='storage'" :token="token"/>
    <OpeningRules v-else-if="selected==='opening'" :token="token"/>
    <template v-else-if="selected==='packages'">
     <Packages :token="token" @updated="refreshPublic"/>

@@ -1,6 +1,7 @@
 import {createHash,randomUUID} from 'node:crypto';
-import {createReadStream,createWriteStream} from 'node:fs';
-import {mkdir,readFile,readdir,rename,rm,stat,writeFile} from 'node:fs/promises';
+import {createWriteStream} from 'node:fs';
+import {mkdir,readFile,readdir,rename,rm,writeFile} from 'node:fs/promises';
+import {createBlobStore} from './cloud-blob-storage.mjs';
 import {join} from 'node:path';
 import {Transform} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
@@ -12,7 +13,8 @@ const formats={
 export const packageLimit=600*1024*1024;
 export const isPackagePlatform=value=>Object.hasOwn(formats,value);
 
-export function createPackageStore(directory,publicPrefix){
+export function createPackageStore(directory,publicPrefix,bucket,rules){
+ const blobs=createBlobStore('packages',bucket,rules);
  const manifest=join(directory,'packages.json');
  async function list(){
   try{return JSON.parse(await readFile(manifest,'utf8'))}
@@ -40,7 +42,8 @@ export function createPackageStore(directory,publicPrefix){
   const entry=(await history()).find(row=>row.platform===platform&&row.path===path);
   if(!entry)return {};
   delete entry.current;
-  await stat(join(directory,entry.sha256+'.'+formats[platform].extension));
+  const id=entry.sha256+'.'+formats[platform].extension;
+  if(await blobs.size(id,join(directory,id))!==entry.bytes)return {};
   await writeCatalog({...current,[platform]:entry});
   return {entry};
  }
@@ -64,13 +67,13 @@ export function createPackageStore(directory,publicPrefix){
    await pipeline(request.iterator({destroyOnReturn:false}),meter,createWriteStream(temporary,{flags:'wx'}));
    if(header.toString('hex')!=='504b0304')throw Error('Expected an APK or ZIP archive');
    const sha256=hash.digest('hex');
+   const id=sha256+'.'+format.extension;
+   await blobs.putFile(id,join(directory,id),temporary,bytes,format.mime);
    return await serialize(async()=>{
     const previous=await list();
     const name=releaseName(platform,version);
     const entry={platform,version,name,bytes,sha256,publishedAt:new Date().toISOString(),
      path:publicPrefix+'/packages/'+sha256+'/'+name};
-    const blob=join(directory,sha256+'.'+format.extension);
-    if(previous[platform]?.sha256!==sha256)await rename(temporary,blob);
     if(previous[platform])await writeFile(releasePath(previous[platform]),JSON.stringify(previous[platform]));
     await writeFile(releasePath(entry),JSON.stringify(entry));
     await writeCatalog({...previous,[platform]:entry});
@@ -84,26 +87,29 @@ export function createPackageStore(directory,publicPrefix){
   const [,sha256,name,platform,extension]=match;
   const format=formats[platform];
   if(format.extension!==extension)return false;
-  const blob=join(directory,sha256+'.'+extension);
-  let info;
-  try{info=await stat(blob)}catch(error){if(error.code==='ENOENT')return false;throw error}
-  let start=0,end=info.size-1,status=200;
+  const id=sha256+'.'+extension,blob=join(directory,id);
+  const size=await blobs.size(id,blob);
+  if(size===undefined)return false;
+  let start=0,end=size-1,status=200;
   const headers={'Content-Type':format.mime,'Content-Disposition':'attachment; filename="'+name+'"',
    'X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=86400','Accept-Ranges':'bytes'};
   if(request.headers.range){
    const range=/^bytes=(\d*)-(\d*)$/.exec(request.headers.range);
    if(range?.[1]){start=Number(range[1]);if(range[2])end=Math.min(end,Number(range[2]))}
    else if(range?.[2])start=Math.max(0,info.size-Number(range[2]));
-   else start=info.size;
+   else start=size;
    if(start>end||!Number.isSafeInteger(start)){
-    response.writeHead(416,{'Content-Range':'bytes */'+info.size}).end();return true;
+    response.writeHead(416,{'Content-Range':'bytes */'+size}).end();return true;
    }
-   status=206;headers['Content-Range']='bytes '+start+'-'+end+'/'+info.size;
+   status=206;headers['Content-Range']='bytes '+start+'-'+end+'/'+size;
   }
   headers['Content-Length']=end-start+1;
+  let body;
+  try{if(request.method!=='HEAD')body=await blobs.stream(id,blob,size,status===206?{start,end}:undefined)}
+  catch(error){if(error.code==='ENOENT')return false;throw error}
   response.writeHead(status,headers);
-  if(request.method==='HEAD')response.end();
-  else await pipeline(createReadStream(blob,{start,end}),response);
+  if(body)await pipeline(body,response);
+  else response.end();
   return true;
  }
  return {list,history,select,save,serve};

@@ -4,6 +4,7 @@ import {clientIp,createStats,validateStats} from './cloud-stats.mjs';
 import {validateGiftOverrides,validateAnnouncement} from '../content/cloud-gifts.mjs';
 import {createBundledCatalog} from './cloud-bundled.mjs';
 import {createAndroidUpdateStore} from './cloud-android-update.mjs';
+import {createBucket,defaultStorageRules,validateStorageRules} from './cloud-blob-storage.mjs';
 import {createPackageStore,isPackagePlatform} from './cloud-packages.mjs';
 import {validateCloudScenes} from '../content/cloud-scenes.mjs';
 import {validatePortalUrl} from '../content/cloud-portal-url.mjs';
@@ -199,15 +200,20 @@ function validateOpening(value){
 const assetTypes = new Map([['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8'],['svg','image/svg+xml'],['png','image/png'],['webp','image/webp'],['woff2','font/woff2'],['zip','application/zip']]);
 const adminDir = new URL('../admin/dist/',import.meta.url);
 
-export function createContentHandler({file,token,publicPrefix='',bundledDirectory,bundledCatalog}) {
+export function createContentHandler({file,token,publicPrefix='',bundledDirectory,bundledCatalog,bucket=createBucket()}) {
  if(!/^(?:\/[a-zA-Z0-9_-]+)*$/.test(publicPrefix))throw Error('Invalid LOVEHOUSE_PUBLIC_PREFIX');
  const bundled=createBundledCatalog({publicPrefix,directory:bundledDirectory,catalog:bundledCatalog});
  const publicAsset=asset=>({...asset,path:publicPrefix+asset.path});
- const assets=createAssetStore(file+'.assets');
- const packages=createPackageStore(file+'.packages',publicPrefix);
+ const storageFile=file+'.storage.json';
+ const readStorageRules=async()=>{
+  try{return validateStorageRules(JSON.parse(await readFile(storageFile,'utf8')))}
+  catch(error){if(error.code==='ENOENT')return defaultStorageRules;throw error}
+ };
+ const assets=createAssetStore(file+'.assets',bucket,readStorageRules);
+ const packages=createPackageStore(file+'.packages',publicPrefix,bucket,readStorageRules);
  const stats=createStats(file);
  const claimAnnouncement=createAnnouncementClaims(file);
- const androidUpdate=createAndroidUpdateStore(file+'.android-update');
+ const androidUpdate=createAndroidUpdateStore(file+'.android-update',bucket,readStorageRules);
  const loginUser=process.env.LOVEHOUSE_ADMIN_USER;
  const loginHash=process.env.LOVEHOUSE_ADMIN_PASSWORD_HASH;
  const loginSalt=process.env.LOVEHOUSE_ADMIN_PASSWORD_SALT;
@@ -411,6 +417,21 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
     try{
      const entry=await packages.save(platform,url.searchParams.get('version')??'',request,serialize);
      sendJson(response,201,entry);
+    }catch(error){sendJson(response,400,{error:error.message})}
+    return;
+   }
+   if(pathname==='/admin/api/storage'&&['GET','POST'].includes(request.method)){
+    const mode=bucket?'s3':'local';
+    try{
+     if(request.method==='GET'){sendJson(response,200,{mode,rules:await readStorageRules()});return}
+     const {current,next}=await readJson(request);
+     const expected=validateStorageRules(current),rules=validateStorageRules(next);
+     const saved=await serialize(async()=>{
+      if(JSON.stringify(expected)!==JSON.stringify(await readStorageRules()))return false;
+      await saveSnapshot(storageFile,JSON.stringify(rules));
+      return true;
+     });
+     sendJson(response,saved?200:412,saved?{mode,rules}:{error:'存储路由已更新，请重新读取'});
     }catch(error){sendJson(response,400,{error:error.message})}
     return;
    }

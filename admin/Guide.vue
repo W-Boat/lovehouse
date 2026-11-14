@@ -3,6 +3,7 @@ import MarkdownIt from 'markdown-it';
 import {NTabs,NTabPane,NCard,NButton,NIcon} from 'naive-ui';
 import downloadIcon from '@iconify-icons/mdi/download-outline';
 const skillUrl=import.meta.env.BASE_URL+'assets/lovehouse-skill.zip';
+import storage from '../docs/对象存储.md?raw';
 import dynamicScenes from '../docs/动态场景与热补丁.md?raw';
 import fullCli from '../docs/完整发布CLI.md?raw';
 import architecture from './guide/architecture.md?raw';
@@ -11,7 +12,7 @@ import cli from './guide/cli.md?raw';
 import actions from './guide/actions.md?raw';
 import agent from './guide/Agent.MD?raw';
 
-const pages=[['dynamic','动态场景与补丁',dynamicScenes],['full-cli','完整 CLI',fullCli],['development','开发方法',development],['cli','发布 CLI',cli],['architecture','架构与模块',architecture],['actions','GitHub Actions',actions],['agent','Agent.MD',agent]];
+const pages=[['storage','对象存储',storage],['dynamic','动态场景与补丁',dynamicScenes],['full-cli','完整 CLI',fullCli],['development','开发方法',development],['cli','发布 CLI',cli],['architecture','架构与模块',architecture],['actions','GitHub Actions',actions],['agent','Agent.MD',agent]];
 const markdown=new MarkdownIt({html:false,linkify:true});
 const renderedPages=pages.map(([key,title,source])=>({key,title,source,html:markdown.render(source)}));
 </script>

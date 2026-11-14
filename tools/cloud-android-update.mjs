@@ -1,6 +1,7 @@
 import {createHash,randomUUID,verify,X509Certificate} from 'node:crypto';
 import {createReadStream,createWriteStream} from 'node:fs';
 import {mkdir,readFile,rename,rm,stat,writeFile} from 'node:fs/promises';
+import {createBlobStore} from './cloud-blob-storage.mjs';
 import {join} from 'node:path';
 import {Transform} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
@@ -32,7 +33,8 @@ wYLnU64h0YIlvyW8oU69N0vJ+zAC+XgJzJw9LkZ+zarsIOzSV0MyPxAYz9UcdYe+
 const digestPattern=/^[a-f0-9]{64}$/;
 const fileLimit=200_000_000;
 const manifestLimit=3_000_000;
-export function createAndroidUpdateStore(directory){
+export function createAndroidUpdateStore(directory,bucket,rules){
+ const storage=createBlobStore('android-update/blobs',bucket,rules);
  const blobs=join(directory,'blobs');
  const current=join(directory,'update.json');
  async function saveBlob(hash,request){
@@ -49,7 +51,7 @@ export function createAndroidUpdateStore(directory){
   try{
    await pipeline(request.iterator({destroyOnReturn:false}),meter,createWriteStream(temporary,{flags:'wx'}));
    if(digest.digest('hex')!==hash)throw Error('资源 SHA-256 不匹配');
-   await rename(temporary,target);
+   await storage.putFile(hash,target,temporary,bytes,'application/octet-stream');
   }finally{await rm(temporary,{force:true})}
  }
  function payload(envelope){
@@ -79,8 +81,8 @@ export function createAndroidUpdateStore(directory){
    if(name.includes('\\')||name.includes(':')||name.split('/').some(part=>!part||part.startsWith('.'))||
       !file||typeof file.sha256!=='string'||!digestPattern.test(file.sha256)||!Number.isSafeInteger(file.bytes)||file.bytes<0||file.bytes>fileLimit||
       (total+=file.bytes)>700_000_000)throw Error('无效资源条目 '+name);
-   const info=await stat(join(blobs,file.sha256)).catch(error=>{if(error.code==='ENOENT')return null;throw error});
-   if(info?.size!==file.bytes)throw Error('资源缺失或大小不匹配 '+name);
+   const size=await storage.size(file.sha256,join(blobs,file.sha256));
+   if(size!==file.bytes)throw Error('资源缺失或大小不匹配 '+name);
   }
   return serialize(async()=>{
    let old;
@@ -97,13 +99,14 @@ export function createAndroidUpdateStore(directory){
   const hash=path.match(/^blobs\/([a-f0-9]{64})$/)?.[1];
   const target=hash?join(blobs,hash):path==='update.json'?current:null;
   if(!target)return false;
-  const info=await stat(target).catch(error=>{if(error.code==='ENOENT')return null;throw error});
-  if(!info)return false;
+  const size=hash?await storage.size(hash,target):await stat(target).then(info=>info.size).catch(error=>{if(error.code!=='ENOENT')throw error});
+  if(size===undefined)return false;
+  const body=request.method==='HEAD'?undefined:hash?await storage.stream(hash,target,size):createReadStream(target);
   response.writeHead(200,{'Content-Type':hash?'application/octet-stream':'application/json',
-   'Content-Length':info.size,'Cache-Control':hash?'public, max-age=31536000, immutable':'no-store',
+   'Content-Length':size,'Cache-Control':hash?'public, max-age=31536000, immutable':'no-store',
    'X-Content-Type-Options':'nosniff'});
-  if(request.method==='HEAD')response.end();
-  else await pipeline(createReadStream(target),response);
+  if(body)await pipeline(body,response);
+  else response.end();
   return true;
  }
  return {saveBlob,publish,serve};

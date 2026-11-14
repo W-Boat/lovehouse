@@ -1,5 +1,6 @@
 import {createHash, randomUUID} from 'node:crypto';
 import {mkdir, readdir, readFile, rename, rm, writeFile} from 'node:fs/promises';
+import {createBlobStore} from './cloud-blob-storage.mjs';
 import {join} from 'node:path';
 
 export const assetLimit = 16 * 1024 * 1024;
@@ -63,7 +64,8 @@ export async function readAssetBody(request) {
  return Buffer.concat(chunks,bytes);
 }
 
-export function createAssetStore(directory) {
+export function createAssetStore(directory,bucket,rules) {
+ const blobs=createBlobStore('media',bucket,rules);
  const blob = id => join(directory,id);
  const record = id => blob(id)+'.json';
  async function get(id) {
@@ -91,7 +93,7 @@ export function createAssetStore(directory) {
    await mkdir(directory,{recursive:true});
    const staged=record(asset.id)+'.'+randomUUID()+'.part';
    try {
-    await writeFile(blob(asset.id),bytes);
+    await blobs.putBytes(asset.id,blob(asset.id),bytes,asset.mime);
     await writeFile(staged,JSON.stringify(asset),{flag:'wx'});
     await rename(staged,record(asset.id));
    }finally{await rm(staged,{force:true})}
@@ -99,13 +101,14 @@ export function createAssetStore(directory) {
   },
   async remove(id){
    if(!await get(id))return false;
+   await blobs.remove(id,blob(id));
    await rm(record(id));
-   await rm(blob(id),{force:true});
    return true;
   },
   async read(id){
-   if(!await get(id))return;
-   return {bytes:await readFile(blob(id)),mime:formats.get(id.split('.').at(-1))};
+   const asset=await get(id);
+   if(!asset)return;
+   return {bytes:await blobs.bytes(id,blob(id),asset.bytes),mime:formats.get(id.split('.').at(-1))};
   },
  };
 }
