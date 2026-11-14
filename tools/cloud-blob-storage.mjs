@@ -79,6 +79,12 @@ export function createBucket(config,{probe=false}={}){
   }
  }
  return {
+  async signUpload(key,size,mime,sha256){
+   await command('HeadObjectCommand',{Key:key});
+   const {client,s3}=await sdk;
+   const {getSignedUrl}=await import('@aws-sdk/s3-request-presigner');
+   return getSignedUrl(client,new s3.PutObjectCommand({Bucket:bucket,Key:key,ContentLength:size,ContentType:mime,ChecksumSHA256:Buffer.from(sha256,'hex').toString('base64')}),{expiresIn:900,signableHeaders:new Set(['content-length','content-type']),unhoistableHeaders:new Set(['x-amz-checksum-sha256'])});
+  },
   async put(key,body,size,mime){
    const uploaded=await command('PutObjectCommand',{Key:key,Body:body,ContentLength:size,ContentType:mime},300000);
    if(!uploaded)throw Error('Bucket unavailable');

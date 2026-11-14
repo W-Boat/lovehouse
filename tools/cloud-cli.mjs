@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {readFile,writeFile,stat} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {createReadStream} from 'node:fs';
 import {basename} from 'node:path';
 import {Readable} from 'node:stream';
@@ -46,7 +47,7 @@ async function request(method,path,body,headers={}){
  if(expected!==undefined)headers['If-Match']=JSON.stringify(expected==='new'?'':expected);
  const response=await fetch(url,{
   method,body,headers:{...(token?{Authorization:'Bearer '+token}:{}),...headers},
-  redirect:'error',signal:AbortSignal.timeout(binary||command==='package-upload'?300000:30000),
+  redirect:'error',signal:AbortSignal.timeout(binary||['package-upload','package-direct'].includes(command)?300000:30000),
   ...(body instanceof Readable?{duplex:'half'}:{}),
  });
  if(!response.ok)throw Error('HTTP '+response.status+' '+(await response.text()).slice(0,1000));
@@ -60,7 +61,7 @@ async function sendFile(path,filename,headers={}){
 }
 const help={
  usage:'node tools/cloud-cli.mjs COMMAND [arguments] [--env .ENV] [--base HTTPS_BASE] [--token-file FILE] [--if-match REVISION] [--output FILE]',
- commands:{'bucket-get':'查看储存桶设置（隐藏凭据）','bucket-test INPUT.json':'测试储存桶读写和清理','bucket-set INPUT.json':'验证并保存储存桶连接','storage-set INPUT.json':'保存存储阈值与路由规则',storage:'查看发布服务器的存储模式','opening-get':'查看定时开放规则','opening-set INPUT.json':'保存定时开放规则，文件包含 enabled、opensAt、allowIps',version:'CLI、Skill 与源码版本',
+ commands:{'package-direct android|windows VERSION FILE':'直传私有桶，服务端校验后发布','bucket-get':'查看储存桶设置（隐藏凭据）','bucket-test INPUT.json':'测试储存桶读写和清理','bucket-set INPUT.json':'验证并保存储存桶连接','storage-set INPUT.json':'保存存储阈值与路由规则',storage:'查看发布服务器的存储模式','opening-get':'查看定时开放规则','opening-set INPUT.json':'保存定时开放规则，文件包含 enabled、opensAt、allowIps',version:'CLI、Skill 与源码版本',
   snapshot:'读取线上配置',catalog:'全部包内素材和配置',assets:'素材列表',stats:'去重在线统计',
   history:'远程发布历史','history-show REVISION':'读取历史配置',packages:'安装包与历史','update-manifest':'公开签名资源清单',
   'check INPUT.json':'本地完整校验','publish INPUT.json --if-match REVISION':'校验并发布全部配置',
@@ -111,6 +112,26 @@ try{
  }else if(command==='rollback'){
   requireArgs(1);if(expected===undefined)throw Error('Pass --if-match with the current revision');
   result=await request('POST','admin/api/rollback',JSON.stringify({revision:args[0]}),{'Content-Type':'application/json'});
+ }else if(command==='package-direct'){
+  requireArgs(3);
+  const [platform,version,filename]=args;
+  const info=await stat(filename);
+  if(!info.isFile())throw Error('Expected a file');
+  const hash=createHash('sha256');
+  for await(const chunk of createReadStream(filename))hash.update(chunk);
+  const metadata={platform,version,bytes:info.size,sha256:hash.digest('hex')};
+  const body=JSON.stringify(metadata),headers={'Content-Type':'application/json'};
+  const prepared=await request('POST','admin/api/packages/direct/prepare',body,headers);
+  if(!prepared.exists){
+   const url=new URL(prepared.url);
+   if(url.protocol!=='https:')throw Error('Expected an HTTPS bucket upload URL');
+   const upload=await fetch(url,{method:'PUT',headers:{'Content-Length':String(info.size),'Content-Type':prepared.contentType,'x-amz-checksum-sha256':Buffer.from(metadata.sha256,'hex').toString('base64')},
+    body:createReadStream(filename),duplex:'half',redirect:'error',signal:AbortSignal.timeout(900000)});
+   if(!upload.ok){await upload.body?.cancel();throw Error('Bucket upload HTTP '+upload.status)}
+   await upload.body?.cancel();
+  }
+  result=await request('POST','admin/api/packages/direct/finish',body,headers);
+  if(result.sha256!==metadata.sha256||result.bytes!==metadata.bytes)throw Error('Published package checksum mismatch');
  }else if(command==='package-upload'){
   requireArgs(3);if(!['android','windows'].includes(args[0]))throw Error('Invalid platform');
   result=await sendFile('admin/api/packages?platform='+args[0]+'&version='+encodeURIComponent(args[1]),args[2]);

@@ -421,6 +421,11 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
     catch{sendJson(response,500,{error:'Unable to read package history'})}
     return;
    }
+   if(['/admin/api/packages/direct/prepare','/admin/api/packages/direct/finish'].includes(pathname)&&request.method==='POST'){
+    try{sendJson(response,200,await packages.direct(pathname.split('/').at(-1),await readJson(request),serialize))}
+    catch(error){sendJson(response,400,{error:error.message})}
+    return;
+   }
    if(pathname==='/admin/api/packages/select'&&request.method==='POST'){
     try{
      const {platform,path,expected}=await readJson(request);

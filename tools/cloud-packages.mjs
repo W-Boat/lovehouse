@@ -69,7 +69,12 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
    const sha256=hash.digest('hex');
    const id=sha256+'.'+format.extension;
    await blobs.putFile(id,join(directory,id),temporary,bytes,format.mime);
-   return await serialize(async()=>{
+   return await register(platform,version,sha256,bytes,serialize);
+  }finally{await rm(temporary,{force:true})}
+ }
+ async function register(platform,version,sha256,bytes,serialize){
+  await mkdir(directory,{recursive:true});
+  return serialize(async()=>{
     const previous=await list();
     const name=releaseName(platform,version);
     const entry={platform,version,name,bytes,sha256,publishedAt:new Date().toISOString(),
@@ -78,8 +83,30 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
     await writeFile(releasePath(entry),JSON.stringify(entry));
     await writeCatalog({...previous,[platform]:entry});
     return entry;
-   });
-  }finally{await rm(temporary,{force:true})}
+  });
+ }
+ async function direct(action,{platform,version,sha256,bytes},serialize){
+  if(!isPackagePlatform(platform)||typeof version!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(version)||
+     typeof sha256!=='string'||!/^[a-f0-9]{64}$/.test(sha256)||!Number.isSafeInteger(bytes)||bytes<4||bytes>packageLimit)
+   throw Error('Invalid package metadata');
+  const active=typeof bucket==='function'?await bucket():bucket;
+  if(!active)throw Error('Storage bucket is not enabled');
+  const format=formats[platform],key=active.key('packages',sha256+'.'+format.extension);
+  if(action==='prepare'){
+   if(await active.size(key)===bytes)return {exists:true};
+   return {url:await active.signUpload(key,bytes,format.mime,sha256),contentType:format.mime};
+  }
+  if(await active.size(key)!==bytes)throw Error('Bucket file size mismatch');
+  const digest=createHash('sha256');
+  let received=0,header=Buffer.alloc(0);
+  for await(const chunk of await active.stream(key)){
+   if(header.length<4)header=Buffer.concat([header,chunk.subarray(0,4-header.length)]);
+   received+=chunk.length;
+   if(received>bytes)throw Error('Bucket file size mismatch');
+   digest.update(chunk);
+  }
+  if(received!==bytes||digest.digest('hex')!==sha256||header.toString('hex')!=='504b0304')throw Error('Bucket package verification failed');
+  return register(platform,version,sha256,bytes,serialize);
  }
  async function serve(request,response,pathname){
   const match=/^\/packages\/([a-f0-9]{64})\/(lovehouse-(android|windows)-[A-Za-z0-9._-]+\.(apk|zip))$/.exec(pathname);
@@ -112,5 +139,5 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
   else response.end();
   return true;
  }
- return {list,history,select,save,serve};
+ return {list,history,select,save,serve,direct};
 }
