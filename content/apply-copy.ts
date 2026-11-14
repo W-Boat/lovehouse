@@ -25,7 +25,7 @@ export function installCloudInteractions(interactions:CloudInteraction[],definit
   if(world.items.some(item=>item.id===id))continue;
   const target={x:point[0],y:point[1]};
   if(!world.walkable(target)||!findPath({x:world.spawn[0],y:world.spawn[1]},target,world.walkable).length)continue;
-  world.items.push({id,x,y,point,name,action,kind:'event',texture:visual?undefined:url?'ui-door':game||gameUrl?'ui-wand':'ui-letter',practiceGame:game,webPortal:url,externalGame:gameUrl});
+  world.items.push({id,x,y,point,name,action,kind:'event',texture:visual?undefined:url?'ui-door':game||gameUrl?'ui-wand':undefined,practiceGame:game,webPortal:url,externalGame:gameUrl});
   if(visual)world.layers=[...(world.layers??[]),visual];
   dialogue[id]={text:response,choice:action,response};
  }

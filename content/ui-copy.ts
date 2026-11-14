@@ -285,6 +285,7 @@ export const uiCopyDefaults={
  "calendar.preview-label": "{season}、{weather}、{period}的窗景预览",
  "theater.canvas-label": "{title}，原创像素动画",
  "theater.countdown": "演出即将开始 · {seconds}",
+ "wardrobe.hair.open-eyes": "露眼侧分",
  "wardrobe.hair.original": "原来的样子",
  "wardrobe.hair.short": "轻盈短发",
  "wardrobe.hair.ponytail": "小马尾",
@@ -345,5 +346,5 @@ export function formatCopy(id:UICopyId,values:Record<string,string|number>):stri
 
 export function htmlFormatCopy(id:UICopyId,values:Record<string,string|number>):string{return formatCopy(id,values).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!))}
 
-export const wardrobeOptionIds={hair:["wardrobe.hair.original","wardrobe.hair.short","wardrobe.hair.ponytail","wardrobe.hair.twin"],color:["wardrobe.color.ash","wardrobe.color.brown","wardrobe.color.black","wardrobe.color.red","wardrobe.color.gold","wardrobe.color.pink"],skin:["wardrobe.skin.light","wardrobe.skin.natural","wardrobe.skin.honey","wardrobe.skin.deep"],outfit:["wardrobe.outfit.daily","wardrobe.outfit.rose","wardrobe.outfit.cream"]} as const;
+export const wardrobeOptionIds={hair:["wardrobe.hair.original","wardrobe.hair.short","wardrobe.hair.ponytail","wardrobe.hair.twin","wardrobe.hair.open-eyes"],color:["wardrobe.color.ash","wardrobe.color.brown","wardrobe.color.black","wardrobe.color.red","wardrobe.color.gold","wardrobe.color.pink"],skin:["wardrobe.skin.light","wardrobe.skin.natural","wardrobe.skin.honey","wardrobe.skin.deep"],outfit:["wardrobe.outfit.daily","wardrobe.outfit.rose","wardrobe.outfit.cream"]} as const;
 export const settingsTabCopyIds=["settings.tab.sound","settings.tab.time","settings.tab.graphics","settings.tab.controls","settings.tab.characters","settings.tab.progress","settings.tab.about"] as const;

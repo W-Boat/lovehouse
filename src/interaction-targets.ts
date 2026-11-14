@@ -1,8 +1,15 @@
 import type {Point} from './navigation';
 /** Distances use physical CSS pixels, so zoom and display scaling do not shrink touch targets. */
-export function interactionTargets<T extends Point&{id:string}>(items:readonly T[],point:Point,worldPerPixel:number,coarse:boolean){
+export function interactionTargets<T extends Point&{id:string;to?:string;point?:[number,number]}>(items:readonly T[],point:Point,worldPerPixel:number,coarse:boolean){
  const unit=Math.max(.01,worldPerPixel),radius=(coarse?28:22)*unit;
- const nearby=items.map(item=>({item,distance:Math.hypot(item.x-point.x,item.y-point.y)}))
+ const nearby=items.map(item=>{
+  const distance=Math.hypot(item.x-point.x,item.y-point.y);
+  // Tap either the painted cottage door or the doorstep on the garden path.
+  if(item.id==='home'&&item.to==='room'&&item.point){
+   return {item,distance:Math.min(distance,Math.hypot(item.point[0]-point.x,item.point[1]-point.y))};
+  }
+  return {item,distance};
+ })
   .filter(hit=>hit.distance<=radius).sort((a,b)=>a.distance-b.distance||a.item.id.localeCompare(b.item.id));
  if(!nearby.length)return [];
  // A precise tap on an object stays direct; offer a choice only for an ambiguous gap.

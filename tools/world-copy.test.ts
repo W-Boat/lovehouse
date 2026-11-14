@@ -44,7 +44,7 @@ test('published interactions use the real walkable floor and cannot replace exis
  installCloudInteractions(parsed,{ferris:world},dialogue);
  installCloudInteractions(parsed,{ferris:world},dialogue);
  assert.equal(world.items.length,original.items.length+1);
- assert.equal(world.items.at(-1)?.texture,'ui-letter');
+ assert.equal(world.items.at(-1)?.texture,undefined);
  assert.equal(dialogue['cloud-ticket'].response,base.response);
  assert.throws(()=>validateCloudInteractions([base,base]));
  assert.throws(()=>validateCloudInteractions([{...base,id:'ferris-ride'}]));

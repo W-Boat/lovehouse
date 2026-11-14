@@ -15,3 +15,6 @@
 
 .online-chat-preview{position:absolute;z-index:25;right:max(10px,env(safe-area-inset-right));top:22%;width:min(200px,38%);padding:6px 9px;background:#26323de8;border:2px solid #a6b9b5;color:#fff4dc;font-size:clamp(11px,1.4vw,14px);line-height:1.35;pointer-events:none}
 .online-chat-preview p{margin:3px 0;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+
+.online-first-invitation.resource-update-invitation{z-index:40}
+#app:has(.resource-update-invitation) .online-first-invitation:not(.resource-update-invitation){bottom:calc(142px + env(safe-area-inset-bottom))}

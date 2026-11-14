@@ -13,6 +13,13 @@ function movieSource(value){
 }
 const secret=()=>randomBytes(18).toString('base64url');
 const clean=(v,n)=>typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').trim().slice(0,n):'';
+function normalizeAppearance(appearance,role){
+ const limits={hair:role==='host'?4:3,color:5,skin:3,outfit:2};
+ return Object.fromEntries(Object.entries(limits).map(([key,max])=>{
+  const value=appearance?.[key];
+  return [key,Number.isInteger(value)&&value>=0&&value<=max?value:0];
+ }));
+}
 export class RoomService{
  constructor({now=Date.now,reconnectMs=120000,maxRooms=1000}={}){this.now=now;this.reconnectMs=reconnectMs;this.maxRooms=maxRooms;this.rooms=new Map();this.clients=new Map()}
  snapshot(r){return{roomId:r.id,serverNow:this.now(),cinema:r.cinema??null,affection:r.affection??null,taoyuan:r.taoyuan,quiz:publicQuiz(r.quiz),players:[...r.players.values()].map(({token,send,expires,rates,...p})=>p),document:r.document,game:r.game,following:r.following,followInvitation:r.followInvitation}}
@@ -36,7 +43,7 @@ export class RoomService{
    const name=clean(m.name,12);if(!name){if(!r.players.size)this.rooms.delete(r.id);return fail('NAME','请填写称呼')}
    if(r.players.size>=2)return fail('ROOM_FULL','房间已有两位玩家');
    const role=m.type==='create'?'host':'guest';if([...r.players.values()].some(p=>p.role===role))return fail('RESERVED','该位置等待原玩家重连');
-   const appearance={};for(const key of ['hair','color','skin','outfit']){const n=m.appearance?.[key],max={hair:3,color:5,skin:3,outfit:2}[key];appearance[key]=Number.isInteger(n)&&n>=0&&n<=max?n:0}
+   const appearance=normalizeAppearance(m.appearance,role);
    p={id:secret(),role,name,appearance,position:{zone:'room',x:320,y:356,direction:0},pet:{kind:'firefly',name:'小萤',enabled:false},rates:new Map(),token:secret()};r.players.set(p.id,p);
   }
   p.send=send;p.connected=true;p.expires=Infinity;this.clients.set(client,{r,p});send({type:'welcome',roomId:r.id,playerId:p.id,role:p.role,token:p.token,snapshot:this.snapshot(r),requestId:m.requestId});this.broadcast(r);return;
@@ -86,6 +93,7 @@ export class RoomService{
  case 'game-start':if(p.role!=='host')return fail('FORBIDDEN','请由主玩家发起小游戏');if(!games.has(m.gameId))return fail('GAME','小游戏不存在');r.game={gameId:m.gameId,seed:Number.isSafeInteger(m.seed)?m.seed:Math.floor(Math.random()*2147483647),revision:0,finished:false};break;
  case 'game-action':if(!r.game||r.game.finished||r.game.gameId!==m.gameId)return fail('GAME','小游戏尚未开始');if(JSON.stringify(m.action??null).length>4096)return fail('GAME','操作数据过大');r.game.revision++;this.event(r,p,'game-action',{gameId:m.gameId,action:m.action,revision:r.game.revision});return;
  case 'game-finish':if(p.role!=='host'||!r.game||r.game.gameId!==m.gameId)return fail('FORBIDDEN','仅主玩家确认游戏结果');if(r.game.finished)return;r.game.finished=true;r.game.result=clean(m.result,64);break;
+ case 'appearance':if(!rate('appearance',5))return;p.appearance=normalizeAppearance(m.appearance,p.role);break;
  case 'equipment':if(!['hat','earphones','band'].every(k=>typeof m[k]==='boolean'))return fail('EQUIPMENT','装备设置无效');p.equipment={hat:m.hat,earphones:m.earphones,band:m.band};break;
  case 'taoyuan-state':if(p.role!=='host')return fail('FORBIDDEN','仅主玩家保存共同田庄');if(!rate('taoyuan-state',2))return fail('RATE_LIMIT','田庄保存太快');if(typeof m.save!=='string'||m.save.length>2000000||!m.save.length||typeof m.route!=='string'||m.route.length>160||!m.route.startsWith('/game'))return fail('TAOYUAN','田庄状态无效');r.taoyuan={save:m.save,route:m.route,revision:(r.taoyuan?.revision??0)+1};this.event(r,p,'taoyuan-state',r.taoyuan);return;
  case 'taoyuan-field':if(p.role!=='guest')return fail('FORBIDDEN','表单协作由副玩家请求');if(!rate('taoyuan-field',20))return fail('RATE_LIMIT','输入太快');if(typeof m.route!=='string'||m.route.length>160||!m.route.startsWith('/game')||!Number.isInteger(m.index)||m.index<0||m.index>1000||!['INPUT','TEXTAREA','SELECT'].includes(m.tag)||typeof m.inputType!=='string'||!['text','number','checkbox','radio','range','email','url','tel','search','date','time','color','select-one','select-multiple','textarea'].includes(m.inputType)||typeof m.value!=='string'||m.value.length>10000||typeof m.checked!=='boolean'||!/^\/game(?:[/?]|$)/.test(m.route)||(m.tag==='INPUT'&&['textarea','select-one','select-multiple'].includes(m.inputType))||(m.tag==='TEXTAREA'&&m.inputType!=='textarea')||(m.tag==='SELECT'&&m.inputType!=='select-one'))return fail('TAOYUAN','田庄表单无效');this.event(r,p,'taoyuan-field',{route:m.route,index:m.index,tag:m.tag,inputType:m.inputType,value:m.value,checked:m.checked});return;

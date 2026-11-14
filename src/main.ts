@@ -3,7 +3,7 @@ import type {RoomSnapshot} from './online-protocol';
 import {nativeBridge} from './native-bridge';
 import {preparedPage} from './release-resources';
 import {showFrameLoading} from './frame-loading';
-import {checkPackageOnEntry} from './content-updates';
+import {checkPackageOnEntry,checkResourceUpdateOnEntry} from './content-updates';
 import {uiCopy} from '../content/ui-copy';
 import {cloudPortals,cloudGiftGames,cloudAnnouncement,watchSystemNotifications,claimNotice,installCloudSnapshot,currentCloudSnapshot,type CloudSnapshot} from './cloud-content';
 import {installMusicRoom} from './music-room';
@@ -412,6 +412,11 @@ let taoyuan:ReturnType<typeof openTaoyuan>|undefined;
 let onlineWorld:ReturnType<typeof installOnlineWorld>|undefined;
 let onlineGame:ReturnType<typeof installOnlineGame>|undefined;
 const online=installOnlineUI({open:showModal,close:closeModal,toast,profile:role=>({name:save.names[role==='guest'?'boy':'girl'],appearance:save.appearance[role==='guest'?'boy':'girl']}),onSnapshot:s=>{onlineWorld?.handleSnapshot(s,online.getPlayerId());syncCinema(s)},onMessage:m=>{onlineWorld?.handleMessage(m);onlineGame?.handleMessage(m);if(m.type==='event'&&m.event==='taoyuan-state')taoyuan?.receive({kind:'state',...(m.data as {save:string;route:string})});if(m.type==='event'&&m.event==='taoyuan-field')taoyuan?.receive({kind:'field',...(m.data as TaoyuanField)});if(m.type==='event'&&m.event==='taoyuan-action')taoyuan?.receive({kind:'command',...(m.data as {route:string;index:number;text:string})})},onConnection:s=>{onlineWorld?.handleConnection(s);if(s==='offline'&&cinemaSession){cinemaSession='';cinemaSeen='';closeSceneActivity()}taoyuan?.setConnected(s==='connected')},onGame:g=>onlineGame?.start(g)});
+scene.bridge.on('appearance-saved',()=>{
+ if(!onlineWorld?.active)return;
+ const appearance=save.appearance[onlineWorld.role==='host'?'girl':'boy'];
+ online.client.send({type:'appearance',appearance});
+});
 onlineWorld=installOnlineWorld(scene,online.client);
 installOnlineAffection(onlineWorld,{open:showModal,close:closeModal,toast});
 onlineGame=installOnlineGame({
@@ -475,7 +480,7 @@ function enterTaoyuan(){
  if(me?.role==='guest'&&snapshot?.taoyuan)taoyuan.receive({kind:'state',save:snapshot.taoyuan.save,route:snapshot.taoyuan.route});
 }
 const onlineButton=document.createElement('button');onlineButton.id='online-toggle';onlineButton.type='button';onlineButton.className='icon-button';onlineButton.setAttribute('aria-label',mainText("online.label"));onlineButton.textContent=mainText("online.label");onlineButton.title=mainText("online.title");onlineButton.onclick=()=>{if(started&&!cinematic&&!openingGift&&!scene.transitioning){scene.bridge.emit('retry-pets');online.openPanel()}};document.querySelector('.hud-tools')!.append(onlineButton);
-const enhancements=installUI({scene,canUse:()=>!cinematic&&!openingGift&&!scene.transitioning,open:showModal,close:closeModal,toast,travel,photo:()=>{void takePhoto()},showGift:id=>showGift(config.gifts.find(g=>g.id===id)!),enter:()=>{started=true;watchSystemNotifications(showSystemNotification);void checkPackageOnEntry();void scene.enter().then(async()=>{const announcement=cloudAnnouncement?.enabled?await claimNotice('announcement'):undefined;if(announcement?.body){const {title,body}=announcement;showModal(`<div class="subheading">游戏私告</div><h2 id="modal-title">${esc(title||'游戏私告')}</h2><p class="gift-message" style="white-space:pre-wrap">${esc(body)}</p><div class="modal-actions"><button class="primary" id="announcement-close">知道了</button></div>`,'announcement');document.addEventListener('cottage-modal-closed',()=>online.resumeLastRoom(),{once:true});action('announcement-close',closeModal)}else online.resumeLastRoom()});updateHUD();document.body.classList.add('started');layoutViewport();immersive();quietLine(config.welcome);if((window as any).__storageMode==='chosen')toast(mainText("storage.chosen"));else if((window as any).__portableReadonly)toast(mainText("storage.system"))},act:kind=>scene.approachForAction(kind),shareSnack});
+const enhancements=installUI({scene,canUse:()=>!cinematic&&!openingGift&&!scene.transitioning,open:showModal,close:closeModal,toast,travel,photo:()=>{void takePhoto()},showGift:id=>showGift(config.gifts.find(g=>g.id===id)!),enter:()=>{started=true;watchSystemNotifications(showSystemNotification);void checkPackageOnEntry();checkResourceUpdateOnEntry();void scene.enter().then(async()=>{const announcement=cloudAnnouncement?.enabled?await claimNotice('announcement'):undefined;if(announcement?.body){const {title,body}=announcement;showModal(`<div class="subheading">游戏私告</div><h2 id="modal-title">${esc(title||'游戏私告')}</h2><p class="gift-message" style="white-space:pre-wrap">${esc(body)}</p><div class="modal-actions"><button class="primary" id="announcement-close">知道了</button></div>`,'announcement');document.addEventListener('cottage-modal-closed',()=>online.resumeLastRoom(),{once:true});action('announcement-close',closeModal)}else online.resumeLastRoom()});updateHUD();document.body.classList.add('started');layoutViewport();immersive();quietLine(config.welcome);if((window as any).__storageMode==='chosen')toast(mainText("storage.chosen"));else if((window as any).__portableReadonly)toast(mainText("storage.system"))},act:kind=>scene.approachForAction(kind),shareSnack});
 const musicRoom=installMusicRoom({scene,open:showModal,close:closeModal,toast,photo:()=>{void takePhoto()},note:()=>writeFuture('music-dedication','夹在唱片里的小纸条','这张点歌小纸条，已经收进唱片套里。')});
 installRewards({scene,canUse:()=>started&&!cinematic&&!openingGift&&!scene.transitioning,close:()=>{closeSceneActivity();if(dialogueOpen)closeDialogue();if(modalOpen)closeModal()},openGift:id=>openGift(config.gifts.find(g=>g.id===id)!,true),refresh:()=>{scene.refresh();updateHUD();enhancements.refresh()},toast});
 scene.bridge.on('online-pair',(active:boolean)=>toast(active?'两位玩家已到齐，双人模式已启动。':'同伴已离开，等待重新加入。'));

@@ -20,6 +20,7 @@ export class OnlineWorld{
   const wasActive=this.active;
   this.remote=snapshot.players.find(p=>p.id!==this.playerId&&p.connected);
   this.active=Boolean(self?.connected&&this.remote);
+  if(this.active&&this.remote)this.scene.preloadOnlinePairArt?.(this.remote.appearance?.hair??0,this.role);
   if(wasActive!==this.active){
    this.sent='';this.equipmentSent='';this.affectionId='';this.readySent='';this.crossing='';
    this.remoteTrack=[];this.follower.enabled=false;this.scene.resetOnlineControl();

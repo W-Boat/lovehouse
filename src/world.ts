@@ -64,7 +64,7 @@ export const worlds:Record<Zone,World>={
  {id:'shell',name:'路边的小海螺',action:'听一听',x:175,y:286,point:[188,289],prop:5},
  {id:'forest-trail',name:'萤火森林的小径',action:'去森林',x:239,y:182,point:[241,202],prop:7,to:'forest'},
  {id:'pier-trail',name:'通往星光栈桥',action:'去栈桥',x:532,y:246,point:[513,249],prop:7,to:'pier'},
- {id:'home',name:'小屋门口',action:'回屋',x:82,y:350,point:[137,365],to:'room'}]},
+ {id:'home',name:'小屋门口',action:'回屋',x:81,y:382,point:[133,391],to:'room'}]},
  forest:{name:'萤火森林',caption:'慢一点，等萤火落进眼睛',texture:'forest',spawn:[320,382],boy:[336,369],walkable:forestWalkable,items:[
  {id:'station-trail',name:'去云上终点站',action:'上山',x:352,y:308,point:[352,308],prop:7,to:'station'},
  {id:'game-rhythm',name:'萤火节拍',action:'玩一局',x:320,y:329,point:[320,329]},
@@ -86,7 +86,7 @@ export const worlds:Record<Zone,World>={
 } as Record<Zone,World>;
 export function entrySpawn(from:Zone,to:Zone):[number,number]{if(to==='garden'&&from==='forest')return[270,199];if(to==='garden'&&from==='pier')return[486,250];return worlds[to].spawn}
 export function actionLabel(item:Item,opened:boolean){if(item.action)return item.action;return opened?'重看':'拆开'}
-export function inReach(player:Point,item:Item,walkable?:Walkable){if(item.id==='boy')return Math.hypot(player.x-item.x,player.y-(item.y+14))<43&&(!walkable||segmentWalkable(player,{x:item.x,y:item.y+14},walkable));return Math.hypot(player.x-item.point[0],player.y-item.point[1])<(item.to?14:25)}
+export function inReach(player:Point,item:Item,walkable?:Walkable){if(item.id==='boy')return Math.hypot(player.x-item.x,player.y-(item.y+14))<43&&(!walkable||segmentWalkable(player,{x:item.x,y:item.y+14},walkable));return Math.hypot(player.x-item.point[0],player.y-item.point[1])<(item.id==='home'&&item.to==='room'?24:item.to?14:25)}
 
 
 export const openFloor=(p:Point)=>p.x>72&&p.x<568&&p.y>218&&p.y<396;

@@ -4,7 +4,7 @@ import {uiCopy,formatCopy} from '../content/ui-copy';
 import {persist} from './state';
 
 type UpdateStatus={phase:string;message:string;progress:number;version:number;url:string;availableVersion:number;canRetry?:boolean};
-type UpdateCommand={action:'status'|'ready'|'auto'|'check'|'install'|'rollback';url?:string};
+type UpdateCommand={action:'status'|'ready'|'check'|'install'|'rollback';url?:string};
 let latest:UpdateStatus|undefined,host:HTMLElement|undefined,listening=false;
 
 function defaultAndroidUpdateUrl(){
@@ -22,10 +22,6 @@ export function sendContentUpdate(command:UpdateCommand){
  if(!native)return false;
  if(command.action==='install'||command.action==='rollback')persist();
  native.postMessage(JSON.stringify({kind:'content-update',...command}));
- if(command.action==='ready'){
-  const url=defaultAndroidUpdateUrl();
-  if(url)native.postMessage(JSON.stringify({kind:'content-update',action:'auto',url}));
- }
  return true;
 }
 
@@ -51,15 +47,61 @@ export function mountContentUpdates(parent:HTMLElement){
  button('content-update-check',uiCopy('updates.check'),()=>{
   const url=input.value.trim();
   if(!input.checkValidity()||!url.startsWith('https://')){status.textContent=uiCopy('updates.invalid-url');return}
+  checkingAtEntry=false;
   sendContentUpdate({action:'check',url});
  });
  button('content-update-install',uiCopy('updates.install'),()=>sendContentUpdate({action:'install'}));
  button('content-update-rollback',uiCopy('updates.rollback'),()=>sendContentUpdate({action:'rollback'}));
- if(!listening){
-  listening=true;
-  document.addEventListener('cottage-update-status',event=>{latest=(event as CustomEvent<UpdateStatus>).detail;paint()});
- }
+ listenForContentUpdates();
  paint();sendContentUpdate({action:'status'});
+}
+
+let entryCheck=false,checkingAtEntry=false;
+function listenForContentUpdates(){
+ if(listening)return;
+ listening=true;
+ document.addEventListener('cottage-update-status',event=>{
+  latest=(event as CustomEvent<UpdateStatus>).detail;
+  paint();
+  if(!checkingAtEntry)return;
+  if(latest.phase==='available'&&latest.availableVersion>latest.version){
+   checkingAtEntry=false;
+   showResourceUpdate(latest.availableVersion);
+  }else if(latest.phase==='error'||latest.phase==='current'||latest.phase==='busy')checkingAtEntry=false;
+ });
+}
+
+export function checkResourceUpdateOnEntry(){
+ const url=defaultAndroidUpdateUrl();
+ if(!url||!nativeBridge()||entryCheck)return;
+ entryCheck=true;
+ checkingAtEntry=true;
+ listenForContentUpdates();
+ sendContentUpdate({action:'check',url});
+}
+
+function showResourceUpdate(version:number){
+ const parent=document.getElementById('app');
+ if(!parent)return;
+ const windows=currentPlatform()==='windows';
+ const prompt=document.createElement('aside');
+ prompt.className='online-first-invitation resource-update-invitation';
+ prompt.setAttribute('aria-label','小屋资源更新');
+ const label=document.createElement('p');
+ label.textContent=windows?'新版小屋资源 '+version+' 已准备好，重新打开小屋即可启用。':'发现新版小屋资源 '+version+'，现在更新吗？';
+ const actions=document.createElement('div');
+ const later=document.createElement('button');
+ later.type='button';later.className='secondary';later.textContent='稍后再说';
+ later.onclick=()=>prompt.remove();
+ actions.append(later);
+ if(!windows){
+  const install=document.createElement('button');
+  install.type='button';install.className='primary';install.textContent='下载并重启小屋';
+  install.onclick=()=>{sendContentUpdate({action:'install'});prompt.remove()};
+  actions.append(install);
+ }
+ prompt.append(label,actions);
+ parent.append(prompt);
 }
 
 function paint(){

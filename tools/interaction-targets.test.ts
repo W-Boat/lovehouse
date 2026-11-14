@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {interactionTargets,hintPosition} from '../src/interaction-targets';
+import {worlds} from '../src/world';
 test('touch targets retain their physical reach across camera and UI scales',()=>{
  for(const unit of [.25,1,3]){const items=[{id:'tea',x:100,y:100}];assert.equal(interactionTargets(items,{x:100+26*unit,y:100},unit,true)[0]?.id,'tea');assert.equal(interactionTargets(items,{x:100+30*unit,y:100},unit,true).length,0)}
 });
@@ -14,4 +15,13 @@ test('nearby cues avoid the map and toolbar, or hide if no free space remains',(
  const map={left:12,top:90,right:110,bottom:202},p=hintPosition({x:70,y:150},844,390,200,32,[map]);
  assert.equal(p.hidden,false);assert.ok(p.y-32>=map.bottom+6||p.x-100>=map.right+6);
  assert.equal(hintPosition({x:100,y:100},390,390,200,32,[{left:0,top:0,right:390,bottom:390}]).hidden,true);
+});
+
+test('the coast cottage entrance accepts both the painted door and its walkable doorstep',()=>{
+ const shore=worlds.garden;
+ const home=shore.items.find(item=>item.id==='home')!;
+ const doorstep={x:home.point[0],y:home.point[1]};
+ assert.ok(shore.walkable(doorstep));
+ assert.equal(interactionTargets(shore.items,{x:home.x,y:home.y},.5,true)[0]?.id,home.id);
+ assert.equal(interactionTargets(shore.items,doorstep,.5,true)[0]?.id,home.id);
 });
