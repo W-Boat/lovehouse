@@ -1,7 +1,7 @@
 <!-- Adapted from vue-naive-admin 2.x normal layout. Copyright (c) 2023 Ronnie Zhang. -->
 <script setup>
 import {computed,h,ref,onMounted,onBeforeUnmount} from 'vue';
-import {NButton,NConfigProvider,NLayout,NLayoutSider,NMenu,NIcon,NDrawer,NDrawerContent,zhCN,dateZhCN} from 'naive-ui';
+import {NConfigProvider,NLayout,NLayoutSider,NScrollbar,NMenu,NIcon,NDrawer,NDrawerContent,zhCN,dateZhCN} from 'naive-ui';
 
 import menuIconData from '@iconify-icons/mdi/menu';
 import IconButton from './IconButton.vue';
@@ -46,9 +46,9 @@ const themeOverrides={common:{primaryColor:'#28624e',primaryColorHover:'#397d64'
 <template>
  <n-config-provider :locale="zhCN" :date-locale="dateZhCN" :theme-overrides="themeOverrides">
   <n-layout has-sider class="naive-admin">
-   <n-layout-sider v-if="!mobile" bordered collapse-mode="width" :collapsed-width="0" :width="224" :collapsed="collapsed" class="naive-sidebar">
-    <div class="naive-brand"><span class="mark" aria-hidden="true"><n-icon size="23"><svg viewBox="0 0 24 24" v-html="homeMarkup"/></n-icon></span><strong>生日小屋</strong></div>
-    <n-menu :options="options" :value="selected" @update:value="select"/>
+   <n-layout-sider v-if="!mobile" bordered collapse-mode="width" :collapsed-width="60" :width="224" :collapsed="collapsed" class="naive-sidebar">
+    <div class="naive-brand"><span class="mark" aria-hidden="true"><n-icon size="23"><svg viewBox="0 0 24 24" v-html="homeMarkup"/></n-icon></span><strong v-if="!collapsed">生日小屋</strong></div>
+    <n-scrollbar class="sidebar-menu-scroll"><n-menu :options="options" :value="selected" :collapsed="collapsed" :collapsed-width="60" :collapsed-icon-size="22" @update:value="select"/></n-scrollbar>
    </n-layout-sider>
    <n-layout class="naive-work-area">
     <header class="naive-header">
