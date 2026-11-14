@@ -19,6 +19,7 @@ const formatNumber=new Intl.NumberFormat('zh-CN',{maximumFractionDigits:1});
 const tab=ref('packages');
 const platform=ref('android');
 const version=ref('');
+const linkToBase=ref(false);
 const files=ref([]);
 const file=computed(()=>files.value[0]?.raw??null);
 const catalog=ref({});
@@ -131,7 +132,9 @@ function stagePublish(){
  }else if(!file.value){
   report('error','请选择要发布的安装包。');
  }else{
-  pendingPublish.value={platform:platform.value,version:normalized,file:file.value,direct:(direct.value&&bucketAvailable.value)||(platform.value==='android'&&androidSignOnly.value)};
+  const baseVersion=linkToBase.value?catalog.value[platform.value]?.version:undefined;
+  if(linkToBase.value&&!baseVersion){report('error','请先发布该平台的底包');return}
+  pendingPublish.value={baseVersion,platform:platform.value,version:normalized,file:file.value,direct:Boolean(baseVersion)||(direct.value&&bucketAvailable.value)||(platform.value==='android'&&androidSignOnly.value)};
  }
 }
 
@@ -147,9 +150,10 @@ async function publish(){
   uploaded.value=0;
   const entry=draft.direct?await publishDirect(draft,token):await publishThroughServer(draft,token);
   progress.value=100;
-  catalog.value={...catalog.value,[entry.platform]:entry};
+  await readCatalog();
   files.value=[];
   version.value='';
+  linkToBase.value=false;
   report('success','已发布 '+entry.name);
   emit('updated',{kind:'package',entry});
   await readHistory();
@@ -197,7 +201,7 @@ async function publishDirect(draft,token){
  const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',await draft.file.arrayBuffer()));
  const sha256=Array.from(digest,value=>value.toString(16).padStart(2,'0')).join('');
  const bytes=draft.file.size;
- const metadata={platform:draft.platform,version:draft.version,sha256,bytes};
+ const metadata={platform:draft.platform,version:draft.version,sha256,bytes,...(draft.baseVersion?{baseVersion:draft.baseVersion}:{})};
  async function request(step){
   const response=await fetch(base+'api/packages/direct/'+step,{
    method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(metadata),
@@ -295,6 +299,9 @@ void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+props.token.trim
           <publisher-option v-for="(entry,key) in platforms" :key="key" :value="key" :label="entry.name+' · '+entry.format"/>
          </publisher-select>
         </publisher-form-item>
+        <publisher-form-item v-if="catalog[platform]" label="关联当前底包">
+         <n-switch v-model:value="linkToBase"/><span v-if="linkToBase"> {{catalog[platform].version}} · 薄包直传</span>
+        </publisher-form-item>
         <publisher-form-item label="版本号">
          <n-input v-model:value="version" aria-label="安装包版本号" placeholder="例如 9b1d5d95b526" maxlength="64" autocomplete="off"/>
         </publisher-form-item>
@@ -342,7 +349,12 @@ void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+props.token.trim
           <summary>SHA-256</summary>
           <code>{{catalog[key].sha256}}</code>
          </details>
-         <n-button tag="a" :href="catalog[key].path" size="small" plain>下载安装包</n-button>
+         <n-button tag="a" :href="catalog[key].path" size="small" plain>下载完整底包</n-button>
+         <div v-if="catalog[key].thinPackage" class="metadata">
+          <n-tag type="info" size="small">关联薄包</n-tag>
+          {{catalog[key].thinPackage.version}} · {{readableBytes(catalog[key].thinPackage.bytes)}}
+          <n-button tag="a" :href="catalog[key].thinPackage.path" text>下载薄包</n-button>
+         </div>
         </template>
         <p v-else class="metadata">{{entry.format}}</p>
        </article>
@@ -362,7 +374,7 @@ void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+props.token.trim
       <publisher-table :data="history" row-key="path" class="history-table" aria-label="安装包版本历史">
        <publisher-column label="安装包" min-width="200">
         <template #default="{row}">
-         <strong>{{row.version}}</strong>
+         <strong>{{row.version}}</strong><n-tag v-if="row.baseVersion" size="small" type="info">薄包 · {{row.baseVersion}}</n-tag>
          <div class="metadata">{{row.name}}</div>
         </template>
        </publisher-column>
@@ -382,12 +394,12 @@ void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+props.token.trim
       <div class="history-mobile">
        <article v-for="row in history" :key="row.path" class="live-package">
         <div class="live-heading">
-         <strong>{{row.version}}</strong>
+         <strong>{{row.version}}</strong><n-tag v-if="row.baseVersion" size="small" type="info">薄包 · {{row.baseVersion}}</n-tag>
          <n-tag v-if="row.current" type="success" effect="light">当前版本</n-tag>
         </div>
         <p class="file-name">{{row.name}}</p>
         <p class="metadata">{{readableBytes(row.bytes)}} · {{readableDate(row.publishedAt)}}</p>
-        <n-button v-if="!row.current" plain :disabled="busy" @click="stageSwitch(row)">设为当前版本</n-button>
+        <n-button v-if="!row.current&&!row.baseVersion" plain :disabled="busy" @click="stageSwitch(row)">设为当前版本</n-button>
        </article>
       </div>
      </template>

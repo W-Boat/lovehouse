@@ -31,6 +31,7 @@ const file=flag('--file');
 const binary=flag('--binary');
 const output=flag('--output');
 const tokenFile=flag('--token-file');
+const baseVersion=flag('--base-version');
 const token=tokenFile?(await readFile(tokenFile,'utf8')).trim():process.env.LOVEHOUSE_ADMIN_TOKEN;
 const getJson=async path=>JSON.parse((await readFile(path,'utf8')).replace(/^\uFEFF/,''));
 const print=value=>console.log(JSON.stringify(value,null,2));
@@ -121,7 +122,7 @@ try{
   if(!info.isFile())throw Error('Expected a file');
   const hash=createHash('sha256');
   for await(const chunk of createReadStream(filename))hash.update(chunk);
-  const metadata={platform,version,bytes:info.size,sha256:hash.digest('hex')};
+  const metadata={platform,version,bytes:info.size,sha256:hash.digest('hex'),...(baseVersion?{baseVersion}:{})};
   const headers={'Content-Type':'application/json'};
   const prepared=await request('POST','admin/api/packages/direct/prepare',JSON.stringify(metadata),headers);
   const curl=process.platform==='win32'?'curl.exe':'curl';

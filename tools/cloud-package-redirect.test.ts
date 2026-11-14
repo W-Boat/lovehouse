@@ -82,3 +82,21 @@ test('sign-only publication requires explicit local verification and downloads w
   assert.equal(await store.serve({method:'GET',headers:{}},sink,entry.path.slice('/lovehouse'.length)),true);
  }finally{await rm(directory,{recursive:true,force:true})}
 });
+
+test('a thin package is associated with its platform base without replacing it',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lovehouse-thin-catalog-'));
+ try{
+  const bucket={signOnly:true,key:(g:string,id:string)=>g+'/'+id};
+  const store=createPackageStore(directory,'/lovehouse',bucket);
+  const serialize=(run:()=>unknown)=>run();
+  const sha256='c'.repeat(64);
+  await store.direct('finish',{platform:'android',version:'base1',sha256,bytes:100,verifiedLocally:true},serialize);
+  await store.direct('finish',{platform:'android',version:'shell1',baseVersion:'base1',sha256:'d'.repeat(64),bytes:12,verifiedLocally:true},serialize);
+  const released=await store.catalog();
+  assert.equal(released.android.version,'base1');
+  assert.equal(released.android.thinPackage.version,'shell1');
+  assert.equal(released.android.thinPackage.baseVersion,'base1');
+  assert.deepEqual(await store.select('android',released.android.thinPackage.path,released.android.path),{});
+  await assert.rejects(store.direct('finish',{platform:'windows',version:'shell1',baseVersion:'base1',sha256,bytes:12,verifiedLocally:true},serialize),/关联底包/);
+ }finally{await rm(directory,{recursive:true,force:true})}
+});

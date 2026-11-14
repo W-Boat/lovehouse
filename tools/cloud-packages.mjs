@@ -33,6 +33,14 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   for(const entry of Object.values(current))if(!records.some(row=>row.path===entry.path))records.push(entry);
   return records.sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)).map(entry=>({...entry,current:current[entry.platform]?.path===entry.path}));
  }
+ async function catalog(){
+  const current=await list();
+  const records=await history();
+  return Object.fromEntries(Object.entries(current).map(([platform,entry])=>{
+   const shell=records.find(row=>row.platform===platform&&row.baseVersion===entry.version);
+   return [platform,shell?{...entry,thinPackage:shell}:entry];
+  }));
+ }
  async function writeCatalog(catalog){
   const staged=manifest+'.'+randomUUID()+'.part';
   try{await writeFile(staged,JSON.stringify(catalog),{flag:'wx'});await rename(staged,manifest)}
@@ -42,7 +50,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   const current=await list();
   if((current[platform]?.path??null)!==expected)return {conflict:true};
   const entry=(await history()).find(row=>row.platform===platform&&row.path===path);
-  if(!entry)return {};
+  if(!entry||entry.baseVersion)return {};
   delete entry.current;
   const id=entry.sha256+'.'+formats[platform].extension;
   if(await blobsFor(platform).size(id,join(directory,id))!==entry.bytes)return {};
@@ -74,23 +82,28 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
    return await register(platform,version,sha256,bytes,serialize);
   }finally{await rm(temporary,{force:true})}
  }
- async function register(platform,version,sha256,bytes,serialize){
+ async function register(platform,version,sha256,bytes,serialize,baseVersion){
   await mkdir(directory,{recursive:true});
   return serialize(async()=>{
     const previous=await list();
+    if(baseVersion&&!(await history()).some(row=>!row.baseVersion&&row.platform===platform&&row.version===baseVersion))
+     throw Error('找不到该平台的关联底包');
     const name=releaseName(platform,version);
     const entry={platform,version,name,bytes,sha256,publishedAt:new Date().toISOString(),
-     path:publicPrefix+'/packages/'+sha256+'/'+name};
+     path:publicPrefix+'/packages/'+sha256+'/'+name,...(baseVersion?{baseVersion}:{})};
     if(previous[platform])await writeFile(releasePath(previous[platform]),JSON.stringify(previous[platform]));
     await writeFile(releasePath(entry),JSON.stringify(entry));
-    await writeCatalog({...previous,[platform]:entry});
+    if(!baseVersion)await writeCatalog({...previous,[platform]:entry});
     return entry;
   });
  }
- async function direct(action,{platform,version,sha256,bytes,verifiedLocally=false},serialize){
+ async function direct(action,{platform,version,sha256,bytes,verifiedLocally=false,baseVersion},serialize){
   if(!isPackagePlatform(platform)||typeof version!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(version)||
      typeof sha256!=='string'||!/^[a-f0-9]{64}$/.test(sha256)||!Number.isSafeInteger(bytes)||bytes<4||bytes>packageLimit)
    throw Error('Invalid package metadata');
+  if(baseVersion!==undefined&&(typeof baseVersion!=='string'||!/^[-.\w]{1,64}$/.test(baseVersion)||version===baseVersion||
+    !(await history()).some(row=>!row.baseVersion&&row.platform===platform&&row.version===baseVersion)))
+   throw Error('关联底包不存在或版本号无效');
   const destination=platform==='android'&&androidBucket?androidBucket:bucket;
   const active=typeof destination==='function'?await destination():destination;
   if(!active)throw Error('Storage bucket is not enabled');
@@ -102,7 +115,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   }
   if(active.signOnly){
    if(verifiedLocally!==true)throw Error('Local bucket read-back SHA-256 verification is required');
-   return register(platform,version,sha256,bytes,serialize);
+   return register(platform,version,sha256,bytes,serialize,baseVersion);
   }
   if(await active.size(key)!==bytes)throw Error('Bucket file size mismatch');
   const digest=createHash('sha256');
@@ -114,7 +127,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
    digest.update(chunk);
   }
   if(received!==bytes||digest.digest('hex')!==sha256||header.toString('hex')!=='504b0304')throw Error('Bucket package verification failed');
-  return register(platform,version,sha256,bytes,serialize);
+  return register(platform,version,sha256,bytes,serialize,baseVersion);
  }
  async function serve(request,response,pathname){
   const match=/^\/packages\/([a-f0-9]{64})\/(lovehouse-(android|windows)-[A-Za-z0-9._-]+\.(apk|zip))$/.exec(pathname);
@@ -154,5 +167,5 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   else response.end();
   return true;
  }
- return {list,history,select,save,serve,direct};
+ return {list,catalog,history,select,save,serve,direct};
 }

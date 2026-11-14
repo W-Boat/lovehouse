@@ -2,7 +2,7 @@ import {nativeBridge} from './native-bridge';
 import {isCollected} from './state';
 declare const __BUILD_INFO__: {version:string; builtAt:string};
 import {DEFAULT_DPI,DPI_STEPS} from './display';
-import {mountContentUpdates,sendContentUpdate} from './content-updates';
+import {mountContentUpdates,observeResourceUpdateOnStartup,sendContentUpdate} from './content-updates';
 import {drawClimateView} from './climate-art';
 import {isSeatItem} from './item-category';
 import {uiCopy,formatCopy,wardrobeOptionIds,settingsTabCopyIds} from '../content/ui-copy';
@@ -188,7 +188,7 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
  const pressed:Record<string,boolean>={'set-music':save.music,'set-motion':save.reduced,'set-minimap':save.settings.minimap,'set-haptics':save.settings.haptics,'set-directions':save.settings.directions,'set-cheat':save.cheat};
  for(const [id,enabled] of Object.entries(pressed)) body.querySelector('#'+id)?.setAttribute('aria-pressed',String(enabled));
 }
- async function begin(){document.body.classList.toggle('android-client',Boolean((window as Window&{CottageSave?:unknown}).CottageSave));await document.fonts.load('24px CottagePixel');minimap??=installRoundMinimap(scene,()=>worldMap());toolbar();scene.refreshEnvironment();sendContentUpdate({action:'ready'});config.girlName=save.names.girl;config.boyName=save.names.boy;$('boot-cover')?.remove();$('opening').classList.add('hidden');if(save.onboarded){open(`<div class="subheading">${esc(uiCopy('entry.eyebrow'))}</div><h2 id="modal-title">${esc(uiCopy('entry.title'))}</h2><div class="modal-actions">${button(uiCopy('entry.continue'),'continue','primary')}${button(uiCopy('entry.customize'),'re-custom')}</div>`,'entry');on('continue',()=>{void music(true);ctx.enter();close()});on('re-custom',()=>customize(true))}else customize(true);unlocked=true}
+ async function begin(){document.body.classList.toggle('android-client',Boolean((window as Window&{CottageSave?:unknown}).CottageSave));await document.fonts.load('24px CottagePixel');minimap??=installRoundMinimap(scene,()=>worldMap());toolbar();scene.refreshEnvironment();observeResourceUpdateOnStartup();sendContentUpdate({action:'ready'});config.girlName=save.names.girl;config.boyName=save.names.boy;$('boot-cover')?.remove();$('opening').classList.add('hidden');if(save.onboarded){open(`<div class="subheading">${esc(uiCopy('entry.eyebrow'))}</div><h2 id="modal-title">${esc(uiCopy('entry.title'))}</h2><div class="modal-actions">${button(uiCopy('entry.continue'),'continue','primary')}${button(uiCopy('entry.customize'),'re-custom')}</div>`,'entry');on('continue',()=>{void music(true);ctx.enter();close()});on('re-custom',()=>customize(true))}else customize(true);unlocked=true}
  function paintClimate(s:CalendarSnapshot){
   if(!scene.textures.exists('time-night'))return;const period=s.period==='dusk'?'dawn':s.period;
   const sky=$('sky-settings'),icon=sky.querySelector<HTMLImageElement>('.pixel-icon');if(icon)icon.src=thumbnail('weather-'+s.weather,24);

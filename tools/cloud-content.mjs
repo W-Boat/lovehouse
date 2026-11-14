@@ -309,7 +309,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
    return;
   }
   if(request.method==='GET'&&pathname==='/packages.json'){
-   try{response.writeHead(200,{...jsonHeaders,'Access-Control-Allow-Origin':'*'}).end(JSON.stringify(await packages.list()))}
+   try{response.writeHead(200,{...jsonHeaders,'Access-Control-Allow-Origin':'*'}).end(JSON.stringify(await packages.catalog()))}
    catch{sendJson(response,500,{error:'Unable to read package releases'})}
    return;
   }
