@@ -26,9 +26,14 @@ function girlSkinMask(pixels:Uint8ClampedArray,width:number,height:number,left:n
 }
 /** Recolor regions and source palette together; never change alpha or near-black ink. */
 export function recolorAppearance(pixels:Uint8ClampedArray,width:number,height:number,who:'girl'|'boy',a:AppearanceColors,base=''){
- const pair=base.startsWith('pair-')||base.startsWith('holding-'),left=pair?(who==='girl'?0:.53):0,right=pair?(who==='girl'?.53:1):1;
- const girlMask=who==='girl'&&a.skin>0?girlSkinMask(pixels,width,height,left,right,base.startsWith('head-')):undefined;
- for(let y=0;y<height;y++)for(let x=Math.floor(left*width);x<Math.ceil(right*width);x++){
+ const pair=base.startsWith('pair-')||base.startsWith('holding-');
+ const split=Math.round(width*.53);
+ const first=pair&&who==='boy'?split:0,last=pair&&who==='girl'?split:width;
+ const left=first/width,right=last/width;
+ const girlMask=who==='girl'&&(a.skin>0||a.color>0)?girlSkinMask(pixels,width,height,left,right,base.startsWith('head-')):undefined;
+ const region=new Uint8Array(width*height);
+ const skinRegion=1,hairRegion=2,clothRegion=3;
+ for(let y=0;y<height;y++)for(let x=first;x<last;x++){
   const n=(y*width+x)*4,r=pixels[n],g=pixels[n+1],b=pixels[n+2],ny=y/height,nx=(x/width-left)/(right-left);
   if(pixels[n+3]<(girlMask?64:100)||Math.max(r,g,b)<66)continue;
   const skin=girlMask?girlMask[y*width+x]===2:r>g*1.04&&g>b*1.035&&r>158&&g>106&&r-g<74&&g-b<65;
@@ -38,11 +43,34 @@ export function recolorAppearance(pixels:Uint8ClampedArray,width:number,height:n
   // the central torso so hands, cheeks, brown trousers and hair retain identity.
   const brown=who==='boy'&&torso&&r>=65&&r<180&&g>=50&&g<145&&b<120&&r>=g*.94&&g>=b*1.02&&r-g<65;
   const cloth=torso&&(blue||green||brown)&&!(r>190&&g>180&&b>170);
+  if(skin&&!cloth)region[y*width+x]=skinRegion;
+  else if(cloth)region[y*width+x]=clothRegion;
+  else if(ny<.49&&Math.max(r,g,b)-Math.min(r,g,b)<80&&Math.min(r,g,b)<190)region[y*width+x]=hairRegion;
+ }
+ // Bright fringe and skin texture can cross the source-palette cutoffs.
+ // Fill small gaps surrounded by the same material while leaving eye whites,
+ // garment trim and isolated highlights next to the silhouette alone.
+ const classified=region.slice();
+ for(let y=0;y<height;y++)for(let x=first;x<last;x++){
+  const i=y*width+x,n=i*4;
+  if(classified[i]||pixels[n+3]<64)continue;
+  const r=pixels[n],g=pixels[n+1],b=pixels[n+2];
+  if(r<186||g<149||b<128||Math.max(r,g,b)-Math.min(r,g,b)>85)continue;
+  const at=(dx:number,dy:number)=>x+dx>=first&&x+dx<last&&y+dy>=0&&y+dy<height?classified[i+dy*width+dx]:0;
+  const neighbors=[at(-1,0),at(1,0),at(0,-1),at(0,1),at(-1,-1),at(1,-1),at(-1,1),at(1,1)];
+  const skin=neighbors.filter(value=>value===skinRegion).length;
+  const hair=neighbors.filter(value=>value===hairRegion).length;
+  if(y>=height*.31&&r>g+7&&r>b+12&&skin>=3&&skin>hair&&!neighbors.includes(clothRegion))region[i]=skinRegion;
+  else if(y<height*.49&&hair>=4&&hair>skin&&!neighbors.includes(clothRegion))region[i]=hairRegion;
+ }
+ for(let y=0;y<height;y++)for(let x=first;x<last;x++){
+  const i=y*width+x,n=i*4;
+  const brightness=pixels[n]+pixels[n+1]+pixels[n+2];
   let target:number[]|undefined,shade=1;
-  if(cloth&&a.outfit>0){target=outfitColors[a.outfit];shade=Math.max(.38,Math.min(1.22,(r+g+b)/(who==='boy'?335:460)))}
-  else if(skin&&a.skin>0&&!cloth){target=skinColors[a.skin];shade=Math.max(.55,Math.min(1.15,(r+g+b)/630))}
-  else if(a.color>0&&ny<.49&&!skin&&Math.max(r,g,b)-Math.min(r,g,b)<80&&Math.min(r,g,b)<190){target=hairColors[a.color];shade=Math.max(.32,Math.min(1.3,(r+g+b)/420))}
-  if(target){pixels[n]=Math.min(255,target[0]*shade);pixels[n+1]=Math.min(255,target[1]*shade);pixels[n+2]=Math.min(255,target[2]*shade)}
+  if(region[i]===clothRegion&&a.outfit>0){target=outfitColors[a.outfit];shade=Math.max(.38,Math.min(1.22,brightness/(who==='boy'?335:460)))}
+  else if(region[i]===skinRegion&&a.skin>0){target=skinColors[a.skin];shade=Math.max(.55,Math.min(1.15,brightness/630))}
+  else if(region[i]===hairRegion&&a.color>0){target=hairColors[a.color];shade=Math.max(.32,Math.min(1.3,brightness/420))}
+  if(target){pixels[n]=target[0]*shade;pixels[n+1]=target[1]*shade;pixels[n+2]=target[2]*shade}
  }
 }
 /** Skin islands separated from the central face are raised hands, not hair.

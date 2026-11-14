@@ -1,7 +1,7 @@
 <script setup>
 import {sakuraTheme} from './sakura-theme.js';
 import {NConfigProvider} from 'naive-ui';
-import {configurationChanges} from "./configuration-changes.js";
+import {configurationChanges,mergeConfiguration,sameConfiguration} from "./configuration-changes.js";
 import ResourceLink from "./ResourceLink.vue";
 import IconButton from './IconButton.vue';
 import PageLoading from './page-loading.js';
@@ -100,8 +100,19 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   }
   const publicRevision=ref(''), publicPackages=ref({}), authState=ref('idle');
   const draftRevision=ref(null);
-  const conflict=computed(()=>loaded.value&&draftRevision.value!==revision.value);
-  let authTimer,authController,hasEdited=false,refreshingEditor=false;
+  const draftBase=ref(null),hasEdited=ref(false);
+  const conflict=computed(()=>loaded.value&&hasEdited.value&&draftRevision.value!==revision.value);
+  let authTimer,authController,refreshingEditor=false,editorStart,originalSection,sectionCollected=false;
+  const recordKeys=new WeakMap();
+  let nextRecordKey=0;
+  function recordKey(record,prior){
+   if(!recordKeys.has(record))recordKeys.set(record,prior?recordKey(prior):++nextRecordKey);
+   return recordKeys.get(record);
+  }
+  function updateRecord(index,record){
+   recordKey(record,records.value[index]);
+   records.value[index]=record;
+  }
   const loaded=ref(false), form=ref(false), entries=ref([]), search=ref('');
   const records=ref([]),objectValue=ref({});
   const specialForm=computed(()=>form.value&&['musicRoom','media','gifts','announcement','notification','statistics'].includes(selected.value));
@@ -138,16 +149,29 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    discardConfirm.value=false;
    if(!loaded.value)return;
    clearTimeout(saveTimer);saveTimer=undefined;
-   draft.value=JSON.parse(JSON.stringify(baseline.value));
-   draftRevision.value=revision.value;hasEdited=false;draftAvailable.value=false;savedAt.value='';
-   try{localStorage.removeItem(storageKey)}catch{}
-   refreshText();report('已放弃本机草稿',true);
+   resetDraft();report('已放弃本机草稿',true);
   }
   const replaceConfirm=ref(false);
   const text=ref('{}'), status=ref(''), success=ref(false), busy=ref(false), confirm=ref(false);
   const section=computed(()=>sections.find(([id])=>id===selected.value));
+  const clone=value=>JSON.parse(JSON.stringify(value));
+  const same=(left,right)=>sameConfiguration(JSON.parse(JSON.stringify(left??null)),JSON.parse(JSON.stringify(right??null)));
+  function editorState(){
+   if(!form.value)return text.value;
+   if(specialForm.value)return objectValue.value;
+   return fields.value?records.value:entries.value;
+  }
+  function editorChanged(){return !same(editorState(),editorStart)}
   function collect(){
-   if(['assets','history','packages','bundled','guide','all'].includes(selected.value))return;
+   if(['assets','history','packages','bundled','guide','all','opening','storage'].includes(selected.value))return;
+   if(!editorChanged()){
+    if(sectionCollected){
+     if(originalSection===undefined)delete draft.value[selected.value];
+     else draft.value[selected.value]=clone(originalSection);
+     sectionCollected=false;
+    }
+    return;
+   }
    let value;
    if(specialForm.value)value=objectValue.value;
    else if(form.value&&fields.value){
@@ -160,15 +184,12 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    }else if(form.value){
     const pairs=entries.value.map(({key,value})=>[key.trim(),value]);
     if(pairs.some(([key])=>!key)||new Set(pairs.map(([key])=>key)).size!==pairs.length)throw Error('请填写唯一的稳定 ID');
-    const existing=draft.value.texts??{};
+    const existing=originalSection??{};
     value=Object.fromEntries(selected.value==='texts'?pairs.filter(([key,value])=>Object.hasOwn(existing,key)||bundled.value.texts?.[key]!==value):pairs);
    }else value=JSON.parse(text.value);
-   if(selected.value==='all'){
-    if(!value||typeof value!=='object'||Array.isArray(value))throw Error('完整配置必须是 JSON 对象');
-    draft.value=value;
-   }else if(value===null){
-    delete draft.value[selected.value];
-   }else draft.value[selected.value]=value;
+   if(value===null)delete draft.value[selected.value];
+   else draft.value[selected.value]=clone(value);
+   sectionCollected=true;
   }
   function choose(id){
    try{
@@ -181,7 +202,11 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   }
   function refreshText(){
    refreshingEditor=true;
-   try{refreshEditorFields()}finally{refreshingEditor=false}
+   try{
+    originalSection=draft.value[selected.value]===undefined?undefined:clone(draft.value[selected.value]);
+    sectionCollected=false;
+    refreshEditorFields();editorStart=clone(editorState());
+   }finally{refreshingEditor=false}
   }
   function refreshEditorFields(){
    const value=selected.value==='all'?draft.value:selected.value==='texts'?{...bundled.value.texts,...draft.value.texts}:draft.value[selected.value]??section.value[3];
@@ -215,8 +240,16 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     if(!response.ok)throw Error('读取包内目录失败');
     const data=await response.json();
     if(current===token.value.trim()){
-     if(selected.value==='texts')collect();
-     bundled.value=data.baseline;refreshText();
+     const additions=Object.entries(data.baseline?.texts??{});
+     bundled.value=data.baseline??{};
+     if(selected.value==='texts'&&form.value){
+      const keys=new Set(entries.value.map(row=>row.key));
+      const startingKeys=new Set(editorStart.map(row=>row.key));
+      const rows=additions.filter(([key])=>!keys.has(key)&&!startingKeys.has(key)).map(([key,value])=>({key,value}));
+      refreshingEditor=true;
+      try{entries.value.push(...rows);editorStart.push(...clone(rows));}
+      finally{refreshingEditor=false}
+     }
     }
    }catch{if(catalogToken===current)catalogToken=''}
   }
@@ -226,6 +259,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     if(!token.value.trim())throw Error('请输入发布令牌');
     if(action==='publish'&&(!loaded.value||conflict.value))throw Error('请先确认草稿基于当前版本');
     if(action!=='snapshot')collect();
+    if(action==='publish'&&!configurationChanges(baseline.value,draft.value,bundled.value).total)throw Error('没有需要发布的配置变更。');
     const response=await fetch(import.meta.env.BASE_URL+'api/'+action,{
      method:action==='snapshot'?'GET':'POST',
      headers:{Authorization:'Bearer '+token.value.trim(),'Content-Type':'application/json',...(action==='publish'?{'If-Match':JSON.stringify(draftRevision.value)}:{})},
@@ -237,19 +271,22 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
      if(response.status===412){await connect();throw Error('线上版本已经变化，请核对后确认草稿基准。')}
      throw Error(data.error||'请求失败');
     }
-    if(action==='snapshot'){
-     await readBundled();
+    if(action==='snapshot'||action==='publish'){
+     if(action==='publish'&&data.schema!==1){
+      resetDraft();await connect();report('发布成功',true);return;
+     }
      const {schema,revision:live,...config}=data;
-     draft.value=config;baseline.value=structuredClone(config);revision.value=live??'';publicRevision.value=revision.value;draftRevision.value=revision.value;loaded.value=true;draftAvailable.value=false;refreshText();saveLocal();
+     baseline.value=config;revision.value=live??'';publicRevision.value=revision.value;loaded.value=true;
+     resetDraft();
+     if(action==='snapshot')void readBundled();
     }
-    if(action==='publish'){revision.value=data.revision;publicRevision.value=revision.value;draftRevision.value=revision.value;baseline.value=JSON.parse(JSON.stringify(draft.value))}
     report(action==='snapshot'?'已读取发布版本':action==='check'?'校验通过 · '+data.revision.slice(0,12):'发布成功',true);
    }catch(error){report(error.message)}
    finally{busy.value=false}
   }
   function exportDraft(){
    try{
-    collect();const url=URL.createObjectURL(new Blob([JSON.stringify(draft.value,null,2)],{type:'application/json'}));
+    collect();const url=URL.createObjectURL(new Blob([JSON.stringify({...draft.value,revision:draftRevision.value},null,2)],{type:'application/json'}));
     const link=document.createElement('a');link.href=url;link.download='lovehouse-content.json';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
    }catch(error){report(error.message)}
@@ -262,13 +299,25 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     const value=JSON.parse(await file.text());
     if(!value||typeof value!=='object'||Array.isArray(value))throw Error('请选择 JSON 对象');
     saveLocal(true);
-    const {schema,revision:importedRevision,...config}=value;draft.value=config;hasEdited=true;draftRevision.value=typeof importedRevision==='string'?importedRevision:null;refreshText();saveLocal();report('草稿已导入',true);
+    const {schema,revision:importedRevision,...config}=value;draft.value=config;hasEdited.value=true;draftRevision.value=typeof importedRevision==='string'?importedRevision:null;draftBase.value=draftRevision.value===revision.value&&loaded.value?clone(baseline.value):null;refreshText();saveLocal();report('草稿已导入',true);
    }catch(error){report(error.message)}
   }
+  function resetDraft(){
+   clearTimeout(saveTimer);saveTimer=undefined;
+   draft.value=clone(baseline.value);draftBase.value=clone(baseline.value);
+   draftRevision.value=revision.value;hasEdited.value=false;draftAvailable.value=false;savedAt.value='';
+   try{localStorage.removeItem(storageKey)}catch{}
+   refreshText();
+  }
   function saveLocal(backup=false){
-   try{collect()}catch{}
+   let pending=false;
+   try{collect()}catch{pending=true}
+   const comparison=draftBase.value??(loaded.value&&(draftRevision.value===revision.value||!draftRevision.value)?baseline.value:null);
+   const changed=pending||(comparison?configurationChanges(comparison,draft.value,bundled.value).total>0:hasEdited.value);
+   hasEdited.value=changed;
    try{
-    const data=JSON.stringify({draft:draft.value,selected:selected.value,text:text.value,entries:entries.value,records:records.value,objectValue:objectValue.value,form:form.value,draftRevision:draftRevision.value});
+    if(!changed){if(!draftAvailable.value)localStorage.removeItem(storageKey);savedAt.value='';return}
+    const data=JSON.stringify({draft:draft.value,selected:selected.value,text:text.value,entries:entries.value,records:records.value,objectValue:objectValue.value,form:form.value,draftRevision:draftRevision.value,draftBase:draftBase.value,pending});
     localStorage.setItem(storageKey,data);
     if(backup===true)localStorage.setItem(storageKey+':previous',data);
     savedAt.value=new Date().toLocaleTimeString();
@@ -282,7 +331,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   }
   watch([text,entries,records,objectValue],()=>{
    if(refreshingEditor)return;
-   hasEdited=true;clearTimeout(saveTimer);saveTimer=setTimeout(flushDraft,800);
+   hasEdited.value=true;clearTimeout(saveTimer);saveTimer=setTimeout(flushDraft,800);
   },{deep:true,flush:'sync'});
   onMounted(()=>window.addEventListener('pagehide',flushDraft));
   onBeforeUnmount(()=>{
@@ -296,8 +345,14 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     if(!value?.draft||typeof value.draft!=='object'||Array.isArray(value.draft))throw Error('草稿格式无效');
     draft.value=value.draft;draftRevision.value=typeof value.draftRevision==='string'?value.draftRevision:null;selected.value=sections.some(([id])=>id===value.selected)?value.selected:'all';
     form.value=Boolean(value.form)&&formSections.includes(selected.value);
-    refreshText();text.value=value.text??text.value;entries.value=value.entries??entries.value;records.value=value.records??records.value;objectValue.value=value.objectValue??objectValue.value;
-    hasEdited=true;draftAvailable.value=false;report(loaded.value?'本机草稿已恢复。':'本机草稿已恢复。输入发布令牌后会读取当前线上版本。',true);
+    draftBase.value=value.draftBase??(loaded.value&&draftRevision.value===revision.value?clone(baseline.value):null);
+    refreshText();
+    if(value.pending){
+     refreshingEditor=true;
+     try{text.value=value.text??text.value;entries.value=value.entries??entries.value;records.value=value.records??records.value;objectValue.value=value.objectValue??objectValue.value;}
+     finally{refreshingEditor=false}
+    }
+    hasEdited.value=true;draftAvailable.value=false;if(loaded.value)saveLocal();report(loaded.value?'本机草稿已恢复。':'本机草稿已恢复。输入发布令牌后会读取当前线上版本。',true);
    }catch(e){report(e.message)}
   }
   async function refreshPublic(){
@@ -311,6 +366,25 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    if(packages.status==='fulfilled')publicPackages.value=packages.value;
   }
   onMounted(refreshPublic);
+  async function pruneStoredDraft(live,controller){
+   try{
+    const raw=localStorage.getItem(storageKey);
+    if(!raw)return;
+    const stored=JSON.parse(raw);
+    if(stored.pending)return;
+    let original=stored.draftBase;
+    const old=stored.draftRevision;
+    if(!original&&old&&old!==revision.value&&/^[a-f0-9]{64}$/.test(old)){
+     const response=await fetch(base+'api/history/'+old,{headers:{Authorization:'Bearer '+token.value.trim()},signal:controller.signal,cache:'no-store'});
+     if(response.ok){const {schema,revision,...config}=await response.json();original=config;}
+    }
+    if(controller.signal.aborted||localStorage.getItem(storageKey)!==raw)return;
+    if(!configurationChanges(live,stored.draft,bundled.value).total||
+       original&&!configurationChanges(original,stored.draft,bundled.value).total){
+     localStorage.removeItem(storageKey);draftAvailable.value=false;
+    }
+   }catch{}
+  }
   async function connect(){
    authController?.abort();
    const controller=new AbortController();
@@ -326,8 +400,11 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     if(controller.signal.aborted)return;
     const {schema,revision:current,...config}=data;
     revision.value=current??'';publicRevision.value=revision.value;baseline.value=config;
-    if(!hasEdited&&!draftAvailable.value){
-     draft.value=structuredClone(config);draftRevision.value=revision.value;refreshText();
+    if(draftAvailable.value)void readBundled().then(()=>pruneStoredDraft(config,controller));
+
+    if(hasEdited.value&&!editorChanged()&&!configurationChanges(config,draft.value,bundled.value).total)resetDraft();
+    else if(!hasEdited.value){
+     draft.value=clone(config);draftBase.value=clone(config);draftRevision.value=revision.value;refreshText();
     }
     loaded.value=true;authState.value='ready';
     report('已载入线上配置。',true);
@@ -347,10 +424,26 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    authState.value=token.value.trim()?'checking':'idle';
    if(token.value.trim())void connect();
   },{flush:'sync',immediate:true});
-  function rebaseDraft(){
+  async function rebaseDraft(){
    try{
-    collect();saveLocal(true);draftRevision.value=revision.value;saveLocal();
-    report('已更新草稿的发布基准，请核对差异后再发布。',true);
+    collect();
+    if(!conflict.value)return;
+    const current=revision.value,old=draftRevision.value;
+    let original=draftBase.value;
+    if(!original&&old==='')original={};
+    if(!original&&old&&/^[a-f0-9]{64}$/.test(old)){
+     const response=await fetch(base+'api/history/'+old,{headers:{Authorization:'Bearer '+token.value.trim()},cache:'no-store'});
+     if(response.ok){const {schema,revision,...config}=await response.json();original=config;}
+    }
+    if(!original)throw Error('找不到这份草稿原来的发布基准。请保留草稿并核对线上版本。');
+    if(current!==revision.value||old!==draftRevision.value)throw Error('发布基准已变化，请重新确认。');
+    collect();
+    const {config,conflicts}=mergeConfiguration(original,draft.value,baseline.value);
+    if(conflicts.length)throw Error('线上和草稿同时改了 '+conflicts.slice(0,4).join('、')+'，请先处理这些冲突。');
+    saveLocal(true);
+    draft.value=clone(config);draftBase.value=clone(baseline.value);draftRevision.value=revision.value;
+    refreshText();saveLocal();
+    report('已合并线上变更，请核对草稿后再发布。',true);
    }catch(error){report(error.message)}
   }
   const importInput=ref(null);
@@ -370,11 +463,17 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    actions[key]?.();
   }
   function review(){
-   try{collect();summary.value=configurationChanges(baseline.value,draft.value,bundled.value);confirm.value=true}
+   try{if(!loaded.value||conflict.value)throw Error('请先确认草稿基于当前版本');collect();summary.value=configurationChanges(baseline.value,draft.value,bundled.value);if(!summary.value.total){saveLocal();report('没有需要发布的配置变更。',true);return}confirm.value=true}
    catch(e){report(e.message)}
   }
   function importHistory(snapshot){
-   saveLocal(true);const {schema,revision:old,...config}=snapshot;draft.value=config;hasEdited=true;draftRevision.value=old??null;selected.value='all';form.value=false;refreshText();saveLocal();report('历史版本已载入草稿，发布前请校验。',true);
+   saveLocal(true);
+   const {schema,revision:old,...config}=snapshot;
+   draft.value=config;hasEdited.value=true;
+   draftRevision.value=loaded.value?revision.value:old??null;
+   draftBase.value=loaded.value?clone(baseline.value):null;
+   selected.value='all';form.value=false;refreshText();saveLocal();
+   report('历史版本已载入草稿，发布前请核对与线上版本的差异。',true);
   }
 </script>
 
@@ -421,7 +520,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   <div v-if="authState==='checking'" class="banner-item" role="status"><n-spin :size="14"/><span>正在同步配置</span></div>
   <n-tag v-if="status" size="small" :type="success?'success':'error'">{{status}}</n-tag>
   <n-tag v-if="conflict" size="small" type="warning">发布基准已变化 <n-button text size="tiny" @click="rebaseDraft">确认基准</n-button></n-tag>
-  <n-tag v-if="draftAvailable" size="small" type="info">有未发布草稿 <n-button text size="tiny" @click="restoreLocal">恢复</n-button><n-button text size="tiny" :disabled="!loaded" @click="discardConfirm=true">放弃</n-button></n-tag>
+  <n-tag v-if="loaded && draftAvailable" size="small" type="info">有未发布草稿 <n-button text size="tiny" @click="restoreLocal()">恢复</n-button><n-button text size="tiny" :disabled="!loaded" @click="discardConfirm=true">放弃</n-button></n-tag>
   <small v-if="savedAt" class="draft-status">草稿保存于 {{savedAt}}</small>
  </template>
  <div class="workspace-main">
@@ -445,9 +544,9 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    <MediaForm v-else-if="specialForm && selected==='media'" v-model="objectValue"/>
    <SceneInteractions v-else-if="selected==='interactions'" v-model="records" :scenes="draft.scenes" :worlds="bundled.worlds" :initial-zone="interactionZone"/>
    <div v-else-if="form && fields" class="record-list">
-    <details v-for="(record,index) in records" :key="record" class="record">
+    <details v-for="(record,index) in records" :key="recordKey(record)" class="record">
      <summary>{{ record.name || record.label || record.id || '新条目' }}</summary>
-     <ScenePreview v-if="selected==='scenes'" :scene="record" @update:scene="value=>records[index]=value"/>
+     <ScenePreview v-if="selected==='scenes'" :scene="record" @update:scene="value=>updateRecord(index,value)"/>
      <SceneLayers v-if="selected==='scenes'" v-model="record.layers" :zone="record.id" :interactions="draft.interactions??[]"/>
      <n-button v-if="selected==='scenes' && record.id && record.id!=='cloud-'" size="small" @click="interactionZone=record.id; choose('interactions')">管理此场景的互动</n-button>
 
@@ -467,7 +566,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     <p v-if="!records.length" class="empty">暂无条目，可新增或导入草稿。</p>
    </div>
    <div v-else-if="form && !specialForm" class="entry-list">
-    <div v-for="row in visibleEntries" :key="entries.indexOf(row)" class="entry">
+    <div v-for="row in visibleEntries" :key="row" class="entry">
      <n-input v-model:value="row.key" aria-label="稳定 ID" placeholder="稳定 ID"/>
      <ResourceLink v-if="selected==='giftGames'" v-model:value="row.value" accept=".html"/>
      <n-input v-else v-model:value="row.value" :type="selected==='texts'?'textarea':'text'" aria-label="内容" :placeholder="selected==='texts'?'文字':'HTTPS 地址'"/>

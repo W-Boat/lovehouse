@@ -27,3 +27,30 @@ export function configurationChanges(before,after,bundled={}){
  changes.total=changes.added+changes.modified+changes.removed;
  return changes;
 }
+
+
+export function sameConfiguration(left,right){
+ if(left===right)return true;
+ if(!left||!right||typeof left!=='object'||typeof right!=='object'||Array.isArray(left)!==Array.isArray(right))return false;
+ const keys=Object.keys(left);
+ return keys.length===Object.keys(right).length&&keys.every(key=>Object.hasOwn(right,key)&&sameConfiguration(left[key],right[key]));
+}
+
+export function mergeConfiguration(base,draft,live){
+ const conflicts=[];
+ const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+ function merge(before,local,remote,path){
+  if(sameConfiguration(local,before))return remote;
+  if(sameConfiguration(remote,before)||sameConfiguration(local,remote))return local;
+  if((before===undefined||isRecord(before))&&isRecord(local)&&isRecord(remote)){
+   const keys=new Set([...Object.keys(before??{}),...Object.keys(local),...Object.keys(remote)]);
+   return Object.fromEntries([...keys].flatMap(key=>{
+    const value=merge(before?.[key],local[key],remote[key],[...path,key]);
+    return value===undefined?[]:[[key,value]];
+   }));
+  }
+  conflicts.push(path.join(' / '));
+  return local;
+ }
+ return {config:merge(base,draft,live,[]),conflicts};
+}

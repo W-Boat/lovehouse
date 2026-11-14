@@ -675,7 +675,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
      }
      catch { sendJson(response,500,{error:'Unable to save snapshot'}); return }
     }
-    sendJson(response,200,{revision:snapshot.revision});
+    sendJson(response,200,pathname.endsWith('/publish')?JSON.parse(snapshot.json):{revision:snapshot.revision});
     return;
    }
   }
