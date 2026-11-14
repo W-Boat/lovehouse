@@ -58,7 +58,7 @@ test('incremental resource blobs use signed redirects for GET and HEAD while loc
    signDownload:async(...args:any[])=>{calls.push(args);return 'https://bucket.example/blob?temporary=signature'},
    stream:async()=>{throw Error('Updates must not proxy bucket bytes')},
   };
-  const store=createAndroidUpdateStore(directory,bucket,async()=>({...defaultStorageRules,thresholdBytes:0}));
+  const store=createAndroidUpdateStore(directory,bucket);
   for(const method of ['GET','HEAD']){
    const {result,sink}=response();
    assert.equal(await store.serve({method,headers:{}},sink,'blobs/'+hash),true);

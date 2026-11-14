@@ -33,8 +33,13 @@ wYLnU64h0YIlvyW8oU69N0vJ+zAC+XgJzJw9LkZ+zarsIOzSV0MyPxAYz9UcdYe+
 const digestPattern=/^[a-f0-9]{64}$/;
 const fileLimit=200_000_000;
 const manifestLimit=3_000_000;
-export function createAndroidUpdateStore(directory,bucket,rules){
- const storage=createBlobStore('android-update/blobs',bucket,rules);
+const updateStorageRules={
+ thresholdBytes:0,
+ small:{upload:['s3','local'],download:['s3','local']},
+ large:{upload:['s3','local'],download:['s3','local']},
+};
+export function createAndroidUpdateStore(directory,bucket){
+ const storage=createBlobStore('android-update/blobs',bucket,async()=>updateStorageRules);
  const blobs=join(directory,'blobs');
  const current=join(directory,'update.json');
  async function saveBlob(hash,request){
