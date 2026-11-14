@@ -9,14 +9,12 @@ function missing(error){
  return error.code==='ENOENT'||error.$metadata?.httpStatusCode===404;
 }
 
-export function bucketEnvironment(env=process.env){
- if(!env.LOVEHOUSE_S3_BUCKET?.trim())return;
- return {
-  bucket:env.LOVEHOUSE_S3_BUCKET,region:env.LOVEHOUSE_S3_REGION,
-  endpoint:env.LOVEHOUSE_S3_ENDPOINT,prefix:env.LOVEHOUSE_S3_PREFIX,
-  accessKeyId:env.LOVEHOUSE_S3_ACCESS_KEY_ID,secretAccessKey:env.LOVEHOUSE_S3_SECRET_ACCESS_KEY,
-  sessionToken:env.LOVEHOUSE_S3_SESSION_TOKEN,pathStyle:env.LOVEHOUSE_S3_PATH_STYLE==='true',
- };
+export function bucketEnvironment(env=process.env,prefix='LOVEHOUSE_S3_'){
+ const value=key=>env[prefix+key];
+ if(!value('BUCKET')?.trim())return;
+ return {bucket:value('BUCKET'),region:value('REGION'),endpoint:value('ENDPOINT'),prefix:value('PREFIX'),
+  accessKeyId:value('ACCESS_KEY_ID'),secretAccessKey:value('SECRET_ACCESS_KEY'),sessionToken:value('SESSION_TOKEN'),
+  pathStyle:value('PATH_STYLE')==='true'};
 }
 
 export function validateBucket(input,previous){
@@ -28,7 +26,7 @@ export function validateBucket(input,previous){
  const config={
   bucket:field('bucket'),region:field('region'),endpoint:field('endpoint','',2048),
   prefix:field('prefix','lovehouse').replace(/^\/+|\/+$/g,''),
-  pathStyle:input?.pathStyle===true,
+  pathStyle:input?.pathStyle===true,signOnly:input?.signOnly===true,
   accessKeyId:field('accessKeyId')||previous?.accessKeyId||'',
   secretAccessKey:field('secretAccessKey')||previous?.secretAccessKey||'',
   sessionToken:input?.clearSessionToken===true?'':field('sessionToken','',8192)||previous?.sessionToken||'',
@@ -60,10 +58,10 @@ function publicLookup(host,options,done){
 }
 
 export function createBucket(config,{probe=false}={}){
- const {bucket,region,endpoint,prefix,accessKeyId,secretAccessKey,sessionToken,pathStyle}=validateBucket(config);
+ const {bucket,region,endpoint,prefix,accessKeyId,secretAccessKey,sessionToken,pathStyle,signOnly}=validateBucket(config);
  let sdk;
- async function command(name,details,timeout=30000){
-  sdk??=Promise.all([import('@aws-sdk/client-s3'),import('@smithy/node-http-handler')]).then(([s3,{NodeHttpHandler}])=>({
+ function initialize(){
+  return sdk??=Promise.all([import('@aws-sdk/client-s3'),import('@smithy/node-http-handler')]).then(([s3,{NodeHttpHandler}])=>({
    s3,client:new s3.S3Client({
     region,endpoint,forcePathStyle:pathStyle,followRegionRedirects:false,
     maxAttempts:probe?1:3,requestHandler:new NodeHttpHandler({httpsAgent:new Agent({lookup:publicLookup,keepAlive:true}),connectionTimeout:5000}),
@@ -71,7 +69,9 @@ export function createBucket(config,{probe=false}={}){
     requestChecksumCalculation:'WHEN_REQUIRED',responseChecksumValidation:'WHEN_REQUIRED',
    }),
   }));
-  const {client,s3}=await sdk;
+ }
+ async function command(name,details,timeout=30000){
+  const {client,s3}=await initialize();
   try{return await client.send(new s3[name]({Bucket:bucket,...details}),{abortSignal:AbortSignal.timeout(probe?7000:timeout)})}
   catch(error){
    if(missing(error))return;
@@ -79,21 +79,22 @@ export function createBucket(config,{probe=false}={}){
   }
  }
  return {
+  signOnly,
   async signUpload(key,size,mime,sha256){
-   await command('HeadObjectCommand',{Key:key});
-   const {client,s3}=await sdk;
+   if(!signOnly)await command('HeadObjectCommand',{Key:key});
+   const {client,s3}=await initialize();
    const {getSignedUrl}=await import('@aws-sdk/s3-request-presigner');
    return getSignedUrl(client,new s3.PutObjectCommand({Bucket:bucket,Key:key,ContentLength:size,ContentType:mime,ChecksumSHA256:Buffer.from(sha256,'hex').toString('base64')}),{expiresIn:900,signableHeaders:new Set(['content-length','content-type']),unhoistableHeaders:new Set(['x-amz-checksum-sha256'])});
   },
   async signDownload(key,name,mime,{head=false,disposition="attachment"}={}){
-   await command('HeadObjectCommand',{Key:key});
+   if(!signOnly)await command('HeadObjectCommand',{Key:key});
    // Some S3 providers accept APK uploads and HEAD but forbid GET. Honor
    // the configured local fallback instead of redirecting to a known 403.
-   if(name.endsWith('.apk')){
+   if(!signOnly&&name.endsWith('.apk')){
     const probe=await command('GetObjectCommand',{Key:key,Range:'bytes=0-0'});
     probe?.Body?.destroy();
    }
-   const {client,s3}=await sdk;
+   const {client,s3}=await initialize();
    const {getSignedUrl}=await import('@aws-sdk/s3-request-presigner');
    const operation=head?s3.HeadObjectCommand:s3.GetObjectCommand;
    return getSignedUrl(client,new operation({Bucket:bucket,Key:key,
@@ -115,9 +116,9 @@ export function createBucket(config,{probe=false}={}){
  };
 }
 
-export async function testBucket(config){
+export async function testBucket(config,{packageExtension='txt'}={}){
  const bucket=createBucket(config,{probe:true});
- const key=bucket.key('connection-test',randomUUID()+'.txt');
+ const key=bucket.key('connection-test',randomUUID()+'.'+packageExtension);
  const expected=Buffer.from('Lovehouse bucket connection test');
  let stage='写入',failure;
  try{
@@ -211,7 +212,7 @@ export function createBlobStore(group,bucket,getRules=async()=>defaultStorageRul
     },
     s3:async active=>{
      const key=active.key(group,id);
-     if(await active.size(key)!==size)throw Object.assign(Error('Object missing'),{code:'ENOENT'});
+     if(!active.signOnly&&await active.size(key)!==size)throw Object.assign(Error('Object missing'),{code:'ENOENT'});
      return active.signDownload(key,name,mime,options);
     },
    });

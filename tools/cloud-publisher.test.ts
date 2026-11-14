@@ -269,3 +269,20 @@ test('bucket settings are authenticated, verified before saving, and never retur
   assert.equal(probes,3);
  }finally{await rm(directory,{recursive:true,force:true})}
 });
+
+test('Android bucket configuration is private, independent and tests APK reads',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lovehouse-android-config-'));
+ try{
+  const calls:any[]=[];
+  const handler=createContentHandler({file:join(directory,'content.json'),token:'fixture-token',probeBucket:async(config,options)=>{calls.push({config,options});return {ok:true}}});
+  const path='/admin/api/storage/android-bucket',auth={authorization:'Bearer fixture-token','content-type':'application/json'};
+  assert.equal((await request(handler,'GET',path)).status,401);
+  assert.equal(JSON.parse((await request(handler,'GET',path,auth)).body).source,'inherited');
+  const config={bucket:'android-test',region:'auto',prefix:'lovehouse',endpoint:'https://example.org',pathStyle:true,accessKeyId:'fixture-id',secretAccessKey:'fixture-secret'};
+  const result=await request(handler,'POST',path,auth,JSON.stringify(config));
+  assert.equal(result.status,200,result.body);assert.equal(result.body.includes('fixture-secret'),false);
+  assert.equal(calls[0].options.packageExtension,'apk');
+  assert.equal(JSON.parse((await request(handler,'GET',path,auth)).body).configuration.bucket,'android-test');
+  assert.equal(JSON.parse((await request(handler,'GET','/admin/api/storage/bucket',auth)).body).configuration,null);
+ }finally{await rm(directory,{recursive:true,force:true})}
+});

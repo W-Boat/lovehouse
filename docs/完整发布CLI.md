@@ -33,3 +33,5 @@ CLI Skill 下载在后台项目文档页。开工先读 Agent.MD，每次交付�
 GitHub runner 能直连发布服务器时，可在仓库变量中设置 `LOVEHOUSE_DIRECT_PUBLISH=true`。当前部署可以在能同时访问 GitHub 和发布服务器的电脑上运行 `python tools/actions_release_relay.py --sha 完整提交号 --token-file 本机令牌文件`。工具等待该提交的构件，分段读取并发布 Android、Windows 与签名资源更新。令牌从本机文件读取。
 
 安装包可用 `package-direct android VERSION FILE.apk` 或 `package-direct windows VERSION FILE.zip` 直传私有储存桶。配置、网络要求和校验方式见 [对象存储](对象存储.md)。
+
+安卓独立桶：android-bucket-get、android-bucket-test connection.json、android-bucket-set connection.json。服务器仅签名模式参见《对象存储》，package-direct 会在本机完整读回校验后发布。

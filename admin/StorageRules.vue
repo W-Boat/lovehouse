@@ -42,6 +42,7 @@ onMounted(()=>request());
 
 <template>
  <BucketConnection :token="token" @saved="mode='s3'; emit('bucket-saved')"/>
+ <BucketConnection :token="token" android/>
  <n-form label-placement="top" style="max-width:640px" @submit.prevent="request(true)">
   <n-alert v-if="mode==='local'" type="info" style="margin-bottom:14px">当前服务器尚未配置储存桶，文件使用本地磁盘。规则可以先保存。</n-alert>
   <template v-if="draft">

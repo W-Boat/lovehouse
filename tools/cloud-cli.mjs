@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-import {readFile,writeFile,stat} from 'node:fs/promises';
+import {readFile,writeFile,stat,mkdtemp,rm,rmdir} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {createReadStream} from 'node:fs';
 import {basename} from 'node:path';
@@ -61,7 +63,7 @@ async function sendFile(path,filename,headers={}){
 }
 const help={
  usage:'node tools/cloud-cli.mjs COMMAND [arguments] [--env .ENV] [--base HTTPS_BASE] [--token-file FILE] [--if-match REVISION] [--output FILE]',
- commands:{'package-direct android|windows VERSION FILE':'直传私有桶，服务端校验后发布','bucket-get':'查看储存桶设置（隐藏凭据）','bucket-test INPUT.json':'测试储存桶读写和清理','bucket-set INPUT.json':'验证并保存储存桶连接','storage-set INPUT.json':'保存存储阈值与路由规则',storage:'查看发布服务器的存储模式','opening-get':'查看定时开放规则','opening-set INPUT.json':'保存定时开放规则，文件包含 enabled、opensAt、allowIps',version:'CLI、Skill 与源码版本',
+ commands:{'android-bucket-get':'查看安卓安装包专用桶','android-bucket-test INPUT.json':'测试专用桶的 APK 读写','android-bucket-set INPUT.json':'验证并保存安卓专用桶','package-direct android|windows VERSION FILE':'直传私有桶，服务端校验后发布','bucket-get':'查看储存桶设置（隐藏凭据）','bucket-test INPUT.json':'测试储存桶读写和清理','bucket-set INPUT.json':'验证并保存储存桶连接','storage-set INPUT.json':'保存存储阈值与路由规则',storage:'查看发布服务器的存储模式','opening-get':'查看定时开放规则','opening-set INPUT.json':'保存定时开放规则，文件包含 enabled、opensAt、allowIps',version:'CLI、Skill 与源码版本',
   snapshot:'读取线上配置',catalog:'全部包内素材和配置',assets:'素材列表',stats:'去重在线统计',
   history:'远程发布历史','history-show REVISION':'读取历史配置',packages:'安装包与历史','update-manifest':'公开签名资源清单',
   'check INPUT.json':'本地完整校验','publish INPUT.json --if-match REVISION':'校验并发布全部配置',
@@ -80,12 +82,12 @@ try{
   print({name:'lovehouse-cli',version:versions.cli,skillVersion:versions.skill,revision:git.status===0?git.stdout.trim():'unknown'});process.exit(0);
  }
  if(!command||command==='help'){print(help);process.exit(0)}
- const reads={snapshot:'snapshot',catalog:'bundled',assets:'assets',stats:'statistics','bucket-get':'storage/bucket',storage:'storage','opening-get':'opening',history:'history',packages:'packages'};
+ const reads={snapshot:'snapshot',catalog:'bundled',assets:'assets',stats:'statistics','android-bucket-get':'storage/android-bucket','bucket-get':'storage/bucket',storage:'storage','opening-get':'opening',history:'history',packages:'packages'};
  let result;
  if(command in reads){requireArgs(0);result=await request('GET','admin/api/'+reads[command])}
- else if(command==='bucket-set'||command==='bucket-test'){
+ else if(['bucket-set','bucket-test','android-bucket-set','android-bucket-test'].includes(command)){
   requireArgs(1);
-  const path='admin/api/storage/bucket'+(command==='bucket-test'?'/test':'');
+  const path='admin/api/storage/'+(command.startsWith('android-')?'android-bucket':'bucket')+(command.endsWith('-test')?'/test':'');
   result=await request('POST',path,JSON.stringify(await getJson(args[0])),{'Content-Type':'application/json'});
  }
  else if(command==='storage-set'){
@@ -120,17 +122,34 @@ try{
   const hash=createHash('sha256');
   for await(const chunk of createReadStream(filename))hash.update(chunk);
   const metadata={platform,version,bytes:info.size,sha256:hash.digest('hex')};
-  const body=JSON.stringify(metadata),headers={'Content-Type':'application/json'};
-  const prepared=await request('POST','admin/api/packages/direct/prepare',body,headers);
-  if(!prepared.exists){
-   const url=new URL(prepared.url);
-   if(url.protocol!=='https:')throw Error('Expected an HTTPS bucket upload URL');
-   const upload=await fetch(url,{method:'PUT',headers:{'Content-Length':String(info.size),'Content-Type':prepared.contentType,'x-amz-checksum-sha256':Buffer.from(metadata.sha256,'hex').toString('base64')},
-    body:createReadStream(filename),duplex:'half',redirect:'error',signal:AbortSignal.timeout(900000)});
-   if(!upload.ok){await upload.body?.cancel();throw Error('Bucket upload HTTP '+upload.status)}
-   await upload.body?.cancel();
+  const headers={'Content-Type':'application/json'};
+  const prepared=await request('POST','admin/api/packages/direct/prepare',JSON.stringify(metadata),headers);
+  const curl=process.platform==='win32'?'curl.exe':'curl';
+  function transfer(url,args){
+   if(new URL(url).protocol!=='https:')throw Error('Expected an HTTPS bucket URL');
+   const run=spawnSync(curl,['-K','-','--fail','--silent','--show-error','--connect-timeout','15','--max-time','1200',...args],
+    {input:'url = "'+url+'"\n',encoding:'utf8',stdio:['pipe','pipe','inherit']});
+   if(run.error)throw run.error;
+   if(run.status!==0)throw Error('Bucket transfer failed: '+run.status);
   }
-  result=await request('POST','admin/api/packages/direct/finish',body,headers);
+  if(!prepared.exists){
+   process.stderr.write('Uploading directly to bucket…\n');
+   transfer(prepared.url,['--upload-file',filename,'-H','Content-Type: '+prepared.contentType,'-H','x-amz-checksum-sha256: '+Buffer.from(metadata.sha256,'hex').toString('base64'),'-o',process.platform==='win32'?'NUL':'/dev/null']);
+  }
+  if(prepared.verifyLocally){
+   process.stderr.write('Reading back bucket file and verifying SHA-256 locally…\n');
+   const fresh=await request('POST','admin/api/packages/direct/prepare',JSON.stringify(metadata),headers);
+   const directory=await mkdtemp(join(tmpdir(),'lovehouse-verify-')),file=join(directory,'package');
+   try{
+    transfer(fresh.downloadUrl,['-o',file]);
+    if((await stat(file)).size!==metadata.bytes)throw Error('Bucket read-back size mismatch');
+    const hash=createHash('sha256');let signature=Buffer.alloc(0);
+    for await(const chunk of createReadStream(file)){hash.update(chunk);if(!signature.length)signature=chunk.subarray(0,4)}
+    if(hash.digest('hex')!==metadata.sha256||signature.toString('hex')!=='504b0304')throw Error('Bucket read-back checksum mismatch');
+    metadata.verifiedLocally=true;
+   }finally{await rm(file,{force:true});await rmdir(directory)}
+  }
+  result=await request('POST','admin/api/packages/direct/finish',JSON.stringify(metadata),headers);
   if(result.sha256!==metadata.sha256||result.bytes!==metadata.bytes)throw Error('Published package checksum mismatch');
  }else if(command==='package-upload'){
   requireArgs(3);if(!['android','windows'].includes(args[0]))throw Error('Invalid platform');

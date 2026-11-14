@@ -215,7 +215,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
  };
  const publicBucket=({source,config})=>({
   source,configuration:config?{
-   bucket:config.bucket,region:config.region,endpoint:config.endpoint,prefix:config.prefix,pathStyle:config.pathStyle,
+   bucket:config.bucket,region:config.region,endpoint:config.endpoint,prefix:config.prefix,pathStyle:config.pathStyle,signOnly:config.signOnly,
    hasCredentials:Boolean(config.accessKeyId&&config.secretAccessKey),hasSessionToken:Boolean(config.sessionToken),
   }:null,
  });
@@ -227,12 +227,28 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   return activeBucket;
  };
 
+ const androidBucketFile=file+'.android-bucket.json';
+ const androidEnvironment=bucketEnvironment(process.env,'LOVEHOUSE_ANDROID_S3_');
+ let activeAndroidBucket,activeAndroidKey;
+ const readAndroidBucket=async()=>{
+  try{return {source:'admin',config:validateBucket(JSON.parse(await readFile(androidBucketFile,'utf8')))}}
+  catch(error){if(error.code!=='ENOENT')throw error}
+  return androidEnvironment?{source:'environment',config:validateBucket(androidEnvironment)}:{source:'inherited'};
+ };
+ const getAndroidBucket=async()=>{
+  const {config}=await readAndroidBucket();
+  if(!config)return getBucket();
+  const key=JSON.stringify(config);
+  if(activeAndroidKey!==key){activeAndroidBucket=createBucket(config);activeAndroidKey=key}
+  return activeAndroidBucket;
+ };
+
  const readStorageRules=async()=>{
   try{return validateStorageRules(JSON.parse(await readFile(storageFile,'utf8')))}
   catch(error){if(error.code==='ENOENT')return defaultStorageRules;throw error}
  };
  const assets=createAssetStore(file+'.assets',getBucket,readStorageRules);
- const packages=createPackageStore(file+'.packages',publicPrefix,getBucket,readStorageRules);
+ const packages=createPackageStore(file+'.packages',publicPrefix,getBucket,readStorageRules,getAndroidBucket);
  const stats=createStats(file);
  const claimAnnouncement=createAnnouncementClaims(file);
  const androidUpdate=createAndroidUpdateStore(file+'.android-update',getBucket,readStorageRules);
@@ -452,30 +468,37 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
     }catch(error){sendJson(response,400,{error:error.message})}
     return;
    }
-   if(pathname==='/admin/api/storage/bucket'&&request.method==='GET'){
-    try{sendJson(response,200,publicBucket(await readBucket()))}
+   const androidBucketRequest=pathname.startsWith('/admin/api/storage/android-bucket');
+   const connectionPath='/admin/api/storage/'+(androidBucketRequest?'android-bucket':'bucket');
+   const readConnection=androidBucketRequest?readAndroidBucket:readBucket;
+   const connectionFile=androidBucketRequest?androidBucketFile:bucketFile;
+   if(pathname===connectionPath&&request.method==='GET'){
+    try{sendJson(response,200,publicBucket(await readConnection()))}
     catch{sendJson(response,500,{error:'无法读取储存桶配置'})}
     return;
    }
-   if(['/admin/api/storage/bucket','/admin/api/storage/bucket/test'].includes(pathname)&&request.method==='POST'){
+   if([connectionPath,connectionPath+'/test'].includes(pathname)&&request.method==='POST'){
     if(probeRunning){sendJson(response,409,{error:'已有储存桶测试正在运行'});return}
     probeRunning=true;
     try{
      const draft=await readJson(request);
-     const previous=(await readBucket()).config;
+     const previous=(await readConnection()).config;
      const config=validateBucket(draft,previous);
      const destinationChanged=previous&&['bucket','endpoint','prefix','region'].some(key=>previous[key]!==config[key]);
      if(previous&&previous.endpoint!==config.endpoint&&
         (!draft.accessKeyId?.trim()||!draft.secretAccessKey?.trim()||(previous.sessionToken&&!draft.sessionToken?.trim()&&draft.clearSessionToken!==true)))
       throw Error('切换 API 端点时请重新填写该端点的访问凭据');
-     const saving=pathname==='/admin/api/storage/bucket';
+     const saving=pathname===connectionPath;
      if(saving&&destinationChanged&&draft.confirmDestinationChange!==true)
       throw Error('切换桶位置前，请确认已迁移仅存于旧桶的文件');
-     await probeBucket(config);
+     if(config.signOnly){
+      if(!androidBucketRequest)throw Error('仅安卓专用桶支持服务器仅签名模式');
+      if(saving&&draft.confirmClientVerification!==true)throw Error('请确认已在本机验证桶读写和 APK 下载');
+     }else await probeBucket(config,androidBucketRequest?{packageExtension:'apk'}:undefined);
      if(saving){
-      await serialize(()=>saveSnapshot(bucketFile,JSON.stringify(config),0o600));
+      await serialize(()=>saveSnapshot(connectionFile,JSON.stringify(config),0o600));
       sendJson(response,200,publicBucket({source:'admin',config}));
-     }else sendJson(response,200,{ok:true});
+     }else sendJson(response,200,config.signOnly?{ok:true,signOnly:true,requiresLocalVerification:true}:{ok:true});
     }catch(error){sendJson(response,400,{error:error.message})}
     finally{probeRunning=false}
     return;

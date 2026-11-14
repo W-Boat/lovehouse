@@ -13,8 +13,10 @@ const formats={
 export const packageLimit=600*1024*1024;
 export const isPackagePlatform=value=>Object.hasOwn(formats,value);
 
-export function createPackageStore(directory,publicPrefix,bucket,rules){
+export function createPackageStore(directory,publicPrefix,bucket,rules,androidBucket){
  const blobs=createBlobStore('packages',bucket,rules);
+ const androidBlobs=androidBucket?createBlobStore('packages',androidBucket,rules):blobs;
+ const blobsFor=platform=>platform==='android'?androidBlobs:blobs;
  const manifest=join(directory,'packages.json');
  async function list(){
   try{return JSON.parse(await readFile(manifest,'utf8'))}
@@ -43,7 +45,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
   if(!entry)return {};
   delete entry.current;
   const id=entry.sha256+'.'+formats[platform].extension;
-  if(await blobs.size(id,join(directory,id))!==entry.bytes)return {};
+  if(await blobsFor(platform).size(id,join(directory,id))!==entry.bytes)return {};
   await writeCatalog({...current,[platform]:entry});
   return {entry};
  }
@@ -68,7 +70,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
    if(header.toString('hex')!=='504b0304')throw Error('Expected an APK or ZIP archive');
    const sha256=hash.digest('hex');
    const id=sha256+'.'+format.extension;
-   await blobs.putFile(id,join(directory,id),temporary,bytes,format.mime);
+   await blobsFor(platform).putFile(id,join(directory,id),temporary,bytes,format.mime);
    return await register(platform,version,sha256,bytes,serialize);
   }finally{await rm(temporary,{force:true})}
  }
@@ -85,16 +87,22 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
     return entry;
   });
  }
- async function direct(action,{platform,version,sha256,bytes},serialize){
+ async function direct(action,{platform,version,sha256,bytes,verifiedLocally=false},serialize){
   if(!isPackagePlatform(platform)||typeof version!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(version)||
      typeof sha256!=='string'||!/^[a-f0-9]{64}$/.test(sha256)||!Number.isSafeInteger(bytes)||bytes<4||bytes>packageLimit)
    throw Error('Invalid package metadata');
-  const active=typeof bucket==='function'?await bucket():bucket;
+  const destination=platform==='android'&&androidBucket?androidBucket:bucket;
+  const active=typeof destination==='function'?await destination():destination;
   if(!active)throw Error('Storage bucket is not enabled');
   const format=formats[platform],key=active.key('packages',sha256+'.'+format.extension);
   if(action==='prepare'){
+   if(active.signOnly)return {url:await active.signUpload(key,bytes,format.mime,sha256),downloadUrl:await active.signDownload(key,releaseName(platform,version),format.mime),contentType:format.mime,verifyLocally:true};
    if(await active.size(key)===bytes)return {exists:true};
    return {url:await active.signUpload(key,bytes,format.mime,sha256),contentType:format.mime};
+  }
+  if(active.signOnly){
+   if(verifiedLocally!==true)throw Error('Local bucket read-back SHA-256 verification is required');
+   return register(platform,version,sha256,bytes,serialize);
   }
   if(await active.size(key)!==bytes)throw Error('Bucket file size mismatch');
   const digest=createHash('sha256');
@@ -115,9 +123,10 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
   const format=formats[platform];
   if(format.extension!==extension)return false;
   const id=sha256+'.'+extension,blob=join(directory,id);
-  const size=await blobs.size(id,blob);
+  const released=(await history()).find(row=>row.sha256===sha256&&row.name===name&&row.platform===platform);
+  const size=released?.bytes??await blobsFor(platform).size(id,blob);
   if(size===undefined)return false;
-  const location=await blobs.downloadUrl(id,blob,size,name,format.mime,{head:request.method==='HEAD'});
+  const location=await blobsFor(platform).downloadUrl(id,blob,size,name,format.mime,{head:request.method==='HEAD'});
   if(location){
    response.writeHead(302,{Location:location,'Cache-Control':'private, no-store',
     'Referrer-Policy':'no-referrer','Content-Length':'0'}).end();
@@ -138,7 +147,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
   }
   headers['Content-Length']=end-start+1;
   let body;
-  try{if(request.method!=='HEAD')body=await blobs.stream(id,blob,size,status===206?{start,end}:undefined)}
+  try{if(request.method!=='HEAD')body=await blobsFor(platform).stream(id,blob,size,status===206?{start,end}:undefined)}
   catch(error){if(error.code==='ENOENT')return false;throw error}
   response.writeHead(status,headers);
   if(body)await pipeline(body,response);

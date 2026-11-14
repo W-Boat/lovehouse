@@ -31,7 +31,9 @@ const historyError=ref('');
 const publishing=ref(false);
 const switching=ref(false);
 const progress=ref(0),phase=ref(''),uploaded=ref(0);
-const bucketAvailable=ref(false),direct=ref(false);
+const bucketAvailable=ref(false),direct=ref(false),androidSignOnly=ref(false);
+onMounted(()=>{fetch(import.meta.env.BASE_URL+'api/storage/android-bucket',{headers:{Authorization:'Bearer '+props.token}})
+ .then(async response=>{if(response.ok){const data=await response.json();androidSignOnly.value=Boolean(data.configuration?.signOnly);if(data.configuration)bucketAvailable.value=true}}).catch(()=>{})});
 const notice=ref(null);
 const pendingPublish=ref(null);
 const pendingSwitch=ref(null);
@@ -129,7 +131,7 @@ function stagePublish(){
  }else if(!file.value){
   report('error','请选择要发布的安装包。');
  }else{
-  pendingPublish.value={platform:platform.value,version:normalized,file:file.value,direct:direct.value&&bucketAvailable.value};
+  pendingPublish.value={platform:platform.value,version:normalized,file:file.value,direct:(direct.value&&bucketAvailable.value)||(platform.value==='android'&&androidSignOnly.value)};
  }
 }
 
@@ -195,10 +197,10 @@ async function publishDirect(draft,token){
  const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',await draft.file.arrayBuffer()));
  const sha256=Array.from(digest,value=>value.toString(16).padStart(2,'0')).join('');
  const bytes=draft.file.size;
- const body=JSON.stringify({platform:draft.platform,version:draft.version,sha256,bytes});
+ const metadata={platform:draft.platform,version:draft.version,sha256,bytes};
  async function request(step){
   const response=await fetch(base+'api/packages/direct/'+step,{
-   method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body,
+   method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(metadata),
    cache:'no-store',signal:AbortSignal.timeout(step==='finish'?300000:30000),
   });
   const data=await response.json();
@@ -215,7 +217,17 @@ async function publishDirect(draft,token){
  }
  progress.value=100;
  uploaded.value=bytes;
- phase.value='服务器正在从桶读回并校验';
+ if(prepared.verifyLocally){
+  phase.value='正在由本机读回储存桶并校验';
+  const fresh=await request('prepare');
+  const response=await fetch(fresh.downloadUrl,{cache:'no-store',signal:AbortSignal.timeout(900000)});
+  if(!response.ok)throw Error('桶读回失败（HTTP '+response.status+'），请检查桶 CORS');
+  const data=await response.arrayBuffer();
+  if(data.byteLength!==bytes)throw Error('桶读回文件大小不一致');
+  const actual=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),value=>value.toString(16).padStart(2,'0')).join('');
+  if(actual!==sha256)throw Error('桶读回 SHA-256 不一致');
+  metadata.verifiedLocally=true;
+ }else phase.value='服务器正在从桶读回并校验';
  const entry=await request('finish');
  if(entry.sha256!==sha256||entry.bytes!==bytes)throw Error('发布后的安装包校验失败');
  return entry;
