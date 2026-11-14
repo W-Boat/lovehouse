@@ -1,4 +1,5 @@
 <script setup>
+import {configurationChanges} from "./configuration-changes.js";
 import ResourceLink from "./ResourceLink.vue";
 import IconButton from './IconButton.vue';
 import PageLoading from './page-loading.js';
@@ -67,7 +68,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   const sessionKey='lovehouse-publisher-session:'+base;
   function savedSession(){try{return sessionStorage.getItem(sessionKey)||''}catch{return ''}}
   const selected=ref('texts'), token=ref(savedSession()), draft=ref({}), revision=ref('');
-  const bundled=ref({}),baseline=ref({}),summary=ref([]),savedAt=ref(''),draftAvailable=ref(false);
+  const bundled=ref({}),baseline=ref({}),summary=ref({added:0,modified:0,removed:0,total:0}),savedAt=ref(''),draftAvailable=ref(false);
   const storageKey='lovehouse-publisher-draft:'+import.meta.env.BASE_URL;
   provide('publisherToken',token);
   const username=ref(''),password=ref(''),loginError=ref(''),loggingIn=ref(false);
@@ -353,7 +354,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    actions[key]?.();
   }
   function review(){
-   try{collect();summary.value=[...new Set([...Object.keys(baseline.value),...Object.keys(draft.value)])].filter(key=>JSON.stringify(baseline.value[key])!==JSON.stringify(draft.value[key]));confirm.value=true}
+   try{collect();summary.value=configurationChanges(baseline.value,draft.value);confirm.value=true}
    catch(e){report(e.message)}
   }
   function importHistory(snapshot){
@@ -496,7 +497,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   </section>
  </div>
  <publisher-dialog v-model="replaceConfirm" title="载入线上配置？" width="min(440px,94vw)"><p>当前草稿会先保存到本机，然后载入线上内容。</p><template #footer><n-button @click="replaceConfirm=false">取消</n-button><n-button type="primary" @click="saveLocal(true); replaceConfirm=false; request('snapshot')">载入</n-button></template></publisher-dialog>
- <publisher-dialog v-model="confirm" title="发布当前草稿？" width="min(440px, 94vw)"><p>玩家下次启动时会同步此配置。</p><p>变更分区 {{summary.map(id=>labels[id]||id).join('、') || '无变更'}}</p><template #footer><n-button @click="confirm=false">取消</n-button><n-button type="primary" @click="confirm=false; request('publish')">确认发布</n-button></template></publisher-dialog>
+ <publisher-dialog v-model="confirm" title="发布当前草稿？" width="min(440px, 94vw)"><p>玩家下次启动时会同步此配置。</p><p>修改配置 {{summary.total}} 条</p><p>新增 {{summary.added}} 条 · 修改 {{summary.modified}} 条 · 删除 {{summary.removed}} 条</p><template #footer><n-button @click="confirm=false">取消</n-button><n-button type="primary" @click="confirm=false; request('publish')">确认发布</n-button></template></publisher-dialog>
 <publisher-dialog v-model="discardConfirm" title="放弃本机草稿？"><p>当前未发布改动会清除，编辑器恢复到已读取的线上版本。</p><template #footer><n-button @click="discardConfirm=false">取消</n-button> <n-button type="error" @click="discardDraft">放弃草稿</n-button></template></publisher-dialog>
  <publisher-dialog v-model="passwordOpen" title="修改密码">
   <n-form label-placement="top" @submit.prevent="changePassword">
