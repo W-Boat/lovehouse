@@ -5,14 +5,21 @@ plugins {
 android {
     namespace 'com.wboat.lovehouse'
     compileSdk 35
+    buildFeatures { buildConfig true }
+    def thin = System.getenv('LOVEHOUSE_THIN_BASE') ?: ''
+    def run = Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
+
     defaultConfig {
         applicationId 'com.wboat.lovehouse'
         minSdk 24
         targetSdk 35
-        versionCode 20000 + Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
+        versionCode 20000 + run
+        buildConfigField 'long', 'BUNDLED_RESOURCE_VERSION', (thin ? '0L' : run + 'L')
+        buildConfigField 'String', 'BASE_PACKAGE', '"' + thin + '"'
+        buildConfigField 'String', 'NATIVE_REVISION', '"' + (System.getenv('LOVEHOUSE_NATIVE_REVISION') ?: '') + '"'
         versionName '2.1.' + (System.getenv('GITHUB_RUN_NUMBER') ?: '1')
     }
-    sourceSets.main.assets.srcDirs = [rootProject.file('../dist')]
+    sourceSets.main.assets.srcDirs = [rootProject.file(thin ? '../shell-bootstrap' : '../dist')]
     signingConfigs {
         release {
             def keystore = System.getenv('ANDROID_KEYSTORE_PATH')

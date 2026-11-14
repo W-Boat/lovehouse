@@ -38,15 +38,13 @@ final class ContentUpdates {
     private volatile URL candidateBlobs;
     private volatile JSONObject status;
     private volatile String servingVersion;
+    private boolean checkedAutomatically;
 
     ContentUpdates(Activity activity, Consumer<JSONObject> listener, Runnable reload) {
         this.activity = activity; this.listener = listener; this.reload = reload;
         root = new File(activity.getFilesDir(), "content-updates");
         preferences = activity.getSharedPreferences("content-updates", 0);
-        long version = 0;
-        try { version = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionCode - 20000L; }
-        catch (Exception ignored) { }
-        bundledVersion = Math.max(0, version);
+        bundledVersion = BuildConfig.BUNDLED_RESOURCE_VERSION;
         if (preferences.getBoolean("trial", false)) rejectTrial();
         String active = preferences.getString("active", "");
         if (active.matches("[0-9]+") && !new File(new File(root, active), ".verified.json").isFile()) restore();
@@ -76,6 +74,7 @@ final class ContentUpdates {
         try {
             result.put("phase", phase).put("message", message).put("progress", progress);
             result.put("version", Math.max(bundledVersion, activeVersion()));
+            result.put("nativeBase", BuildConfig.BASE_PACKAGE).put("nativeRevision", BuildConfig.NATIVE_REVISION);
             result.put("url", preferences.getString("url", ""));
             result.put("availableVersion", candidate == null ? 0 : candidate.optLong("version"));
             result.put("canRetry", "error".equals(phase) && candidate != null
@@ -83,6 +82,17 @@ final class ContentUpdates {
         } catch (Exception ignored) { }
         status = result;
         main.post(() -> { if (!activity.isDestroyed()) listener.accept(result); });
+    }
+
+    void checkAutomatically() {
+        if (checkedAutomatically || preferences.getBoolean("trial", false)) return;
+        checkedAutomatically = true;
+        JSONObject request = new JSONObject();
+        try {
+            request.put("action", "auto").put("url",
+                "https://server.080726.xyz/lovehouse/android-update/update.json");
+        } catch (Exception ignored) { return; }
+        command(request);
     }
 
     void command(JSONObject message) {
@@ -94,13 +104,15 @@ final class ContentUpdates {
                 String current = preferences.getString("active", "");
                 if (!current.equals(confirmed)) return;
                 preferences.edit().putBoolean("trial", false).commit();
-                String previous = preferences.getString("previous", "");
+                String previous = BuildConfig.BASE_PACKAGE.isEmpty() ? preferences.getString("previous", "") : "";
+                if (previous.isEmpty()) preferences.edit().remove("previous").commit();
                 File[] versions = root.listFiles();
                 if (versions != null) for (File version : versions) {
                     if (version.getName().matches("[0-9]+") && !version.getName().equals(current) && !version.getName().equals(previous) && !version.getName().equals(preferences.getString("pending", ""))) {
                         try { remove(version); } catch (Exception ignored) { }
                     }
                 }
+                if (!BuildConfig.BASE_PACKAGE.isEmpty()) checkAutomatically();
             });
             return;
         }
@@ -113,7 +125,7 @@ final class ContentUpdates {
                     candidate = null;
                     URL url = secureUrl(message.optString("url"));
                     if (!automatic) preferences.edit().putString("url", url.toString()).commit();
-                    if (!automatic) publish("checking", "正在检查资源版本", 0);
+                    publish("checking", "正在检查资源版本", 0);
                     JSONObject envelope = new JSONObject(new String(fetch(url, 3_000_000), StandardCharsets.UTF_8));
                     byte[] payload = Base64.decode(envelope.getString("payload"), Base64.DEFAULT);
                     byte[] signature = Base64.decode(envelope.getString("signature"), Base64.DEFAULT);
@@ -128,8 +140,8 @@ final class ContentUpdates {
                     if (!"index.html".equals(manifest.getString("entry")) || !"lovehouse-content.zip".equals(manifest.getString("archive"))) throw new IOException("资源入口格式不支持");
                     long version = manifest.getLong("version");
                     if (version < 1) throw new IOException("无效资源版本");
-                    if (version <= Math.max(bundledVersion, activeVersion())) { if (!automatic) publish("current", "当前已是最新资源", 100); return; }
-                    if (automatic && version == preferences.getLong("failedAutoVersion", -1)) return;
+                    if (version <= Math.max(bundledVersion, activeVersion())) { publish("current", "当前已是最新资源", 100); return; }
+                    if (automatic && !message.optBoolean("retry") && version == preferences.getLong("failedAutoVersion", -1)) { publish("restored", "正在使用已验证的资源", 100); return; }
                     if (version > Integer.MAX_VALUE) throw new IOException("无效资源版本");
                     JSONObject files = manifest.getJSONObject("files");
                     if (!files.has("index.html") || files.length() > 4096) throw new IOException("资源清单不完整");
@@ -152,7 +164,7 @@ final class ContentUpdates {
                     restore(); publish("restored", "已恢复上一份离线资源", 100); main.post(this::reloadContent);
                 } else throw new IOException("不支持的更新操作");
             } catch (Exception error) {
-                if (!automatic) publish("error", error.getMessage() == null ? "资源更新失败，请重试" : error.getMessage(), 0);
+                publish("error", error.getMessage() == null ? "资源更新失败，请重试" : error.getMessage(), 0);
             } finally { busy.set(false); }
         });
     }
@@ -235,7 +247,7 @@ final class ContentUpdates {
                 } finally { connection.disconnect(); }
             }
             stagedByHash.put(hash, destination);
-            if (!automatic) publish("downloading", "正在同步变更的资源", ++done * 100 / files.length());
+            publish("downloading", "正在下载和校验资源", ++done * 100 / files.length());
         }
     }
 
@@ -307,13 +319,15 @@ final class ContentUpdates {
                 }
                 if (found.size() != files.length()) throw new IOException("资源文件缺失");
             }
+            publish("downloading", "正在保存已校验的资源", 100);
             try (OutputStream out = new FileOutputStream(new File(staging, ".verified.json"))) { out.write(manifest.toString().getBytes(StandardCharsets.UTF_8)); }
             File destination = new File(root, String.valueOf(manifest.getLong("version")));
             remove(destination);
             if (!staging.renameTo(destination)) throw new IOException("无法保存新资源");
-            if (automatic) {
+            if (automatic && !servingVersion.isEmpty()) {
                 if (!preferences.edit().putString("pending", destination.getName()).commit())
                     throw new IOException("无法安排资源更新");
+                publish("available", "资源已校验，重新打开小屋即可启用", 100);
                 return;
             }
             String previous = preferences.getString("active", "");

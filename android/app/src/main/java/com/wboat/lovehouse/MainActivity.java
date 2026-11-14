@@ -41,9 +41,12 @@ public final class MainActivity extends Activity {
             .build();
 
         webView = new WebView(this);
-        updates = new ContentUpdates(this, result -> webView.evaluateJavascript(
-            "document.dispatchEvent(new CustomEvent('cottage-update-status',{detail:" + result.toString() + "}))", null),
-            () -> { webView.clearCache(true); webView.loadUrl("https://" + HOST + "/game/index.html"); });
+        ResourceNotification notifications = new ResourceNotification(this);
+        updates = new ContentUpdates(this, result -> {
+            if (!BuildConfig.BASE_PACKAGE.isEmpty()) notifications.update(result);
+            webView.evaluateJavascript(
+                "document.dispatchEvent(new CustomEvent('cottage-update-status',{detail:" + result + "}))", null);
+        }, () -> { webView.clearCache(true); webView.loadUrl("https://" + HOST + "/game/index.html"); });
         webView.setBackgroundColor(0xff211e21);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
@@ -103,6 +106,10 @@ public final class MainActivity extends Activity {
         setContentView(webView);
         enterImmersiveMode();
         webView.loadUrl("https://" + HOST + "/game/index.html");
+        if (!BuildConfig.BASE_PACKAGE.isEmpty()) {
+            notifications.requestPermission();
+            updates.checkAutomatically();
+        }
     }
 
     private void exportResult(String result) {

@@ -91,8 +91,8 @@ fn main() {
         let (storage, mode) = storage_directory(&executable, &local)?;
         let resources=updates::Updates::new(&storage);
         let intercept=resources.clone();
-        app.manage(resources);
-        let init = format!("window.__storageMode='{}';window.__portableReadonly={};window.CottageDesktop={{postMessage:(data)=>window.__TAURI_INTERNALS__.invoke('desktop_command',{{data}})}};", mode, mode == "system");
+        app.manage(resources.clone());
+        let init = format!("window.__storageMode='{}';window.__portableReadonly={};window.__nativeBase='{}';window.__nativeRevision='{}';window.CottageDesktop={{postMessage:(data)=>window.__TAURI_INTERNALS__.invoke('desktop_command',{{data}})}};", mode, mode == "system", env!("LOVEHOUSE_THIN_BASE"), env!("LOVEHOUSE_NATIVE_REVISION"));
         tauri::WebviewWindowBuilder::new(app,"main",tauri::WebviewUrl::App("index.html".into()))
             .title("生日小屋").inner_size(1280.0,800.0).min_inner_size(800.0,500.0)
             .center().resizable(true)
@@ -108,6 +108,10 @@ fn main() {
                     *response.body_mut()=std::borrow::Cow::Owned(bytes);
                 }
             }).build()?;
+        if !env!("LOVEHOUSE_THIN_BASE").is_empty() {
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn_blocking(move || resources.command(handle, "auto", None));
+        }
         Ok(())
     }).run(tauri::generate_context!()).expect("The birthday cottage could not open");
 }

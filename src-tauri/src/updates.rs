@@ -12,7 +12,6 @@ pub struct Resource { bytes: u64, sha256: String }
 pub struct Manifest {
     format: u32, pub version: u64, #[serde(rename="requiredNativeApi")] native_api: u32,
     entry: String, #[serde(rename="blobDirectory")] blobs: String,
-    #[serde(rename="builtAt", default)] pub built_at: u64,
     pub files: BTreeMap<String, Resource>,
 }
 #[derive(Clone, Default, Deserialize, Serialize)]
@@ -52,23 +51,36 @@ fn manifest(bytes: &[u8]) -> Result<Manifest, String> {
         || result.files.values().map(|spec|spec.bytes).sum::<u64>()>600_000_000 { return Err("资源清单无效".into()) }
     Ok(result)
 }
+fn bundled_version() -> u64 {
+    env!("LOVEHOUSE_BUNDLED_RESOURCE_VERSION").parse().unwrap_or(0)
+}
 impl Updates {
     pub fn new(storage: &Path) -> Self {
         let root=storage.join("resource-updates");
         let mut versions: Versions=fs::read(root.join("state.json")).ok().and_then(|v|serde_json::from_slice(&v).ok()).unwrap_or_default();
-        if versions.trial { versions.failed=versions.active; versions.active=versions.previous.take(); versions.trial=false; }
-        if let Some(pending)=versions.pending.take() {
-            versions.previous=versions.active;versions.active=Some(pending);versions.trial=true;
+        let load = |version: u64| {
+            let path = root.join(version.to_string());
+            let data = manifest(&fs::read(path.join("update.json")).ok()?).ok()?;
+            if data.version != version || version <= bundled_version() { return None; }
+            let valid = data.files.iter().all(|(name, spec)| {
+                fs::read(path.join(name)).map(|bytes| bytes.len() as u64 == spec.bytes && digest(&bytes) == spec.sha256).unwrap_or(false)
+            });
+            valid.then_some((path, data))
+        };
+        if versions.trial {
+            versions.failed = versions.active;
+            versions.active = versions.previous.take();
+            versions.trial = false;
         }
-        let mut active=None;
-        if let Some(version)=versions.active {
-            let path=root.join(version.to_string());
-            let candidate=fs::read(path.join("update.json")).ok().and_then(|data|manifest(&data).ok());
-            if let Some(data)=candidate.filter(|m|m.built_at>env!("LOVEHOUSE_BUILD_EPOCH").parse().unwrap_or(u64::MAX)) {
-                let valid=data.files.iter().all(|(name,spec)|fs::read(path.join(name)).map(|bytes|bytes.len() as u64==spec.bytes&&digest(&bytes)==spec.sha256).unwrap_or(false));
-                if valid { active=Some((path,data)); }
+        let mut active = versions.active.and_then(&load).or_else(|| versions.previous.take().and_then(&load));
+        versions.active = active.as_ref().map(|(_, data)| data.version);
+        if let Some(pending) = versions.pending.take() {
+            if let Some(candidate) = load(pending) {
+                versions.previous = versions.active;
+                versions.active = Some(pending);
+                versions.trial = true;
+                active = Some(candidate);
             }
-            if active.is_none() { versions.active=None;versions.trial=false; }
         }
         let this=Self{root,versions:Arc::new(Mutex::new(versions)),busy:Arc::new(AtomicBool::new(false)),active};
         let _=this.save_state();this
@@ -78,16 +90,33 @@ impl Updates {
         atomic_write(&self.root.join("state.json"),&data)
     }
     fn event(&self,app:&tauri::AppHandle,phase:&str,message:&str,progress:u64) {
-        let version=self.active.as_ref().map(|(_,m)|m.version).unwrap_or(0);
-        let detail=json!({"phase":phase,"message":message,"progress":progress,"version":version,"availableVersion":self.versions.lock().ok().and_then(|v|v.pending).unwrap_or(0),"url":format!("{}/android-update/update.json",env!("LOVEHOUSE_CONTENT_SERVER").trim_end_matches('/'))});
+        let version=self.active.as_ref().map(|(_,m)|m.version).unwrap_or_else(bundled_version);
+        let detail=json!({"phase":phase,"nativeBase":env!("LOVEHOUSE_THIN_BASE"),"nativeRevision":env!("LOVEHOUSE_NATIVE_REVISION"),"message":message,"progress":progress,"version":version,"availableVersion":self.versions.lock().ok().and_then(|v|v.pending).unwrap_or(0),"url":format!("{}/android-update/update.json",env!("LOVEHOUSE_CONTENT_SERVER").trim_end_matches('/'))});
         if let Some(window)=app.get_webview_window("main"){
             let _=window.eval(format!("document.dispatchEvent(new CustomEvent('cottage-update-status',{{detail:{}}}))",detail));
         }
     }
     pub fn command(&self,app:tauri::AppHandle,action:&str,url:Option<String>) {
         if action=="ready" {
-            if let Ok(mut state)=self.versions.lock(){state.trial=false;}
-            let _=self.save_state();self.event(&app,"current","资源已就绪",100);return
+            if let Ok(mut state)=self.versions.lock(){
+                if state.active == self.active.as_ref().map(|(_, manifest)| manifest.version) {
+                    state.trial = false;
+                    if !env!("LOVEHOUSE_THIN_BASE").is_empty() { state.previous = None; }
+                }
+            }
+            if self.save_state().is_ok() && !env!("LOVEHOUSE_THIN_BASE").is_empty() {
+                if let Ok(state)=self.versions.lock(){
+                    if let Ok(entries)=fs::read_dir(&self.root) {
+                        for entry in entries.flatten() {
+                            let Some(version)=entry.file_name().to_str().and_then(|name|name.parse::<u64>().ok()) else {continue};
+                            if ![state.active,state.previous,state.pending].contains(&Some(version))
+                                && entry.file_type().is_ok_and(|kind|kind.is_dir()&&!kind.is_symlink()) {
+                                let _=fs::remove_dir_all(entry.path());
+                            }
+                        }
+                    }
+                }
+            }self.event(&app,"current","资源已就绪",100);return
         }
         if action=="status" {self.event(&app,"current","资源状态已读取",100);return}
         if action=="install"||action=="rollback" {
@@ -118,12 +147,19 @@ impl Updates {
         let url=reqwest::Url::parse(&address).map_err(|e|e.to_string())?;
         if url.scheme()!="https" || !url.username().is_empty() || url.password().is_some(){return Err("需要 HTTPS 更新地址".into())}
         let client=reqwest::blocking::Client::builder().timeout(Duration::from_secs(120)).redirect(reqwest::redirect::Policy::none()).build().map_err(|e|e.to_string())?;
+        let blob_client=reqwest::blocking::Client::builder().timeout(Duration::from_secs(120))
+            .redirect(reqwest::redirect::Policy::custom(|attempt|{
+                let target=attempt.url();
+                if attempt.previous().len()>=5 || target.scheme()!="https" || !target.username().is_empty() || target.password().is_some(){
+                    attempt.error("Invalid resource redirect")
+                }else{attempt.follow()}
+            })).build().map_err(|e|e.to_string())?;
         let response=client.get(url.clone()).send().and_then(|r|r.error_for_status()).map_err(|e|e.to_string())?;
         let mut signed=Vec::new();response.take(3_000_001).read_to_end(&mut signed).map_err(|e|e.to_string())?;
         let next=manifest(&signed)?;
         {
             let state=self.versions.lock().map_err(|_|"资源状态不可用")?;
-            if next.built_at<=env!("LOVEHOUSE_BUILD_EPOCH").parse().unwrap_or(u64::MAX)
+            if next.version<=bundled_version()
                 || next.version<=state.active.unwrap_or(0) || state.pending==Some(next.version)
                 || (automatic&&state.failed==Some(next.version)){return Ok(false)}
         }
@@ -136,7 +172,7 @@ impl Updates {
             let bundled=if prior.is_none(){app.asset_resolver().get(name.clone()).map(|a|a.bytes).filter(|bytes|bytes.len() as u64==spec.bytes&&digest(bytes)==spec.sha256)}else{None};
             let bytes=if let Some(bytes)=prior.or(bundled){bytes}else{
                 let blob=url.join(&format!("blobs/{}",spec.sha256)).map_err(|e|e.to_string())?;
-                let response=client.get(blob).send().and_then(|r|r.error_for_status()).map_err(|e|e.to_string())?;
+                let response=blob_client.get(blob).send().and_then(|r|r.error_for_status()).map_err(|e|e.to_string())?;
                 let mut bytes=Vec::new();response.take(spec.bytes+1).read_to_end(&mut bytes).map_err(|e|e.to_string())?;
                 if bytes.len() as u64!=spec.bytes || digest(&bytes)!=spec.sha256{return Err(format!("资源校验失败：{}",name))}
                 bytes
