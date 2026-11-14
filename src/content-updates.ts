@@ -3,8 +3,8 @@ import {defaultContentServer} from './cloud-content';
 import {uiCopy,formatCopy} from '../content/ui-copy';
 import {persist} from './state';
 
-type UpdateStatus={phase:string;message:string;progress:number;version:number;url:string;availableVersion:number;canRetry?:boolean;nativeBase?:string;nativeRevision?:string};
-type UpdateCommand={action:'status'|'ready'|'check'|'install'|'rollback';url?:string};
+type UpdateStatus={phase:string;message:string;progress:number;version:number;url:string;availableVersion:number;canRetry?:boolean;nativeBase?:string;nativeRevision?:string;autoUpdate?:boolean};
+type UpdateCommand={action:'status'|'ready'|'check'|'install'|'rollback'|'set-auto';url?:string;enabled?:boolean};
 let latest:UpdateStatus|undefined,host:HTMLElement|undefined,listening=false;
 
 function defaultAndroidUpdateUrl(){
@@ -36,6 +36,9 @@ export function mountContentUpdates(parent:HTMLElement){
  element('p',uiCopy('updates.help'));
  const label=element('label',uiCopy('updates.address'));
  const input=element('input','',label);input.id='content-update-url';input.type='url';input.maxLength=2048;input.placeholder='https://';input.value=latest?.url||defaultAndroidUpdateUrl();
+ const auto=element('label',' 启动时自动下载并校验资源');auto.id='content-update-auto';auto.hidden=true;
+ const autoInput=document.createElement('input');autoInput.type='checkbox';auto.prepend(autoInput);
+ autoInput.onchange=()=>sendContentUpdate({action:'set-auto',enabled:autoInput.checked});
  const version=element('p');version.id='content-update-version';
  const status=element('output');status.id='content-update-status';status.setAttribute('role','status');
  const progress=element('div');progress.id='content-update-progress';progress.className='content-update-progress';progress.setAttribute('role','progressbar');progress.setAttribute('aria-label',uiCopy('updates.progress'));progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax','100');
@@ -96,7 +99,7 @@ function listenForContentUpdates(){
   paint();
   reflectNativeStartup(latest);
   if(latest.nativeBase){
-   if(latest.phase==='available'&&latest.availableVersion>latest.version&&latest.progress===100)showResourceUpdate(latest.availableVersion,true);
+   if(latest.phase==='available'&&latest.availableVersion>latest.version)showResourceUpdate(latest.availableVersion,latest.progress===100);
    return;
   }
   if(!checkingAtEntry)return;
@@ -149,6 +152,8 @@ function paint(){
  const get=(id:string)=>host!.querySelector<HTMLElement>('#content-update-'+id)!;
  const status=latest,busy=Boolean(status&&['checking','downloading','installed','busy'].includes(status.phase));
  get('status').textContent=status?.message??uiCopy('updates.idle');
+ const auto=get('auto');auto.hidden=!(status?.nativeBase&&currentPlatform()==='android'&&typeof status.autoUpdate==='boolean');
+ (auto.querySelector('input') as HTMLInputElement).checked=status?.autoUpdate===true;
  get('version').textContent=status?formatCopy('updates.version',{version:status.version}):'';
  const input=get('url') as HTMLInputElement;
  if(!input.value&&status?.url&&document.activeElement!==input)input.value=status.url;

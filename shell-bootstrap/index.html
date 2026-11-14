@@ -1,13 +1,15 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>生日小屋</title>
 <style>body{background:#211e21;color:#ffe8cb;font:16px system-ui;display:grid;place-content:center;min-height:90vh;padding:1rem}main{max-width:26rem}progress{width:100%;accent-color:#e5a6ae}button{padding:.6rem 1rem}</style>
-<main><h1>生日小屋</h1><p id="status" role="status">正在准备游戏资源…</p><progress max="100"></progress><p>首次安装需要联网下载。此后可打开本地已下载的游戏。</p><button id="retry" type="button">重试</button></main>
+<main><h1>生日小屋</h1><p id="status" role="status">正在准备游戏资源…</p><progress max="100"></progress><p>首次安装需要联网下载。此后可打开本地已下载的游戏。</p><button id="retry" type="button">重试</button> <button id="install" type="button" hidden>下载更新</button></main>
 <script>
 const send=(action)=>{const bridge=window.CottageSave||window.CottageDesktop;bridge?.postMessage(JSON.stringify({kind:'content-update',action,retry:true,url:'https://server.080726.xyz/lovehouse/android-update/update.json'}))};
 document.querySelector('#retry').onclick=()=>send(window.CottageDesktop?'check':'auto');
-send('status');
+document.querySelector('#install').onclick=()=>send('install');
 document.addEventListener('cottage-update-status',({detail})=>{
  document.querySelector('#status').textContent=detail.message;
  document.querySelector('progress').value=detail.progress;
+ document.querySelector('#install').hidden=!(detail.phase==='available'&&detail.progress<100);
  if(detail.phase==='available'&&window.CottageDesktop)document.querySelector('#status').textContent='资源已下载并校验。请关闭后重新打开小屋。';
 });
+send('status');
 </script></html>

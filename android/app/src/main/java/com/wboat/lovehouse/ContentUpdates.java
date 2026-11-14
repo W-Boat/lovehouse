@@ -79,7 +79,8 @@ final class ContentUpdates {
         try {
             result.put("phase", phase).put("message", message).put("progress", progress);
             result.put("version", Math.max(bundledVersion, activeVersion()));
-            result.put("nativeBase", BuildConfig.BASE_PACKAGE).put("nativeRevision", BuildConfig.NATIVE_REVISION);
+            result.put("nativeBase", BuildConfig.BASE_PACKAGE).put("nativeRevision", BuildConfig.NATIVE_REVISION)
+                .put("autoUpdate", preferences.getBoolean("autoUpdate", true));
             result.put("url", preferences.getString("url", ""));
             result.put("availableVersion", Math.max(candidate == null ? 0 : candidate.optLong("version"), pendingVersion()));
             result.put("canRetry", "error".equals(phase) && candidate != null
@@ -94,7 +95,7 @@ final class ContentUpdates {
         checkedAutomatically = true;
         JSONObject request = new JSONObject();
         try {
-            request.put("action", "auto").put("url",
+            request.put("action", preferences.getBoolean("autoUpdate", true) ? "auto" : "check").put("url",
                 "https://server.080726.xyz/lovehouse/android-update/update.json");
         } catch (Exception ignored) { return; }
         command(request);
@@ -102,6 +103,13 @@ final class ContentUpdates {
 
     void command(JSONObject message) {
         String action = message.optString("action");
+        if ("set-auto".equals(action) && !BuildConfig.BASE_PACKAGE.isEmpty()) {
+            preferences.edit().putBoolean("autoUpdate", message.optBoolean("enabled", true)).apply();
+            try { status.put("autoUpdate", preferences.getBoolean("autoUpdate", true)); }
+            catch (Exception ignored) { }
+            listener.accept(status);
+            return;
+        }
         if ("status".equals(action)) { listener.accept(status); return; }
         if ("ready".equals(action)) {
             String confirmed = servingVersion;
@@ -154,7 +162,7 @@ final class ContentUpdates {
                     candidateBlobs = "blobs/".equals(manifest.optString("blobDirectory"))
                         ? secureUrl(new URL(url, "blobs/").toString()) : null;
                     candidate = manifest;
-                    if (automatic) {
+                    if (automatic && preferences.getBoolean("autoUpdate", true)) {
                         if (candidateBlobs != null) install(candidate, candidateUrl, candidateBlobs, true);
                         candidate = null;
                     } else publish("available", "发现新资源，可下载并重启小屋", 0);
