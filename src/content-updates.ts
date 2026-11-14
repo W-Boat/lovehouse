@@ -88,6 +88,7 @@ function reflectNativeStartup(status:UpdateStatus){
 
 export function observeResourceUpdateOnStartup(){
  if(!nativeBridge())return;
+ void checkPackageOnEntry();
  listenForContentUpdates();
  sendContentUpdate({action:'status'});
 }
@@ -178,9 +179,14 @@ function currentPlatform():Platform|undefined{
 async function packageFor(platform:Platform){
  const catalog=new URL('packages.json',defaultContentServer().replace(/\/?$/,'/'));
  if(catalog.protocol!=='https:')throw Error('HTTPS required');
- const response=await fetch(catalog,{signal:AbortSignal.timeout(6000),cache:'no-store',credentials:'omit'});
- if(!response.ok)throw Error('Package catalog unavailable');
- const entry=(await response.json())?.[platform];
+ const controller=new AbortController();
+ const timeout=window.setTimeout(()=>controller.abort(),15000);
+ let entry;
+ try{
+  const response=await fetch(catalog,{signal:controller.signal,cache:'no-store',credentials:'omit'});
+  if(!response.ok)throw Error('Package catalog unavailable');
+  entry=(await response.json())?.[platform];
+ }finally{window.clearTimeout(timeout)}
  if(!entry||typeof entry.version!=='string')return;
  const native=window as Window&{__nativeBase?:string;__nativeRevision?:string};
  const shell=entry.thinPackage;
@@ -199,15 +205,16 @@ async function packageFor(platform:Platform){
  return {url:url.href,version,newer,thin:useShell};
 }
 let checkedOnEntry=false;
+let checkingPackage=false;
 export async function checkPackageOnEntry(){
  const platform=currentPlatform();
- if(!platform||checkedOnEntry)return;
- checkedOnEntry=true;
+ if(!platform||checkedOnEntry||checkingPackage)return;
+ checkingPackage=true;
  listenForContentUpdates();
  sendContentUpdate({action:'status'});
  try{
   const entry=await packageFor(platform);
-  if(!entry?.newer)return;
+  if(!entry?.newer){checkedOnEntry=true;return}
   const dialog=document.createElement('dialog');
   dialog.className='package-update-dialog';
   const title=document.createElement('h2');
@@ -216,12 +223,17 @@ export async function checkPackageOnEntry(){
   const actions=document.createElement('div');actions.className='modal-actions';
   const later=document.createElement('button');later.type='button';later.className='secondary';later.textContent='稍后';
   later.onclick=()=>dialog.close();
-  const link=document.createElement('a');link.className='primary';link.href=entry.url;link.download='';link.textContent='下载更新';
+  const link=document.createElement('a');link.className='primary';link.href=entry.url;link.textContent='下载更新';
   actions.append(later,link);dialog.append(title,version,actions);
   (document.getElementById('app')??document.body).append(dialog);
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});
-  dialog.showModal();
- }catch{}
+  if(typeof dialog.showModal==='function'){
+   try{dialog.showModal()}catch{dialog.setAttribute('open','')}
+  }else dialog.setAttribute('open','');
+  checkedOnEntry=true;
+ }catch{
+  window.addEventListener('online',()=>void checkPackageOnEntry(),{once:true});
+ }finally{checkingPackage=false}
 }
 function mountPackageDownloads(parent:HTMLElement){
  if(!defaultContentServer())return;
@@ -239,7 +251,7 @@ function mountPackageDownloads(parent:HTMLElement){
     const entry=await packageFor(platform);
     if(!entry){result.textContent='暂无可下载版本。';return}
     const link=document.createElement('a');
-    link.href=entry.url;link.download='';link.className='secondary';
+    link.href=entry.url;link.className='secondary';
     link.textContent='下载 '+platformNames[platform]+(entry.thin?' 薄包':'')+' · '+entry.version;
     result.replaceChildren(link);
     if(currentPlatform()===platform&&!entry.newer)result.prepend('当前版本无需更新。 ');
