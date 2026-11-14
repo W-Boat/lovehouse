@@ -35,3 +35,25 @@ test('CI: two real WebSocket clients share chat and document updates',{skip:proc
   clients[0].send(JSON.stringify({type:'document',revision:0,text:'一起写下'}));await wait(()=>received[1].some(m=>m.snapshot?.document?.text==='一起写下'));
  }finally{for(const ws of clients)ws.terminate();await new Promise<void>(r=>server.close(()=>r()))}
 });
+
+test('external movies relay only within the room and honor host playback controls',()=>{
+ let now=1000;
+ const service=new RoomService({now:()=>now}),host:any[]=[],guest:any[]=[];
+ const a=(message:any)=>service.receive('host',message,(value:any)=>host.push(value));
+ const b=(message:any)=>service.receive('guest',message,(value:any)=>guest.push(value));
+ a({type:'create',name:'主'});b({type:'join',name:'客',roomId:host[0].roomId});
+ const location={type:'move',zone:'cinema',x:200,y:200,direction:0};a(location);b(location);
+ const url='https://media.example/movie.m3u8?token=abc';
+ b({type:'cinema-start',url});assert.equal(guest.at(-1).code,'CINEMA');
+ a({type:'cinema-start',url:'https://media.example/page'});assert.equal(host.at(-1).code,'CINEMA');
+ a({type:'cinema-start',url});
+ const cinema=guest.at(-1).snapshot.cinema;
+ assert.equal(cinema.url,url);assert.equal(cinema.paused,true);
+ now=2000;
+ a({type:'cinema-control',id:cinema.id,position:480,paused:false});
+ assert.deepEqual(guest.at(-1).snapshot.cinema,{...cinema,position:480,paused:false,anchor:now});
+ b({type:'cinema-control',id:cinema.id,position:100,paused:true});assert.equal(guest.at(-1).code,'CINEMA');
+ a({type:'cinema-control',id:cinema.id,position:900,paused:true});
+ assert.equal(guest.at(-1).snapshot.cinema.position,900);
+ assert.equal(guest.at(-1).snapshot.cinema.paused,true);
+});

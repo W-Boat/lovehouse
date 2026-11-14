@@ -1,3 +1,4 @@
+import {playSharedMovie} from './shared-movie';
 import type {RoomSnapshot} from './online-protocol';
 import {nativeBridge} from './native-bridge';
 import {preparedPage} from './release-resources';
@@ -231,7 +232,7 @@ function mountSceneActivity(id:string,kind:SceneActivity['kind'],label:string){
  close.onclick=closeSceneActivity;
  element.addEventListener('keydown',event=>{
   if(event.key!=='Tab'||kind==='workshop')return;
-  const items=Array.from(element.querySelectorAll<HTMLElement>('button:not([disabled]),canvas[tabindex]'));
+  const items=Array.from(element.querySelectorAll<HTMLElement>('button:not([disabled]):not([hidden]),input:not([disabled]),canvas[tabindex]'));
   const first=items[0],last=items.at(-1);
   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}
   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}
@@ -317,7 +318,8 @@ function syncCinema(snapshot:RoomSnapshot){
  cinemaSession='';closeSceneActivity();
  cinemaSeen=cinema.id;cinemaSession=cinema.id;
  const activity=mountSceneActivity('film-host','film','一起看片');
- void screenFilm(cinema.film,activity,cinema.id);
+ if(cinema.url)screenSharedMovie(cinema.url,cinema.id,activity);
+ else if(cinema.film)void screenFilm(cinema.film,activity,cinema.id);
 }
 function chooseFilm(id:'meet'|'travel'|'birthday',activity:SceneActivity){
  if(scene.zone==='cinema'&&onlineWorld?.active&&onlineWorld.remote?.position.zone==='cinema'){
@@ -327,14 +329,45 @@ function chooseFilm(id:'meet'|'travel'|'birthday',activity:SceneActivity){
  void screenFilm(id,activity);
 }
 function openTheater(id:string){
+ const snapshot=online.getSnapshot();
+ if(scene.zone==='cinema'&&onlineWorld?.role==='guest'&&snapshot?.cinema){
+  cinemaSeen='';syncCinema(snapshot);return;
+ }
  const activity=mountSceneActivity('film-host','film',mainText('cinema.pick'));
- if(id==='cinema-seat'){chooseFilm('meet',activity);return}
- if(id!=='movie'){void screenFilm(id==='concert'?'concert':'meet',activity);return}
+ if(id==='cinema-seat'&&!onlineWorld?.active){chooseFilm('meet',activity);return}
+ if(id!=='movie'&&id!=='cinema-seat'){void screenFilm(id==='concert'?'concert':'meet',activity);return}
+ if(scene.zone==='cinema'&&onlineWorld?.active){
+  if(onlineWorld.role==='guest'){
+   activity.host.textContent='等房主选择影片。';
+   return;
+  }
+  const form=document.createElement('form');
+  form.className='shared-movie-link';
+  const input=document.createElement('input');
+  input.type='url';input.required=true;input.maxLength=4096;
+  input.placeholder='粘贴 MP4、WebM 或 M3U8 直链';
+  input.setAttribute('aria-label','电影链接');
+  const submit=document.createElement('button');submit.textContent='一起看';submit.type='submit';submit.className='primary';
+  form.append(input,submit);
+  form.onsubmit=event=>{
+   event.preventDefault();
+   if(onlineWorld?.remote?.position.zone!=='cinema'){toast('请让另一位玩家先进入电影院。');return}
+   if(!online.client.send({type:'cinema-start',url:input.value.trim()}))toast('联机已断开，请重新连接。');
+  };
+  activity.host.append(form);
+ }
  for(const title of ['meet','travel','birthday'] as const){
   const choice=document.createElement('button');choice.className='secondary';
   choice.textContent=films[title].title;choice.onclick=()=>chooseFilm(title,activity);
   activity.host.append(choice);
  }
+}
+function screenSharedMovie(url:string,id:string,activity:SceneActivity){
+ const host=onlineWorld?.role==='host';
+ activity.dispose=playSharedMovie(activity.host,url,{
+  read:()=>{const state=online.getSnapshot()?.cinema;return state?.id===id?{state,now:Date.now()+cinemaClock}:undefined},
+  control:host?(position,paused)=>{if(!online.client.send({type:'cinema-control',id,position,paused}))toast('联机已断开，请重新连接。')}:undefined,
+ });
 }
 async function screenFilm(id:string,activity:SceneActivity,sharedId?:string){
  activity.host.textContent=mainText('cinema.loading');

@@ -2,6 +2,15 @@ import {changeQuiz,publicQuiz} from './quiz.mjs';
 import {randomBytes} from 'node:crypto';
 const zones=new Set('room garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora shichahai gulou chaya tianmo tanghulu catcottage highschool musicroom taoyuan'.split(' '));
 const games=new Set('moon keychain chestnuts earphones band doll chocolate letter notes hat labubu mystery'.split(' '));
+function movieSource(value){
+ if(typeof value!=='string'||value.length>4096)return;
+ try{
+  const url=new URL(value);
+  if(url.protocol!=='https:'||url.username||url.password)return;
+  if(!/\.(mp4|webm|m3u8)$/i.test(url.pathname))return;
+  return url.href;
+ }catch{}
+}
 const secret=()=>randomBytes(18).toString('base64url');
 const clean=(v,n)=>typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').trim().slice(0,n):'';
 export class RoomService{
@@ -51,14 +60,21 @@ export class RoomService{
  case 'move':if(!rate('move',30))return;if(!zones.has(m.zone)||![m.x,m.y,m.direction].every(Number.isFinite)||m.x<0||m.x>640||m.y<0||m.y>427||!Number.isInteger(m.direction)||m.direction<0||m.direction>3)return fail('POSITION','位置无效');if(r.affection){const a=r.affection;if(a.kind==='hand'&&a.phase==='playing'&&r.following){if(p.role==='host'&&a.zone!==m.zone){a.zone=m.zone;this.broadcast(r)}}else if(m.zone!==a.zone||(a.phase==='playing'&&Math.hypot(m.x-a[p.role].x,m.y-a[p.role].y)>8)){r.affection=null;this.broadcast(r)}}p.position={zone:m.zone,x:m.x,y:m.y,direction:m.direction,pose:clean(m.pose,32)};this.event(r,p,'move',p.position);if(r.cinema&&p.role==='host'&&m.zone!=='cinema'){r.cinema=null;this.broadcast(r)}return;
  case 'cinema-start':{
   if(p.role!=='host'||p.position.zone!=='cinema'||![...r.players.values()].some(member=>member.role==='guest'&&member.connected&&member.position.zone==='cinema'))return fail('CINEMA','两人到电影院后，由房主开始放映');
-  if(!['meet','travel','birthday'].includes(m.film)||!rate('cinema',8))return fail('CINEMA','无法开始放映');
-  r.cinema={id:secret(),film:m.film,position:0,paused:false,anchor:this.now()+600};
+  if(!rate('cinema',8))return fail('CINEMA','操作太快，请稍等');
+  if(m.url!==undefined){
+   const url=movieSource(m.url);
+   if(!url)return fail('CINEMA','请输入 HTTPS 视频直链（MP4、WebM 或 M3U8）');
+   r.cinema={id:secret(),url,position:0,paused:true,anchor:this.now()};
+  }else{
+   if(!['meet','travel','birthday'].includes(m.film))return fail('CINEMA','无法开始放映');
+   r.cinema={id:secret(),film:m.film,position:0,paused:false,anchor:this.now()+600};
+  }
   break;
  }
  case 'cinema-control':{
   if(p.role!=='host'||!r.cinema||m.id!==r.cinema.id||!rate('cinema',8))return fail('CINEMA','只有房主可以控制放映');
   if(m.stop===true){r.cinema=null;break}
-  if(!Number.isFinite(m.position)||m.position<0||m.position>72||typeof m.paused!=='boolean')return fail('CINEMA','播放进度无效');
+  if(!Number.isFinite(m.position)||m.position<0||m.position>(r.cinema.url?86400:72)||typeof m.paused!=='boolean')return fail('CINEMA','播放进度无效');
   r.cinema={...r.cinema,position:m.position,paused:m.paused,anchor:this.now()};
   break;
  }

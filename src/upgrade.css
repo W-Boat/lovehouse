@@ -224,3 +224,9 @@ body[data-cloud-offline=true] .game-hud::before{content:'离线';position:absolu
 #app #round-minimap{z-index:7}
 #scene-transition-cover{position:absolute;inset:0;z-index:75;display:grid;place-items:center;background:#241e26;color:#fff0cf;font-family:CottagePixel,monospace;font-size:20px;pointer-events:auto;opacity:1;transition:opacity .2s steps(6)}
 #scene-transition-cover.leaving{opacity:0;pointer-events:none}
+.shared-movie-link,.shared-movie-controls{display:flex;width:100%;align-items:center;gap:8px;flex-wrap:wrap}
+.shared-movie-link input,.shared-movie-controls input{flex:1;min-width:8rem}
+.shared-movie-video{width:100%;max-height:min(55vh,345px);background:#191c29;object-fit:contain}
+.scene-activity-film:has(.shared-movie-video){width:min(92%,700px);max-width:92%}
+.scene-activity-film #film-host:has(.shared-movie-video){width:100%}
+.shared-movie-controls output{white-space:nowrap;font-size:12px}

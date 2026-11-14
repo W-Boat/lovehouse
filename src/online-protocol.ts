@@ -1,4 +1,6 @@
-export type CinemaState={id:string;film:'meet'|'travel'|'birthday';position:number;paused:boolean;anchor:number};
+export type CinemaState={id:string;position:number;paused:boolean;anchor:number}&(
+ {film:'meet'|'travel'|'birthday';url?:never}|{url:string;film?:never}
+);
 export type QuizCount=5|10|15|20;
 export type QuizDraft={text:string;options:string[];correct:number};
 export type QuizSnapshot={id:string;author:string;responder:string;count:QuizCount;phase:'invited'|'drafting'|'answering'|'result'|'finished';index:number;correctCount:number;penaltyUntil?:number;question?:Omit<QuizDraft,'correct'>;results:{index:number;choice:number;correct:number}[]};
