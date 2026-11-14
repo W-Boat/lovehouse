@@ -69,6 +69,11 @@ final class ContentUpdates {
         catch (Exception ignored) { return 0; }
     }
 
+    private long pendingVersion() {
+        try { return Long.parseLong(preferences.getString("pending", "0")); }
+        catch (NumberFormatException ignored) { return 0; }
+    }
+
     private void publish(String phase, String message, int progress) {
         JSONObject result = new JSONObject();
         try {
@@ -76,7 +81,7 @@ final class ContentUpdates {
             result.put("version", Math.max(bundledVersion, activeVersion()));
             result.put("nativeBase", BuildConfig.BASE_PACKAGE).put("nativeRevision", BuildConfig.NATIVE_REVISION);
             result.put("url", preferences.getString("url", ""));
-            result.put("availableVersion", candidate == null ? 0 : candidate.optLong("version"));
+            result.put("availableVersion", Math.max(candidate == null ? 0 : candidate.optLong("version"), pendingVersion()));
             result.put("canRetry", "error".equals(phase) && candidate != null
                 && candidate.optLong("version") > Math.max(bundledVersion, activeVersion()));
         } catch (Exception ignored) { }

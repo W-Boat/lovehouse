@@ -118,7 +118,12 @@ impl Updates {
                 }
             }self.event(&app,"current","资源已就绪",100);return
         }
-        if action=="status" {self.event(&app,"current","资源状态已读取",100);return}
+        if action=="status" {
+            let pending=self.versions.lock().ok().and_then(|state|state.pending);
+            if pending.is_some(){self.event(&app,"available","资源已校验，重新打开小屋即可启用",100);}
+            else{self.event(&app,"current","资源状态已读取",100);}
+            return
+        }
         if action=="install"||action=="rollback" {
             if self.busy.load(Ordering::SeqCst){self.event(&app,"busy","资源仍在准备中",0);return}
             if action=="rollback" {

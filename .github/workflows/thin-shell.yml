@@ -20,6 +20,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
+      - run: pip install pillow
+      - run: python -X utf8 tools/prepare_android_icons.py
       - name: Build and verify compatible signed shell
         env:
           LOVEHOUSE_THIN_BASE: ${{ inputs.base }}
