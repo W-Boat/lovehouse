@@ -15,12 +15,12 @@ Node 22，执行 node tools/cloud-cli.mjs help。默认读取当前目录 .ENV�
 | 回滚 | rollback TARGET_REVISION --if-match CURRENT_REVISION |
 | 安装包历史 | packages |
 | 安装包上传 | package-upload android VERSION FILE.apk 或 package-upload windows VERSION FILE.zip |
-| 历史安装包切换 | package-select selection.json --if-match CURRENT_SHA256 |
+| 历史安装包切换 | package-select selection.json --if-match CURRENT_PATH |
 | 签名资源清单 | update-manifest |
 | 增量资源发布 | android-publish DIRECTORY |
 | 其他全部 API | request METHOD admin/api/PATH --file input.json |
 
-selection.json 按 API 填 platform 和 sha256，参见 packages 输出。通用 request 可以调用后台账号登录、退出和修改密码。登录后会话字符串可临时放入 LOVEHOUSE_ADMIN_TOKEN；修改密码接口需要账号会话。使用 shell 环境注入密码和令牌，避免把秘密写进命令历史。
+selection.json 按 API 填 platform 和 path，参见 packages 输出。通用 request 可以调用后台账号登录、退出和修改密码。登录后会话字符串可临时放入 LOVEHOUSE_ADMIN_TOKEN；修改密码接口需要账号会话。使用 shell 环境注入密码和令牌，避免把秘密写进命令历史。
 
 发布包含文案、场景、动画图层、互动、礼物、小游戏、网页入口、歌单、媒体、资源清单、游戏私告、系统通知和统计开关。先读取现有配置，在完整配置上修改，再以读取的 revision 发布。用户有其他未发布草稿时保持线上版本的乐观锁。上传素材返回不可变哈希 URL，后台和 CLI 可互相读取和继续编辑。
 

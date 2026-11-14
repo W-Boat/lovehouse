@@ -52,6 +52,8 @@ const sectionGroups=[
 ];
 const labels=Object.fromEntries(sections.map(([id,label])=>[id,label]));
 const base=import.meta.env.BASE_URL;
+const publisherBuild=__PUBLISHER_BUILD__;
+const publisherBuildTime=new Date(publisherBuild.builtAt).toLocaleString('zh-CN',{hour12:false});
 
 const structuredFields={
  scenes:[['id','场景 ID'],['parent','父场景 ID'],['name','名称'],['caption','简介'],['background','背景 HTTPS 地址'],['entrance','父场景入口',2],['spawn','到达点',2],['exit','返回点',2],['floor','行走范围（左上 / 右下）',4]],
@@ -395,6 +397,9 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
  </template>
  <template #status>
   <div class="banner-versions" aria-label="线上版本">
+   <span :title="publisherBuild.builtAt">后台 <b>{{publisherBuild.revision}}</b> <small>{{publisherBuildTime}}</small></span>
+   <span>CLI <b>{{publisherBuild.cli}}</b></span>
+   <span>Skill <b>{{publisherBuild.skill}}</b></span>
    <span>内容 <b>{{publicRevision.slice(0,12)||'—'}}</b></span>
    <span>Android <b>{{publicPackages.android?.version||'—'}}</b></span>
    <span>Windows <b>{{publicPackages.windows?.version||'—'}}</b></span>

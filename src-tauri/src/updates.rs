@@ -133,7 +133,7 @@ impl Updates {
             let destination=staging.path().join(name);
             let prior=self.active.as_ref().and_then(|(root,_)|fs::read(root.join(name)).ok())
                 .filter(|bytes|bytes.len() as u64==spec.bytes&&digest(bytes)==spec.sha256);
-            let bundled=if prior.is_none(){app.asset_resolver().get(name.clone()).map(|a|a.bytes.into_owned()).filter(|bytes|bytes.len() as u64==spec.bytes&&digest(bytes)==spec.sha256)}else{None};
+            let bundled=if prior.is_none(){app.asset_resolver().get(name.clone()).map(|a|a.bytes).filter(|bytes|bytes.len() as u64==spec.bytes&&digest(bytes)==spec.sha256)}else{None};
             let bytes=if let Some(bytes)=prior.or(bundled){bytes}else{
                 let blob=url.join(&format!("blobs/{}",spec.sha256)).map_err(|e|e.to_string())?;
                 let response=client.get(blob).send().and_then(|r|r.error_for_status()).map_err(|e|e.to_string())?;

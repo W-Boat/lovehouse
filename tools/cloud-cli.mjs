@@ -42,10 +42,10 @@ async function request(method,path,body,headers={}){
  const origin=base(),url=new URL(path,origin);
  if(!path.startsWith('admin/api/')&&!['content.json','packages.json','android-update/update.json'].includes(path))throw Error('Use a publisher API path');
  if(url.origin!==origin.origin||!url.pathname.startsWith(origin.pathname))throw Error('Invalid API path');
- if(!token)throw Error('Set LOVEHOUSE_ADMIN_TOKEN or pass --token-file');
+ if(!token&&path!=='admin/api/login')throw Error('Set LOVEHOUSE_ADMIN_TOKEN or pass --token-file');
  if(expected!==undefined)headers['If-Match']=JSON.stringify(expected==='new'?'':expected);
  const response=await fetch(url,{
-  method,body,headers:{Authorization:'Bearer '+token,...headers},
+  method,body,headers:{...(token?{Authorization:'Bearer '+token}:{}),...headers},
   redirect:'error',signal:AbortSignal.timeout(binary||command==='package-upload'?300000:30000),
   ...(body instanceof Readable?{duplex:'half'}:{}),
  });
@@ -61,7 +61,7 @@ async function sendFile(path,filename,headers={}){
 }
 const help={
  usage:'node tools/cloud-cli.mjs COMMAND [arguments] [--env .ENV] [--base HTTPS_BASE] [--token-file FILE] [--if-match REVISION] [--output FILE]',
- commands:{
+ commands:{version:'CLI、Skill 与源码版本',
   snapshot:'读取线上配置',catalog:'全部包内素材和配置',assets:'素材列表',stats:'去重在线统计',
   history:'远程发布历史','history-show REVISION':'读取历史配置',packages:'安装包与历史','update-manifest':'公开签名资源清单',
   'check INPUT.json':'本地完整校验','publish INPUT.json --if-match REVISION':'校验并发布全部配置',
@@ -74,6 +74,11 @@ const help={
  },
 };
 try{
+ if(['version','--version','-v'].includes(command)){
+  const versions=JSON.parse(await readFile(new URL('../content/tooling-version.json',import.meta.url),'utf8'));
+  const git=spawnSync('git',['rev-parse','--short=12','HEAD'],{cwd:fileURLToPath(new URL('..',import.meta.url)),encoding:'utf8'});
+  print({name:'lovehouse-cli',version:versions.cli,skillVersion:versions.skill,revision:git.status===0?git.stdout.trim():'unknown'});process.exit(0);
+ }
  if(!command||command==='help'){print(help);process.exit(0)}
  const reads={snapshot:'snapshot',catalog:'bundled',assets:'assets',stats:'statistics',history:'history',packages:'packages'};
  let result;
