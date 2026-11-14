@@ -1,3 +1,4 @@
+import {validateLayers} from './cloud-layers.mjs';
 import {validatePortalUrl} from './cloud-portal-url.mjs';
 
 export function validateCloudScenes(input) {
@@ -15,6 +16,6 @@ export function validateCloudScenes(input) {
       floor[0][0]>=floor[1][0] || floor[0][1]>=floor[1][1]) throw Error('Invalid scene geometry');
   if (typeof name !== 'string' || !name.trim() || name.length > 48 ||
       typeof caption !== 'string' || caption.length > 160) throw Error('Invalid scene copy');
-  return {id,parent,name,caption,background:validatePortalUrl(background),entrance,spawn,exit,floor};
+  return {id,parent,name,caption,background:validatePortalUrl(background),entrance,spawn,exit,floor,layers:validateLayers(scene.layers)};
  });
 }

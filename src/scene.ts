@@ -1,3 +1,4 @@
+import {CloudMotion} from './cloud-motion';
 import {preparedResource} from './release-resources';
 import {loadCloudBackground} from './cloud-background';
 import {interactionTargets} from './interaction-targets';
@@ -28,6 +29,8 @@ import {worlds,entrySpawn,inReach,type Zone,type Item} from './world';
 export type {Zone,Item} from './world';
 export class Cottage extends Phaser.Scene {
  readonly bridge=new Signals();
+ private cloudMotion?:CloudMotion;
+ private pendingLayers=new Map<string,Map<string,string>>();
  private onlinePets?:OnlinePets;private onlineBoyGear?:{hat:Phaser.GameObjects.Image;ear:Phaser.GameObjects.Image;band:Phaser.GameObjects.Image};private onlineSeat?:{from:Point;to:Point;elapsed:number;standing:boolean};onlineWorld?:OnlineWorld;onlineDirection=0;onlinePose='idle';private onlinePoseUntil=0;get controlledActor(){return this.onlineWorld?.active?this.onlineWorld.local:this.player}
  transitioning=false;private transitionGeneration=0;private transitionTarget:Zone='room';private transitionCleanup?:()=>void;private placeEffects?:PlaceEffects;private windowView?:WindowView;private seatLayers?:SeatLayers;get hasSeatedBody(){return Boolean(this.seated&&this.seatedPhase!==0)}private seatingDuration=.4;private seatedFacing=0;get actorHeight(){return actorHeights[this.zone]??64}private walkingNow=false;private afterStand?:()=>void;private staging=false;private stagingDone?:()=>void;private filmTextures:string[]=[];
  private get bootKeys(){return [...coreTextureKeys,...(save.celebrated?['room-after' as const]:[]),...(save.calendar.enabled?['season-views' as const]:[])]}
@@ -82,6 +85,7 @@ export class Cottage extends Phaser.Scene {
   this.background=this.add.image(0,0,this.backgroundKey).setOrigin(0).setDisplaySize(640,426.667).setDepth(0);this.outdoorEnvironment=new OutdoorEnvironment(this);this.climateGround=this.add.graphics().setDepth(1.1);this.trail=this.add.graphics().setDepth(2);this.glow=this.add.graphics().setDepth(3);this.effects=this.add.graphics().setDepth(8);
   this.shadow=this.add.ellipse(320,356,19,6,0x2d2030,.3).setDepth(5);this.boyShadow=this.add.ellipse(365,343,19,6,0x2d2030,.3).setDepth(5);
   this.player=this.add.image(320,356,'girl0').setOrigin(.5,1).setDisplaySize(23,37).setDepth(10);this.boy=this.add.image(363,338,'__DEFAULT').setOrigin(.5,1).setDisplaySize(24,37).setDepth(9);
+  this.cloudMotion=new CloudMotion(this);
   this.buildActionFrames();
   for(const gift of config.gifts as Gift[]){if(!gift.image)continue;const key='cloud-gift-'+gift.id;if(!this.textures.exists(key))continue;const source=this.textures.get(key).getSourceImage() as HTMLImageElement;const canvas=document.createElement('canvas');const scale=Math.min(1,512/Math.max(source.width,source.height));canvas.width=Math.max(1,Math.round(source.width*scale));canvas.height=Math.max(1,Math.round(source.height*scale));canvas.getContext('2d')!.drawImage(source,0,0,canvas.width,canvas.height);this.textures.remove('gift-'+gift.id);this.textures.addCanvas('gift-'+gift.id,canvas)}
   this.boy.setTexture(this.textures.exists('boy-pose-0')?'boy-pose-0':'__DEFAULT');
@@ -165,7 +169,11 @@ export class Cottage extends Phaser.Scene {
  }
  private async ensureZone(zone:Zone,generation=this.transitionGeneration){if(zone==='catcottage'){await this.ensureTexture('pet-cat');this.sliceAtlas('pet-cat',6,1,Array.from({length:6},(_,i)=>'cottage-cat-'+i))}if(zone==='memory'||zone==='cinema'){await this.ensureTexture('seats-back');this.sliceAtlas('seats-back',2,2,['seat-rocking-back','seat-cinema-back','seat-memory-back','seat-cream-front'])}if(zone==='hotspring'){await this.ensureTexture('footbath-poses');this.sliceAtlas('footbath-poses',3,2,[...Array.from({length:3},(_,i)=>'girl-soak-'+i),...Array.from({length:3},(_,i)=>'boy-soak-'+i)])}if(furnishings[zone]){await this.ensureTexture('furniture');this.sliceAtlas('furniture',4,4,Array.from({length:16},(_,i)=>'furnishing-'+i))}if(zone==='ferris')await this.ensureTexture('ferris-platform');if(['magic','haunted','ferris'].includes(zone)){await this.ensureTexture('wheel-actors');this.sliceAtlas('wheel-actors',2,2,['motion-wheel','motion-cabin','motion-ghost','motion-book'])}const key=worlds[zone].texture;if(!this.textures.exists(key)){const file=textureFiles[key as keyof typeof textureFiles],remote=worlds[zone].backgroundUrl;if(remote){this.bridge.emit('cloud-scene-load',zone,null);
  try{await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
- const image=await loadCloudBackground(remote,ratio=>{if(generation===this.transitionGeneration)this.bridge.emit('cloud-scene-load',zone,ratio)});if(!this.textures.exists(key))this.textures.addImage(key,image)}finally{if(generation===this.transitionGeneration)this.bridge.emit('cloud-scene-load',undefined)}}else if(file)await new Promise<void>((resolve,reject)=>{const image=new Image();const timer=setTimeout(()=>{image.onload=null;image.onerror=null;image.src='';reject(Error(key))},8000);image.onload=()=>{clearTimeout(timer);if(!this.textures.exists(key))this.textures.addImage(key,image);resolve()};image.onerror=()=>{clearTimeout(timer);reject(Error(key))};image.src=assetUrl(file)});else throw Error(key)}if(generation!==this.transitionGeneration){if(key!==worlds[this.zone].texture&&key!==worlds[this.transitionTarget].texture&&!coreTextureKeys.includes(key as any))this.textures.remove(key);return}this.sceneCache=this.sceneCache.filter(k=>k!==key);this.sceneCache.push(key);while(this.sceneCache.length>3){const old=this.sceneCache.shift()!;if(!coreTextureKeys.includes(old as any))this.textures.remove(old)}for(const exit of worlds[zone].items.filter(i=>i.to).slice(0,2)){const next=worlds[exit.to!].texture;if(!worlds[exit.to!].backgroundUrl&&!this.textures.exists(next)){const image=new Image();image.src=assetUrl(textureFiles[next as keyof typeof textureFiles])}}}
+ const image=await loadCloudBackground(remote,ratio=>{if(generation===this.transitionGeneration)this.bridge.emit('cloud-scene-load',zone,ratio)});if(!this.textures.exists(key))this.textures.addImage(key,image)}finally{if(generation===this.transitionGeneration)this.bridge.emit('cloud-scene-load',undefined)}}else if(file)await new Promise<void>((resolve,reject)=>{const image=new Image();const timer=setTimeout(()=>{image.onload=null;image.onerror=null;image.src='';reject(Error(key))},8000);image.onload=()=>{clearTimeout(timer);if(!this.textures.exists(key))this.textures.addImage(key,image);resolve()};image.onerror=()=>{clearTimeout(timer);reject(Error(key))};image.src=assetUrl(file)});else throw Error(key)}if(worlds[zone].layers?.length&&this.cloudMotion){
+ const keys=await this.cloudMotion.prepare(worlds[zone].layers!);
+ if(generation!==this.transitionGeneration)this.cloudMotion.discard(keys);
+ else {const prior=this.pendingLayers.get(zone);if(prior)this.cloudMotion.discard(prior);this.pendingLayers.set(zone,keys)}
+}if(generation!==this.transitionGeneration){if(key!==worlds[this.zone].texture&&key!==worlds[this.transitionTarget].texture&&!coreTextureKeys.includes(key as any))this.textures.remove(key);return}this.sceneCache=this.sceneCache.filter(k=>k!==key);this.sceneCache.push(key);while(this.sceneCache.length>3){const old=this.sceneCache.shift()!;if(!coreTextureKeys.includes(old as any))this.textures.remove(old)}for(const exit of worlds[zone].items.filter(i=>i.to).slice(0,2)){const next=worlds[exit.to!].texture;if(!worlds[exit.to!].backgroundUrl&&!this.textures.exists(next)){const image=new Image();image.src=assetUrl(textureFiles[next as keyof typeof textureFiles])}}}
  private renderMoving(actor:Phaser.GameObjects.Image,who:'girl'|'boy',dir:number,moving:boolean,phase:number){
   const index=dir*4+phase;
   const base=who+'-stride-'+index;
@@ -243,6 +251,8 @@ export class Cottage extends Phaser.Scene {
  }
 
  private rebuild(){
+  const layers=this.pendingLayers.get(this.zone);
+  if(layers){this.cloudMotion?.mount(worlds[this.zone].layers??[],layers);this.pendingLayers.delete(this.zone)}else if(!worlds[this.zone].layers?.length)this.cloudMotion?.clear();
   this.motion?.rebuild();this.markers.forEach(m=>m.destroy());this.markers=[];this.giftMarkers.clear();this.props.clear();this.trail.clear();for(const prop of furnishings[this.zone]??[]){const icon=this.add.image(0,0,prop.texture??'furnishing-'+prop.frame).setOrigin(.5,1).setDisplaySize(prop.w,prop.h);this.markers.push(this.add.container(prop.x,prop.y,[icon]).setDepth(prop.floor?1:10+prop.y/1000));this.props.set(prop.id,icon)}
   if(this.zone==='room'){
    const patch=this.add.image(0,0,'rack-background').setOrigin(0).setDisplaySize(76/2.4,126/2.4);
@@ -264,6 +274,28 @@ export class Cottage extends Phaser.Scene {
   const showAccessories=!this.pairImage?.visible;const showLayeredGear=showAccessories&&!this.integratedWalkGear;this.hat.setVisible(showLayeredGear&&save.hat);this.band.setVisible(showLayeredGear&&save.band);this.earwear?.setVisible(showAccessories&&save.earphones);this.clearHint();this.seatLayers?.rebuild();
  }
  refresh(){this.background.setTexture(this.backgroundKey);this.rebuild()}
+ async reloadCloudWorld(install:()=>void,rollback:()=>void){
+  const previous=this.zone,position={x:this.player.x,y:this.player.y,bx:this.boy.x,by:this.boy.y};
+  this.transitioning=true;this.blocked=true;this.stop();this.bridge.emit('scene-cover',previous);
+  try{
+   install();
+   const target=Object.hasOwn(worlds,previous)?previous:'room';
+   await this.ensureZone(target);
+   this.changeZone(target);
+   if(target===previous){
+    const p=nearestWalkable(position,this.walkable,180),b=nearestWalkable({x:position.bx,y:position.by},this.walkable,180);
+    if(p)this.player.setPosition(p.x,p.y);
+    if(b)this.boy.setPosition(b.x,b.y);
+   }
+   this.resizeView();this.syncFollowing();this.savePosition();
+   return true;
+  }catch{
+   rollback();this.zone=previous;this.background.setTexture(this.backgroundKey).setDisplaySize(640,426.667);this.rebuild();
+   return false;
+  }finally{
+   this.transitioning=false;this.blocked=false;this.bridge.emit('scene-cover',undefined);
+  }
+ }
  savePosition(){if(!this.entered||this.transitioning||this.leaveFerris||this.onlineWorld?.active)return;const p=nearestWalkable(this.player,this.walkable,180),b=nearestWalkable(this.boy,this.walkable,180);if(p&&b)save.resume={zone:this.zone,x:p.x,y:p.y,boyX:b.x,boyY:b.y}}
  private restorePosition(){const pos=save.resume;if(!pos||pos.zone!==this.zone)return;const p=nearestWalkable({x:pos.x,y:pos.y},this.walkable,120),b=nearestWalkable({x:pos.boyX,y:pos.boyY},this.walkable,120);if(p)this.player.setPosition(p.x,p.y);if(b)this.boy.setPosition(b.x,b.y);this.syncFollowing();this.frameView()}
  async enter(){if(!this.readyToEnter||this.entered)return;this.entered=true;this.blocked=false;this.player.setTexture('girl2');this.dir=2;const resume=save.resume;if(resume&&Object.hasOwn(worlds,resume.zone)){this.transitioning=true;this.blocked=true;try{await this.ensureZone(resume.zone as Zone);this.changeZone(resume.zone as Zone);this.restorePosition()}catch{this.bridge.emit('zone-error')}finally{this.transitioning=false;this.blocked=false}}this.cameras.main.fadeIn(save.reduced?1:850,25,19,27)}
@@ -373,7 +405,7 @@ export class Cottage extends Phaser.Scene {
   const standing=this.seatedPhase<0;this.seatedPhase+=standing?-dt:dt;const t=Math.min(1,Math.abs(this.seatedPhase)/this.seatingDuration);const ease=t*t*(3-2*t);for(const [actor,base,floorPoint,who]of [[this.player,0,this.sitReturn,'girl'],[this.boy,2,this.boyReturn,'boy']] as const){if(!floorPoint)continue;actor.setPosition(standing?p[base]+(floorPoint.x-p[base])*ease:floorPoint.x+(p[base]-floorPoint.x)*ease,standing?p[base+1]+(floorPoint.y-p[base+1])*ease:floorPoint.y+(p[base+1]-floorPoint.y)*ease);const back=['sea','starlight','tide'].includes(this.seated)||this.seatedFacing===2;const bending=t<1&&!back&&this.seated!=='hotspring-seat'&&!save.reduced&&this.transitionSeatPose(actor,who,standing?1-t:t);if(!bending)this.setPose(actor,who,standing&&t>.65?'idle':'sit',back?2:this.seatedFacing)}
   if(t===1&&standing){this.seated='';this.seatTargets=undefined;this.actor.cancel();this.buddy.cancel();this.syncFollowing();this.finishStanding()}
  }
- remember(id:string){this.motion?.interact(id);if(id==='window'&&this.onlineWorld?.active){const item=this.getItem('window');if(item)this.walk({x:item.point[0],y:item.point[1]},()=>{this.onlineDirection=2;this.onlinePose='idle'});return;}this.placeEffects?.trigger(id);if(id==='window'){const item=this.getItem('window');if(item){this.stop();this.staging=true;const target=nearestWalkable({x:item.point[0],y:item.point[1]},this.walkable,110);if(target){this.actor.move(this.player,target,this.walkable);const other=nearestWalkable({x:target.x+30,y:target.y},this.walkable,80);if(other)this.buddy.move(this.boy,other,this.walkable)}else this.staging=false}}if(id==='shell')grantItem('shell');if(id==='lanterns'||id==='camp-lights')grantItem('lantern');if(id==='starlight'||id==='telescope')this.starTime=this.idleTime;if(!save.moments.includes(id)){save.moments.push(id);persist()}this.animatePlace(id);if(id==='ghost'||id==='ghost-box')this.affection('scare');if(['popcorn','market-bread','spring-tea','aurora-tea','memory-tea'].includes(id))this.affection('share');if(id==='mars-dance')this.affection('dance');if(id==='spell')this.affection('flower');if(id==='paper-plane')this.releasePlane();if(id==='station-bell'||id==='school-bell'){this.bridge.emit('station-chime')}if(id==='postmark')this.confetti()}
+ remember(id:string){this.cloudMotion?.trigger(id);this.motion?.interact(id);if(id==='window'&&this.onlineWorld?.active){const item=this.getItem('window');if(item)this.walk({x:item.point[0],y:item.point[1]},()=>{this.onlineDirection=2;this.onlinePose='idle'});return;}this.placeEffects?.trigger(id);if(id==='window'){const item=this.getItem('window');if(item){this.stop();this.staging=true;const target=nearestWalkable({x:item.point[0],y:item.point[1]},this.walkable,110);if(target){this.actor.move(this.player,target,this.walkable);const other=nearestWalkable({x:target.x+30,y:target.y},this.walkable,80);if(other)this.buddy.move(this.boy,other,this.walkable)}else this.staging=false}}if(id==='shell')grantItem('shell');if(id==='lanterns'||id==='camp-lights')grantItem('lantern');if(id==='starlight'||id==='telescope')this.starTime=this.idleTime;if(!save.moments.includes(id)){save.moments.push(id);persist()}this.animatePlace(id);if(id==='ghost'||id==='ghost-box')this.affection('scare');if(['popcorn','market-bread','spring-tea','aurora-tea','memory-tea'].includes(id))this.affection('share');if(id==='mars-dance')this.affection('dance');if(id==='spell')this.affection('flower');if(id==='paper-plane')this.releasePlane();if(id==='station-bell'||id==='school-bell'){this.bridge.emit('station-chime')}if(id==='postmark')this.confetti()}
  animatePlace(id:string){const icon=this.props.get(id);if(icon&&!save.reduced)this.tweens.add({targets:icon,angle:id==='chime'?13:0,y:icon.y-3,duration:220,yoyo:true,repeat:2})}
  arrangeCake(callback:()=>void){if(this.zone!=='room')return;this.stop();this.staging=true;this.stagingDone=callback;this.actor.move(this.player,{x:278,y:274},this.walkable);this.buddy.move(this.boy,{x:364,y:274},this.walkable)}
  darken(show:boolean){this.cakeDark.setVisible(show);if(this.zone==='room')this.background.setTexture(show?'room':this.backgroundKey)}
@@ -515,7 +547,7 @@ export class Cottage extends Phaser.Scene {
   if(nearest?.id!==this.nearby?.id){this.nearby=nearest;this.bridge.emit('nearby',nearest)}if(nearest)this.bridge.emit('hint-position',this.project(nearest.x,nearest.y-20));this.emitPortalPositions();this.seatLayers?.update();this.windowView?.update();this.atmosphere();this.environment();this.motion?.update(this.idleTime);
  }
  update(_time:number,delta:number){
-  if(!this.player)return;this.placeEffects?.update(delta);this.updateCalendar(delta);if(this.leaveFerris){const dt=Math.min(delta,250)/1000;this.idleTime+=dt;this.updateFerris?.(dt);this.motion.update(this.idleTime);return}if(this.entered&&this.blocked&&!this.staging&&!this.onlineWorld?.active)return;this.outdoorEnvironment?.update();this.walkingNow=false;this.frameView();const dt=Math.min(delta,250)/1000;this.idleTime+=dt;this.onlinePets?.update(dt);if(this.onlineWorld?.active){this.updateOnline(dt);return;}
+  if(!this.player)return;this.cloudMotion?.update(delta);this.placeEffects?.update(delta);this.updateCalendar(delta);if(this.leaveFerris){const dt=Math.min(delta,250)/1000;this.idleTime+=dt;this.updateFerris?.(dt);this.motion.update(this.idleTime);return}if(this.entered&&this.blocked&&!this.staging&&!this.onlineWorld?.active)return;this.outdoorEnvironment?.update();this.walkingNow=false;this.frameView();const dt=Math.min(delta,250)/1000;this.idleTime+=dt;this.onlinePets?.update(dt);if(this.onlineWorld?.active){this.updateOnline(dt);return;}
   if(this.staging){this.actor.update(this.player,dt,this.walkable);this.buddy.update(this.boy,dt,this.walkable);if(!this.actor.moving&&!this.buddy.moving){this.staging=false;this.setPose(this.player,'girl','idle',2);this.setPose(this.boy,'boy','idle',2);this.syncFollowing();const done=this.stagingDone;this.stagingDone=undefined;done?.()}}
   if(this.seated)this.updateSeated(dt);else if(this.actionKind&&!this.blocked)this.updateAction(dt);
   if(!this.blocked&&this.entered&&!this.seated&&!this.actionKind){

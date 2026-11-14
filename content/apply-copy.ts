@@ -30,7 +30,7 @@ export function installCloudInteractions(interactions:CloudInteraction[],definit
  }
 }
 export function installCloudScenes(scenes:CloudScene[],definitions:Record<string,World>=worlds){
- for(const {id,parent,name,caption,background,entrance,spawn,exit,floor} of scenes){
+ for(const {id,parent,name,caption,background,entrance,spawn,exit,floor,layers} of scenes){
   if(Object.hasOwn(definitions,id)||!Object.hasOwn(definitions,parent))continue;
   const origin=definitions[parent];
   const [x,y]=entrance;
@@ -41,11 +41,26 @@ export function installCloudScenes(scenes:CloudScene[],definitions:Record<string
   const start={x:spawn[0],y:spawn[1]};
   if(!walkable(start)||!walkable({x:exit[0],y:exit[1]}))continue;
   const buddy=nearestWalkable({x:start.x+26,y:start.y},walkable,36)??start;
-  definitions[id]={name,caption,texture:id,backgroundUrl:background,spawn,boy:[buddy.x,buddy.y],walkable,
+  definitions[id]={layers,name,caption,texture:id+'-'+Array.from(background).reduce((hash,char)=>(Math.imul(hash,31)+char.charCodeAt(0))|0,0).toString(16),backgroundUrl:background,spawn,boy:[buddy.x,buddy.y],walkable,
    items:[{id:id+'-return',name:origin.name,action:'返回',x:exit[0],y:exit[1],point:exit,to:parent as Zone}]};
   origin.items.push({id:id+'-entrance',name,action:'前往',x,y,point:entrance,to:id});
  }
 }
+const originalWorlds=Object.fromEntries(Object.entries(worlds).map(([id,world])=>[id,{...world,items:world.items.map(item=>({...item}))}]));
+const originalFilms=structuredClone(films);
+const originalPlaces=structuredClone(places);
+const originalConfig=structuredClone(config);
+export function refreshCloudWorld(){
+ for(const id of Object.keys(worlds))if(id.startsWith('cloud-'))delete worlds[id as Zone];
+ for(const [id,world] of Object.entries(originalWorlds))worlds[id as Zone]={...world,items:world.items.map(item=>({...item}))};
+ for(const id of Object.keys(places))if(!Object.hasOwn(originalPlaces,id))delete places[id];
+ Object.assign(places,structuredClone(originalPlaces));
+ // Gift geometry is applied by the cloud-content installer.
+ for(const [key,value] of Object.entries(originalConfig))if(key!=='gifts'&&key!=='girlName'&&key!=='boyName')Object.assign(config,{[key]:structuredClone(value)});
+ for(const [id,film] of Object.entries(films))Object.assign(film,structuredClone(originalFilms[id as keyof typeof originalFilms]));
+ applyPublishedWorld();
+}
+function applyPublishedWorld(){
 installCloudScenes(cloudScenes);
 installCloudInteractions(cloudInteractions);
 const texts=personal.texts as Record<string,string>;
@@ -61,7 +76,7 @@ config.labubuReveal.text=texts['gift.labubu.reveal']??config.labubuReveal.text;
 config.mysteryBoxReveal.text=texts['gift.mystery.reveal']??config.mysteryBoxReveal.text;
 for(const [id,p]of Object.entries(places)){p.text=texts['place.'+id+'.text']??p.text;p.response=texts['place.'+id+'.response']??p.response;p.choice=texts['place.'+id+'.choice']??p.choice}
 config.birthDateForMoon=personal.birthDateForMoon;config.moonImage=personal.moonImage;config.labubuReveal.image=personal.labubuImage;config.mysteryBoxReveal.image=personal.mysteryImage;
-export {personal};
+
 
 // Existing film.<id>.<index> copy IDs remain valid as shorts gain new shots.
 for(const [id,film] of Object.entries(films)){
@@ -73,3 +88,8 @@ config.keychainLines=config.keychainLines.map((v,i)=>texts['keychain.'+i]??v);
 
 // UI copy resolves the same personal.texts dictionary through uiCopy(id);
 // changing labels never changes DOM IDs, action keys or settings tab routing.
+
+}
+applyPublishedWorld();
+
+export {personal};

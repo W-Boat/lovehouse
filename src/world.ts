@@ -1,9 +1,10 @@
+import type {CloudLayer} from '../content/cloud-layers.mjs';
 import type {GiftId} from '../content/birthday-config';
 import {furnishings,backgroundSeats} from './layouts';
 import {roomWalkable,gardenWalkable,type Point,inside,inPolygon,type Polygon,segmentWalkable,nearestWalkable,type Walkable} from './navigation';
 export type Zone=`cloud-${string}`|'room'|'garden'|'forest'|'pier'|'greenhouse'|'memory'|'station'|'postoffice'|'aquarium'|'camp'|'magic'|'haunted'|'cinema'|'ferris'|'mars'|'hotspring'|'market'|'aurora'|'shichahai'|'gulou'|'chaya'|'tianmo'|'tanghulu'|'catcottage'|'highschool'|'musicroom';
 export type Item={id:string;name:string;x:number;y:number;point:[number,number];action?:string;kind?:'place'|'collect'|'slot'|'event';collect?:string;prop?:number;texture?:string;to?:Zone;practiceGame?:GiftId; webPortal?:string; externalGame?:string};
-export type World={name:string;caption:string;texture:string;backgroundUrl?:string;spawn:[number,number];boy:[number,number];items:Item[];walkable:(point:Point)=>boolean};
+export type World={layers?:CloudLayer[];name:string;caption:string;texture:string;backgroundUrl?:string;spawn:[number,number];boy:[number,number];items:Item[];walkable:(point:Point)=>boolean};
 // Broad walkable floor regions match the painted clearing/deck instead of invisible center lines.
 const forestGround:Polygon=[[293,417],[338,417],[337,355],[350,315],[390,289],[438,269],[482,246],[516,221],[510,202],[490,193],[468,205],[444,218],[408,222],[379,208],[354,190],[348,155],[334,133],[305,133],[290,157],[282,191],[256,211],[230,219],[204,214],[181,200],[156,189],[134,200],[139,218],[167,236],[195,246],[219,259],[240,278],[253,291],[229,287],[210,293],[210,316],[242,337],[282,337],[294,365]];
 export const forestWalkable=(p:Point)=>inPolygon(p,forestGround)&&!inside(p,{x:294,y:94,w:51,h:36},4)&&!inside(p,{x:505,y:165,w:65,h:31},4)&&!inside(p,{x:170,y:280,w:36,h:27},3);

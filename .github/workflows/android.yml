@@ -81,3 +81,11 @@ jobs:
           name: lovehouse-content-update
           path: hot-update-delivery
           if-no-files-found: error
+      - name: Publish Android package
+        env:
+          LOVEHOUSE_PUBLISHER_TOKEN: ${{ secrets.LOVEHOUSE_PUBLISHER_TOKEN }}
+        run: python tools/publish_ci_package.py android "${GITHUB_SHA::12}" android-delivery/生日小屋-Android.apk
+      - name: Publish signed incremental resources
+        env:
+          LOVEHOUSE_ADMIN_TOKEN: ${{ secrets.LOVEHOUSE_PUBLISHER_TOKEN }}
+        run: python tools/publish_android_update.py hot-update-delivery "${LOVEHOUSE_CONTENT_SERVER:-https://server.080726.xyz/lovehouse/}"

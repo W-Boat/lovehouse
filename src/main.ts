@@ -1,8 +1,9 @@
+import {nativeBridge} from './native-bridge';
 import {preparedPage} from './release-resources';
 import {showFrameLoading} from './frame-loading';
 import {checkPackageOnEntry} from './content-updates';
 import {uiCopy} from '../content/ui-copy';
-import {cloudPortals,cloudGiftGames,cloudAnnouncement,watchSystemNotifications,claimNotice} from './cloud-content';
+import {cloudPortals,cloudGiftGames,cloudAnnouncement,watchSystemNotifications,claimNotice,installCloudSnapshot,currentCloudSnapshot,type CloudSnapshot} from './cloud-content';
 import {installMusicRoom} from './music-room';
 import {validDpi,stickVector} from './display';
 import {installRewards} from './rewards';
@@ -17,7 +18,7 @@ import {installOnlineUI} from './online-ui';
 import {installOnlineWorld} from './online-world';
 import {installOnlineGame} from './online-game';
 import Phaser from 'phaser';
-import '../content/apply-copy';
+import {refreshCloudWorld} from '../content/apply-copy';
 import './style.css';
 import './upgrade.css';
 import {Cottage,type Zone,type Item} from './scene';
@@ -170,7 +171,7 @@ document.addEventListener('pointerdown',event=>{if(interactionChoices&&!interact
 
 function journal(){if(!ready||!started||cinematic||scene.transitioning)return;showModal(`<div class="subheading">${mainHtml("journal.eyebrow")}</div><h2 id="modal-title">${mainHtml("journal.title")}</h2><div class="subheading">${mainHtml('journal.progress',{count:save.opened.length})}</div><div class="journal-grid">${config.gifts.map(g=>`<button class="journal-gift ${save.opened.includes(g.id)?'opened':''}" id="journal-${g.id}" aria-label="${esc(g.name)}">${save.opened.includes(g.id)?'':'<span class="journal-empty">✧</span>'}<small>${esc(g.name)}</small></button>`).join('')}</div><small class="config-placeholder">${mainHtml("journal.help")}</small>`,'journal');for(const g of config.gifts){const el=$('journal-'+g.id);if(save.opened.includes(g.id))art(g.id,el,64);el.onclick=()=>{if(save.opened.includes(g.id))showGift(g);else{closeModal();if(scene.zone!=='room'){toast(mainText("journal.wrong-zone"));return}scene.approachById(g.id)}}}}
 function settings(){if(!ready||!started||cinematic)return;showModal(`<div class="subheading">${mainHtml("settings.eyebrow")}</div><h2 id="modal-title">${mainHtml("settings.title")}</h2><div class="settings-row"><span>${mainHtml("settings.music")}</span><button class="secondary" id="setting-music">${save.music?mainHtml("settings.enabled"):mainHtml("settings.muted")}</button></div><div class="settings-row"><span>${mainHtml("settings.motion")}</span><button class="secondary" id="setting-motion">${save.reduced?mainHtml("settings.enabled"):mainHtml("settings.disabled")}</button></div><div class="settings-row"><span>${mainHtml("settings.progress")}</span><button class="secondary" id="reset-request">${mainHtml("settings.reset")}</button></div><small class="config-placeholder">${mainHtml("settings.keyboard-help")}<br>${mainHtml("settings.touch-help")}<br>${mainHtml("settings.storage-help")}</small><div class="modal-actions"><button class="secondary" id="settings-close">${mainHtml("settings.close")}</button></div>`,'settings');action('setting-music',()=>{save.music=!save.music;persist();void music(true);updateHUD();settings()});action('setting-motion',()=>{save.reduced=!save.reduced;persist();updateHUD();settings()});action('settings-close',closeModal);action('reset-request',()=>{showModal(`<h2 id="modal-title">${mainHtml("reset.title")}</h2><div class="gift-message">${mainHtml("reset.warning")}<br>${mainHtml("reset.keep-content")}</div><div class="modal-actions"><button class="secondary" id="reset-cancel">${mainHtml("reset.cancel")}</button><button class="primary" id="reset-confirm">${mainHtml("reset.confirm")}</button></div>`,'reset');action('reset-cancel',settings);action('reset-confirm',()=>{reset();closeModal();scene.changeZone('room');scene.refresh();updateHUD();toast(mainText("reset.done"))})})}
-async function takePhoto(){if(scene.transitioning)return;if(!ready||!started||cinematic)return;scene.stop();const capture=scene.zone==='musicroom'?musicRoom.capture:scene.capture.bind(scene);capture(img=>{showModal(`<h2 id="modal-title">${mainHtml("photo.title")}</h2><img id="photo-result" class="photo-result" alt="${mainHtml("photo.alt")}"><div class="modal-actions"><button id="photo-download" class="primary">${mainHtml("photo.save")}</button></div>`,'photo');($('photo-result') as HTMLImageElement).src=img.src;action('photo-download',()=>{const native=(window as Window&{CottageSave?:{postMessage:(data:string)=>void}}).CottageSave;if(native){native.postMessage(JSON.stringify({kind:'image',data:img.src}));return}const a=document.createElement('a');a.href=img.src;a.download=mainText("photo.filename");a.click()})})}
+async function takePhoto(){if(scene.transitioning)return;if(!ready||!started||cinematic)return;scene.stop();const capture=scene.zone==='musicroom'?musicRoom.capture:scene.capture.bind(scene);capture(img=>{showModal(`<h2 id="modal-title">${mainHtml("photo.title")}</h2><img id="photo-result" class="photo-result" alt="${mainHtml("photo.alt")}"><div class="modal-actions"><button id="photo-download" class="primary">${mainHtml("photo.save")}</button></div>`,'photo');($('photo-result') as HTMLImageElement).src=img.src;action('photo-download',()=>{const native=nativeBridge();if(native){native.postMessage(JSON.stringify({kind:'image',data:img.src}));return}const a=document.createElement('a');a.href=img.src;a.download=mainText("photo.filename");a.click()})})}
 scene.bridge.on('cottage-ready',()=>{if(loadFailed)return;ready=true;void enhancements.begin();document.dispatchEvent(new Event('cottage-ready'));});
 scene.bridge.on('load-progress',(value:number)=>{if(!ready&&!loadFailed){$('load-status').textContent=mainText('loading.progress',{percent:Math.round(value*100)});$('load-bar').style.width=Math.round(value*100)+'%';document.dispatchEvent(new CustomEvent('cottage-load-progress',{detail:value*.9}))}});
 scene.bridge.on('asset-error',()=>{loadFailed=true;window.dispatchEvent(new Event('error'))});
@@ -443,6 +444,23 @@ scene.bridge.on('zone-error',()=>{cinematic=false;toast(mainText("scene.load-err
 scene.bridge.on('station-chime',()=>{sound(523);window.setTimeout(()=>sound(659),450);window.setTimeout(()=>sound(784),900)});
 
 if(import.meta.env.MODE==='e2e')(window as any).__cottage=scene;
+let pendingCloudPatch:CloudSnapshot|undefined;
+let applyingCloudPatch=false;
+document.addEventListener('cottage-cloud-patch',event=>{pendingCloudPatch=(event as CustomEvent<CloudSnapshot>).detail});
+window.setInterval(async()=>{
+ if(!pendingCloudPatch||applyingCloudPatch||!started||modalOpen||dialogueOpen||cinematic||openingGift||sceneActivity||scene.transitioning||scene.seated||scene.blocked||scene.onlineWorld?.active||document.hidden)return;
+ const patch=pendingCloudPatch,previous=currentCloudSnapshot;
+ if(!previous||patch.revision===previous.revision){pendingCloudPatch=undefined;return}
+ applyingCloudPatch=true;
+ const success=await scene.reloadCloudWorld(
+  ()=>{installCloudSnapshot(patch);refreshCloudWorld()},
+  ()=>{installCloudSnapshot(previous);refreshCloudWorld()},
+ );
+ if(pendingCloudPatch===patch)pendingCloudPatch=undefined;
+ if(success){updateHUD();toast('小屋内容已更新。')}
+ else toast('新内容暂未准备好，已恢复原场景。');
+ applyingCloudPatch=false;
+},1000);
 window.setInterval(()=>{if(started&&!scene.transitioning){scene.savePosition();persist()}},3000);
 window.addEventListener('portable-readonly',()=>toast(mainText("storage.readonly")));
 

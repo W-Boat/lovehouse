@@ -4,6 +4,7 @@ import base64
 import hashlib
 import json
 import os
+import time
 from pathlib import Path
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
@@ -60,6 +61,7 @@ def create_package(build, output, version, key, certificate):
         archive_hash = hashlib.file_digest(stream, 'sha256').hexdigest()
     manifest = {
         'format': 1,
+        'builtAt': int(time.time()),
         'version': version,
         'requiredNativeApi': 1,
         'entry': 'index.html',

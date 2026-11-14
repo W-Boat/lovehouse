@@ -107,3 +107,10 @@ jobs:
             docs/windows-sha256.txt
             文案.md
             需替换内容.md
+      - name: Package and publish Windows portable
+        shell: pwsh
+        env:
+          LOVEHOUSE_PUBLISHER_TOKEN: ${{ secrets.LOVEHOUSE_PUBLISHER_TOKEN }}
+        run: |
+          Compress-Archive -LiteralPath src-tauri/target/release/lovehouse.exe,docs/Windows便携版.md,docs/windows-commit.txt,docs/windows-sha256.txt -DestinationPath lovehouse-windows.zip
+          python tools/publish_ci_package.py windows $env:GITHUB_SHA.Substring(0,12) lovehouse-windows.zip

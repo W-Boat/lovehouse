@@ -1,3 +1,4 @@
+import {nativeBridge} from './native-bridge';
 import {defaultContentServer} from './cloud-content';
 import {uiCopy,formatCopy} from '../content/ui-copy';
 import {persist} from './state';
@@ -17,7 +18,7 @@ function defaultAndroidUpdateUrl(){
 
 
 export function sendContentUpdate(command:UpdateCommand){
- const native=(window as Window&{CottageSave?:{postMessage:(message:string)=>void}}).CottageSave;
+ const native=nativeBridge();
  if(!native)return false;
  if(command.action==='install'||command.action==='rollback')persist();
  native.postMessage(JSON.stringify({kind:'content-update',...command}));
@@ -30,7 +31,7 @@ export function sendContentUpdate(command:UpdateCommand){
 
 export function mountContentUpdates(parent:HTMLElement){
  mountPackageDownloads(parent);
- if(!(window as Window&{CottageSave?:unknown}).CottageSave)return;
+ if(!nativeBridge())return;
  host=document.createElement('section');host.className='content-updates';parent.append(host);
  const element=<K extends keyof HTMLElementTagNameMap>(tag:K,text='',target:HTMLElement=host!)=>{
   const node=document.createElement(tag);node.textContent=text;target.append(node);return node;

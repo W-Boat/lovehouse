@@ -16,6 +16,7 @@ import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem,NPagination
 const Assets=defineAsyncComponent({loader:()=>import('./Assets.vue'),loadingComponent:PageLoading,delay:120});
 const Packages=defineAsyncComponent({loader:()=>import('./Packages.vue'),loadingComponent:PageLoading,delay:120});
 const History=defineAsyncComponent({loader:()=>import('./History.vue'),loadingComponent:PageLoading,delay:120});
+const SceneLayers=defineAsyncComponent({loader:()=>import('./SceneLayers.vue'),loadingComponent:PageLoading,delay:120});
 const ScenePreview=defineAsyncComponent({loader:()=>import('./ScenePreview.vue'),loadingComponent:PageLoading,delay:120});
 const SceneInteractions=defineAsyncComponent({loader:()=>import('./SceneInteractions.vue'),loadingComponent:PageLoading,delay:120});
 const interactionZone=ref('');
@@ -426,6 +427,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     <details v-for="(record,index) in records" :key="record" class="record">
      <summary>{{ record.name || record.label || record.id || '新条目' }}</summary>
      <ScenePreview v-if="selected==='scenes'" :scene="record" @update:scene="value=>records[index]=value"/>
+     <SceneLayers v-if="selected==='scenes'" v-model="record.layers" :zone="record.id" :interactions="draft.interactions??[]"/>
      <n-button v-if="selected==='scenes' && record.id && record.id!=='cloud-'" size="small" @click="interactionZone=record.id; choose('interactions')">管理此场景的互动</n-button>
 
      <div class="record-fields">

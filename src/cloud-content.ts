@@ -69,15 +69,32 @@ export async function syncCloudContent(){
   }else if(!snapshot)throw Error('Missing local snapshot');
  }catch{document.body.dataset.cloudOffline='true'}
  if(snapshot){
+  installCloudSnapshot(snapshot);
+  const resources=prepareReleaseResources(snapshot,endpoint).catch(()=>{});
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  await Promise.race([resources,new Promise<void>(resolve=>{timer=setTimeout(resolve,1400)})]);
+  clearTimeout(timer);
+ }
+}
+
+export type CloudSnapshot=Awaited<ReturnType<typeof verifyCloudSnapshot>>;
+const originalPersonal=structuredClone(personal);
+const originalGifts=structuredClone(birthdayConfig.gifts);
+export let currentCloudSnapshot:CloudSnapshot|undefined;
+export function installCloudSnapshot(snapshot:CloudSnapshot){
+ for(const key of Object.keys(personal.texts))delete (personal.texts as Record<string,string>)[key];
+ const {texts:defaultTexts,...defaultPersonal}=structuredClone(originalPersonal);
+ Object.assign(personal,defaultPersonal);
+ Object.assign(personal.texts,defaultTexts);
+ birthdayConfig.gifts.forEach((gift,index)=>{
+  for(const key of Object.keys(gift))if(!Object.hasOwn(originalGifts[index],key))delete (gift as unknown as Record<string,unknown>)[key];
+  Object.assign(gift,originalGifts[index]);
+ });
   Object.assign(personal.texts,snapshot.texts);
   Object.assign(personal,snapshot.media);
   cloudAnnouncement=snapshot.announcement;
   initialNotification=snapshot.notification;
   statisticsEnabled=snapshot.statistics?.enabled===true;
-  const resources=prepareReleaseResources(snapshot,endpoint).catch(()=>{});
-  let timer:ReturnType<typeof setTimeout>|undefined;
-  await Promise.race([resources,new Promise<void>(resolve=>{timer=setTimeout(resolve,1400)})]);
-  clearTimeout(timer);
   for(const gift of birthdayConfig.gifts){
    const override=snapshot.gifts?.[gift.id];
    if(!override)continue;
@@ -92,8 +109,11 @@ export async function syncCloudContent(){
   cloudGiftGames=snapshot.giftGames??{};
   cloudInteractions=snapshot.interactions??[];
   cloudMusicRoom=snapshot.musicRoom?parseMusicConfig(snapshot.musicRoom):undefined;
- }
+ currentCloudSnapshot=snapshot;
+ const server=defaultContentServer();
+ if(server)try{const endpoint=new URL('content.json',server.replace(/\/?$/,'/'));localStorage.setItem('cottage-cloud:'+endpoint.href,JSON.stringify(snapshot))}catch{}
 }
+
 
 
 export function watchSystemNotifications(display:(title:string,body:string)=>void){
@@ -129,6 +149,10 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
    if(response.status!==304&&response.status!==204&&response.ok){
     const snapshot=await verifyCloudSnapshot(await response.json());
     revision=snapshot.revision;void show(snapshot.notification);
+    if(snapshot.revision!==currentCloudSnapshot?.revision){
+     void prepareReleaseResources(snapshot,endpoint).catch(()=>{});
+     document.dispatchEvent(new CustomEvent('cottage-cloud-patch',{detail:snapshot}));
+    }
     const enabled=snapshot.statistics?.enabled===true;
     if(enabled&&!statisticsEnabled){statisticsEnabled=true;void sendOnlineStatus()}else statisticsEnabled=enabled;
    }

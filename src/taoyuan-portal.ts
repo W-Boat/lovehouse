@@ -1,3 +1,4 @@
+import {nativeBridge} from './native-bridge';
 import {showFrameLoading} from './frame-loading';
 import type {TaoyuanField} from './online-protocol';
 import {uiCopy} from '../content/ui-copy';
@@ -8,7 +9,7 @@ export function openTaoyuan(options:{role:'host'|'guest'|'offline';identity:{nam
  const frame=document.createElement('iframe');frame.title=uiCopy('taoyuan.title');
  const url=new URL('taoyuan/index.html',document.baseURI);
  url.searchParams.set('lovehouse-name',options.identity.name);url.searchParams.set('lovehouse-gender',options.identity.gender);
- const native=(window as Window&{CottageSave?:{postMessage:(data:string)=>void}}).CottageSave;
+ const native=nativeBridge();
  native?.postMessage(JSON.stringify({kind:'orientation',value:'portrait'}));
  if(options.role==='guest')url.searchParams.set('lovehouse-role','guest');
  frame.src=url.href;frame.style.cssText='flex:1;width:100%;border:0;background:#211e21';const toolbar=document.createElement('nav');toolbar.className='taoyuan-toolbar';const exportButton=document.createElement('button');exportButton.className='taoyuan-return';exportButton.textContent='导出存档';exportButton.disabled=true;toolbar.append(exit,exportButton);panel.append(toolbar,frame);document.body.append(panel);

@@ -60,6 +60,9 @@ export function prepareSnapshot(input) {
   if (!floor && !builtInZones.has(item.zone)) throw Error('Unknown interaction scene: ' + item.zone);
   if (floor && !insideFloor(item.point,floor)) throw Error('Interaction point outside floor: ' + item.id);
  }
+ for(const scene of scenes??[])for(const layer of scene.layers??[]){
+  if(layer.trigger&&!interactions?.some(item=>item.id===layer.trigger&&item.zone===scene.id))throw Error('Animation trigger must belong to the same scene: '+layer.id);
+ }
  const body = {
   schema: 1,
   texts: Object.fromEntries(Object.entries(texts).sort(([a],[b]) => a.localeCompare(b,'en'))),
