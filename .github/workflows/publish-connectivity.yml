@@ -1,0 +1,22 @@
+name: Publisher connectivity
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  network:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe publisher connections
+        run: |
+          python3 - <<'PY'
+          import socket
+          for host in ['server.080726.xyz','49.232.63.183']:
+            try: print(host, socket.getaddrinfo(host,443,type=socket.SOCK_STREAM))
+            except Exception as error: print(type(error).__name__)
+            for port in [22,80,443]:
+              try:
+                with socket.create_connection((host,port),timeout=8):print(host,port,'connected')
+              except Exception as error:print(host,port,type(error).__name__)
+          PY
+          curl -IsS --connect-timeout 8 --max-time 12 https://server.080726.xyz/lovehouse/packages.json || true
+          curl -IsS --connect-timeout 8 --max-time 12 --resolve server.080726.xyz:443:49.232.63.183 https://server.080726.xyz/lovehouse/packages.json || true
