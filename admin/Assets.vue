@@ -15,8 +15,8 @@ const uploads=ref([]),lyrics=ref(''),previewError=ref(''),previewLoading=ref(fal
 let uploadRequest,previewController;
 let disposed=false;
 const assetUrl=asset=>new URL(asset.path,location.origin).href;
-const kind=asset=>asset.mime?.startsWith('image/')?'image':asset.mime?.startsWith('audio/')?'audio':'lyrics';
-const labels={image:'图片',audio:'音频',lyrics:'歌词'};
+const kind=asset=>asset.mime?.startsWith('image/')?'image':asset.mime?.startsWith('audio/')?'audio':asset.mime?.startsWith('text/plain')?'lyrics':'other';
+const labels={image:'图片',audio:'音频',lyrics:'歌词',other:'其他'};
 const totalBytes=computed(()=>assets.value.reduce((total,asset)=>total+asset.bytes,0));
 const filtered=computed(()=>{
  const query=search.value.trim().toLowerCase();
@@ -49,7 +49,8 @@ async function run(action){
  finally{busy.value=false}
 }
 async function load(){
- assets.value=(await call('GET')).assets;
+ const [online,catalog]=await Promise.all([call('GET'),fetch(import.meta.env.BASE_URL+'api/bundled',{headers:{Authorization:authorization()}})]);
+ assets.value=[...online.assets,...(catalog.ok?(await catalog.json()).assets:[])];
  loaded.value=true;
 }
 function uploadOne(file){
@@ -158,9 +159,9 @@ onBeforeUnmount(()=>{disposed=true;uploadRequest?.abort();previewController?.abo
  </section>
  <details v-if="uploads.length" class="asset-upload-results"><summary>本次上传结果</summary><div v-for="(item,index) in uploads" :key="index"><el-tag :type="item.ok?'success':'danger'" size="small">{{item.ok?'成功':'失败'}}</el-tag><span>{{item.name}}</span><small>{{item.text}}</small></div></details>
  <el-table :data="rows" :empty-text="loaded?'没有匹配的素材':'点击刷新列表，读取已上传素材'" class="asset-table">
-  <el-table-column label="素材" min-width="200"><template #default="{row}"><div class="asset-name"><button v-if="kind(row)==='image'" type="button" class="asset-thumbnail" :aria-label="'预览 '+row.name" @click="showPreview(row)"><img :src="assetUrl(row)" alt="" loading="lazy"></button><div><strong>{{row.name}}</strong><small>{{labels[kind(row)]}} · {{formatSize(row.bytes)}}</small></div></div></template></el-table-column>
+  <el-table-column label="素材" min-width="200"><template #default="{row}"><div class="asset-name"><button v-if="kind(row)==='image'" type="button" class="asset-thumbnail" :aria-label="'预览 '+row.name" @click="showPreview(row)"><img :src="assetUrl(row)" alt="" loading="lazy"></button><div><strong>{{row.name}}<small v-if="row.source==='bundled'"> · 包内</small></strong><small>{{labels[kind(row)]}} · {{formatSize(row.bytes)}}</small></div></div></template></el-table-column>
   <el-table-column label="链接" min-width="190"><template #default="{row}"><el-input :model-value="assetUrl(row)" readonly aria-label="素材地址" @focus="event=>event.target.select()"/></template></el-table-column>
-  <el-table-column label="操作" width="220"><template #default="{row}"><el-button link @click="showPreview(row)">预览</el-button><el-button link @click="copy(row)">复制</el-button><el-button link @click="inspectReferences(row)">引用</el-button><el-button link type="danger" :disabled="busy" @click="selected=row">删除</el-button></template></el-table-column>
+  <el-table-column label="操作" width="220"><template #default="{row}"><el-button link @click="showPreview(row)">预览</el-button><el-button link @click="copy(row)">复制</el-button><el-button link @click="inspectReferences(row)">引用</el-button><el-button link type="danger" :disabled="busy" v-if="row.source!=='bundled'" @click="selected=row">删除</el-button></template></el-table-column>
  </el-table>
  <el-pagination v-if="filtered.length" v-model:current-page="page" v-model:page-size="pageSize" :page-sizes="[12,24,48]" :total="filtered.length" layout="total, sizes, prev, pager, next" class="asset-pagination"/>
  <el-dialog :model-value="Boolean(referenceAsset)" title="素材引用" width="min(720px,94vw)" @close="referenceAsset=null">

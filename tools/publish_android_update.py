@@ -3,8 +3,9 @@ import argparse
 import hashlib
 import json
 import os
+import time
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
@@ -47,8 +48,15 @@ def publish(folder, base, token):
             except HTTPError as error:
                 if error.code != 404:
                     raise
-            stream.seek(0)
-            post('blobs/' + asset.name, stream, asset.stat().st_size, 'application/octet-stream')
+            for attempt in range(3):
+                stream.seek(0)
+                try:
+                    post('blobs/' + asset.name, stream, asset.stat().st_size, 'application/octet-stream')
+                    break
+                except (URLError, TimeoutError):
+                    if attempt == 2:
+                        raise
+                    time.sleep(2 ** attempt)
     manifest = folder / 'update.json'
     with manifest.open('rb') as stream:
         return post('publish', stream, manifest.stat().st_size, 'application/json')

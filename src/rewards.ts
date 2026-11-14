@@ -35,7 +35,7 @@ export function installRewards(ctx:Context){
    if(!document.hidden)elapsed+=dt;
    const duration=save.reduced?.2:6.4,t=save.reduced?4.5:elapsed;
    const nextPhase=t<1.2?0:t<3.5?1:2;
-   if(nextPhase!==phase){phase=nextPhase;caption.textContent=phase===0?'把愿望交给星光':phase===1?'有一份心意，正向你靠近':all?'所有心意，都为你而来':gift.name}
+   if(nextPhase!==phase){phase=nextPhase;caption.textContent=phase===0?'把愿望交给星光':phase===1?'有一份心意，正向你靠近':all?'所有心意，都为你而来':gift.name+' · '+gift.subtitle}
    g.fillStyle=sky;g.fillRect(0,0,1280,720);
    for(const star of stars){
     const travel=save.reduced?1:1+Math.min(2.5,Math.max(0,t-1.2))*star.z*.45;

@@ -1,3 +1,5 @@
+import {validateGiftOverrides,validateAnnouncement} from '../content/cloud-gifts.mjs';
+import {createBundledCatalog} from './cloud-bundled.mjs';
 import {createAndroidUpdateStore} from './cloud-android-update.mjs';
 import {createPackageStore,isPackagePlatform} from './cloud-packages.mjs';
 import {validateCloudScenes} from '../content/cloud-scenes.mjs';
@@ -14,7 +16,7 @@ import {pathToFileURL} from 'node:url';
 
 const limit = 1_000_000;
 const builtInZones = new Set('room garden forest pier greenhouse memory station postoffice aquarium camp magic haunted cinema ferris mars hotspring market aurora shichahai gulou chaya tianmo tanghulu catcottage highschool musicroom'.split(' '));
-const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames']);
+const publishFields = new Set(['schema','revision','texts','portals','musicRoom','media','interactions','scenes','giftGames','gifts','announcement']);
 const jsonHeaders = {'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff'};
 
 function insideFloor([x,y],[[left,top],[right,bottom]]) {
@@ -56,6 +58,8 @@ export function prepareSnapshot(input) {
   interactions,
   scenes,
   giftGames: validateGiftGames(input.giftGames),
+  gifts: validateGiftOverrides(input.gifts),
+  announcement: validateAnnouncement(input.announcement),
  };
  const revision = createHash('sha256').update(JSON.stringify(body)).digest('hex');
  const json = JSON.stringify({...body,revision});
@@ -159,8 +163,9 @@ async function readJson(request) {
 const assetTypes = new Map([['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8'],['svg','image/svg+xml'],['png','image/png'],['webp','image/webp'],['woff2','font/woff2']]);
 const adminDir = new URL('../admin/dist/',import.meta.url);
 
-export function createContentHandler({file,token,publicPrefix=''}) {
+export function createContentHandler({file,token,publicPrefix='',bundledDirectory,bundledCatalog}) {
  if(!/^(?:\/[a-zA-Z0-9_-]+)*$/.test(publicPrefix))throw Error('Invalid LOVEHOUSE_PUBLIC_PREFIX');
+ const bundled=createBundledCatalog({publicPrefix,directory:bundledDirectory,catalog:bundledCatalog});
  const publicAsset=asset=>({...asset,path:publicPrefix+asset.path});
  const assets=createAssetStore(file+'.assets');
  const packages=createPackageStore(file+'.packages',publicPrefix);
@@ -200,6 +205,11 @@ export function createContentHandler({file,token,publicPrefix=''}) {
   if(pathname.startsWith('/packages/')&&['GET','HEAD'].includes(request.method)){
    try{if(!await packages.serve(request,response,pathname))sendJson(response,404,{error:'Package not found'})}
    catch{if(!response.headersSent)sendJson(response,500,{error:'Unable to download package'})}
+   return;
+  }
+  if(pathname.startsWith('/bundled/')&&['GET','HEAD'].includes(request.method)){
+   try{if(!await bundled.serve(request,response,pathname))sendJson(response,404,{error:'Bundled asset not found'})}
+   catch{if(!response.headersSent)sendJson(response,404,{error:'Bundled assets unavailable'})}
    return;
   }
   if (request.method==='GET' && pathname==='/content.json') {
@@ -288,6 +298,11 @@ export function createContentHandler({file,token,publicPrefix=''}) {
      const entry=await packages.save(platform,url.searchParams.get('version')??'',request,serialize);
      sendJson(response,201,entry);
     }catch(error){sendJson(response,400,{error:error.message})}
+    return;
+   }
+   if(pathname==='/admin/api/bundled'&&request.method==='GET'){
+    try{const {baseline,assets}=await bundled.load();sendJson(response,200,{baseline,assets})}
+    catch{sendJson(response,503,{error:'Bundled catalog unavailable'})}
     return;
    }
    if (pathname==='/admin/api/history' && request.method==='GET') {

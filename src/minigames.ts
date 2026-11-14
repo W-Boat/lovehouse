@@ -1,3 +1,4 @@
+import {assetUrl} from './assets';
 import {ClawMachine} from './claw-machine';
 import {getGameCopy,formatGameCopy} from '../content/game-copy';
 import {puzzleLevel} from './puzzle-levels';
@@ -24,7 +25,7 @@ export const giftGames:Record<GiftId,MinigameDefinition>={
 let currentDispose:(()=>void)|undefined;
 export function disposeGame(){currentDispose?.();currentDispose=undefined}
 const el=<K extends keyof HTMLElementTagNameMap>(tag:K,text='',cls='')=>{const e=document.createElement(tag);e.textContent=text;e.className=cls;return e};
-export function launchGiftGame(id:GiftId,host:HTMLElement,finish:(r:GameResult)=>void,artUrl='',recordProgress=true){
+export function launchGiftGame(id:GiftId,host:HTMLElement,finish:(r:GameResult)=>void,artUrl='',recordProgress=true,hatPortraits?:readonly [string,string]){
  disposeGame();const def=giftGames[id];let disposed=false,paused=false,score=0,level=0,won=false;const controller=new AbortController(),timers=new Set<number>();let frame=0;let restart:()=>void=()=>{},onPauseChange:()=>void=()=>{};
  host.replaceChildren();host.append(el('div',getGameCopy('common.eyebrow'),'subheading'),el('h2',def.title));const instruction=el('p',def.rule),status=el('p','','game-status'),board=el('div','','game-board'),controls=el('div','','game-controls'),footer=el('div','','modal-actions');host.append(instruction,status,board,controls,footer);
  const listen=(target:EventTarget,type:string,fn:EventListener)=>target.addEventListener(type,fn,{signal:controller.signal});
@@ -58,7 +59,69 @@ export function launchGiftGame(id:GiftId,host:HTMLElement,finish:(r:GameResult)=
  const sets=[{a:['起床','出门','看日落','说晚安'],clue:getGameCopy('notes.clue.morning')},{a:['烧水','泡茶','晾一晾','一起喝'],clue:getGameCopy('notes.clue.tea')},{a:['折信','装信封','贴邮票','投进邮筒'],clue:getGameCopy('notes.clue.post')}];let a:string[]=[];let selected=-1;restart=()=>{resetBoard(sets[level].clue);a=[...sets[level].a].reverse();selected=-1;render();btn(getGameCopy('notes.check'),()=>{if(a.every((v,i)=>v===sets[level].a[i]))success();else status.textContent=getGameCopy('notes.retry')});hint=()=>sets[level].a.join(' → ')};const render=()=>{board.replaceChildren();a.forEach((v,i)=>btn(formatGameCopy('notes.numbered',{index:i+1,label:v}),()=>{if(paused)return;if(selected<0){selected=i;status.textContent=getGameCopy('notes.select-second')}else{[a[i],a[selected]]=[a[selected],a[i]];selected=-1;render()}},board))}
  }
  else if(id==='hat'){
- let next=0;const paths=[[0,3,6,7,8,5,2,1,4],[2,5,8,7,6,3,0,1,4],[0,1,2,5,8,7,6,3,4]];restart=()=>{resetBoard(getGameCopy('hat.start'));grid(3);next=0;const buttons:HTMLButtonElement[]=[];for(let i=0;i<9;i++)buttons.push(btn(getGameCopy('hat.stitch'),()=>{if(paused)return;if(i===paths[level][next]){buttons[i].classList.add('placed');next++;score+=10;if(next===9){success();return}mark()}else status.textContent=getGameCopy('hat.retry')},board));const mark=()=>buttons.forEach((b,i)=>{b.classList.toggle('lit',i===paths[level][next]);b.textContent=paths[level].indexOf(i)<next?getGameCopy('hat.finished'):String(paths[level].indexOf(i)+1)});mark();hint=()=>formatGameCopy('hat.hint',{index:next+1})}
+  const colors=['ivory','navy'] as const;
+  const roles=[save.names.girl,save.names.boy];
+  const hats:HTMLImageElement[]=[];
+  const buttons:HTMLButtonElement[]=[];
+  const fitted=[false,false];
+  let elapsed=0,previous=0;
+  const targets=[.22,.14,.10];
+  const offset=(i:number)=>Math.sin(elapsed*(1.9+level*.45)+i*1.7);
+  const tryFit=(i:number)=>{
+   if(paused||fitted[i]||document.hidden)return;
+   if(Math.abs(offset(i))>targets[level]){
+    status.textContent=getGameCopy('hat.retry');return;
+   }
+   fitted[i]=true;
+   hats[i].style.setProperty('--hat-offset','0%');
+   hats[i].classList.add('hat-fitted');
+   buttons[i].setAttribute('aria-pressed','true');
+   score+=50;
+   if(fitted.every(Boolean))success();
+   else status.textContent=formatGameCopy('hat.fit-one',{name:roles[i]});
+  };
+  restart=()=>{
+   resetBoard(formatGameCopy('hat.stage',{level:level+1}));
+   board.classList.add('hat-fit-board');
+   elapsed=0;previous=0;fitted.fill(false);
+   colors.forEach((color,i)=>{
+    const cell=btn(formatGameCopy('hat.fit-button',{name:roles[i]}),()=>tryFit(i),board);
+    cell.classList.add('hat-fit-cell');
+    cell.setAttribute('aria-pressed','false');
+    const stage=el('span','','hat-fit-stage');
+    const guide=el('span','','hat-fit-guide');
+    const hat=el('img','','hat-fit-hat');
+    hat.src=assetUrl('rack-hat-'+color+'.webp');hat.alt='';
+    const portrait=el('img','','hat-fit-portrait');
+    portrait.src=hatPortraits?.[i]||assetUrl(i===0?'girl-actions.webp':'boy-actions.webp');portrait.alt='';
+    stage.append(portrait,guide,hat);
+    cell.prepend(stage);
+    buttons[i]=cell;hats[i]=hat;
+   });
+  };
+  hint=()=>getGameCopy('hat.hint');
+  onPauseChange=()=>{previous=0};
+  listen(document,'visibilitychange',()=>{previous=0});
+  listen(window,'keydown',((event:KeyboardEvent)=>{
+   if(event.repeat||event.altKey||event.ctrlKey||event.metaKey)return;
+   if(event.key==='1'||event.key==='2'){event.preventDefault();tryFit(Number(event.key)-1)}
+  }) as EventListener);
+  const animate=(now:number)=>{
+   if(disposed)return;
+   if(!paused&&!document.hidden){
+    if(previous)elapsed+=Math.min(now-previous,50)/1000;
+    previous=now;
+    for(let i=0;i<2;i++){
+     if(fitted[i]||!hats[i])continue;
+     const position=offset(i);
+     const reduced=save.reduced;
+     hats[i].style.setProperty('--hat-offset',reduced?'0%':(position*73).toFixed(1)+'%');
+     buttons[i].classList.toggle('hat-ready',Math.abs(position)<=targets[level]);
+    }
+   }
+   frame=requestAnimationFrame(animate);
+  };
+  frame=requestAnimationFrame(animate);
  }
  else if(id==='band'||id==='labubu'||id==='mystery'){
  let player=0,buddy=0,active=0,box=0,steps=0,hearts:Set<number>,history:{p:number;b:number;box:number;steps:number;hearts:number[]}[]=[];let walls=new Set<number>(),goal=24,partnerGoal=23,boxGoal=13,gate=12,switches=[6,22];

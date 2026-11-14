@@ -2,6 +2,9 @@ import {validateCloudMedia} from '../content/cloud-media.mjs';
 import {validateCloudInteractions,validateGiftGames,type CloudInteraction} from '../content/cloud-interactions.mjs';
 import {validatePortalUrl} from '../content/cloud-portal-url.mjs';
 import {validateCloudScenes,type CloudScene} from '../content/cloud-scenes.mjs';
+import {validateGiftOverrides,validateAnnouncement} from '../content/cloud-gifts.mjs';
+import {birthdayConfig} from '../content/birthday-config';
+import {roomWalkable} from './navigation';
 import personal from '../content/personal.json';
 import {validateCloudPlaylist} from '../content/cloud-playlist.mjs';
 import {parseMusicConfig,type MusicRoomConfig} from './music-config';
@@ -9,6 +12,7 @@ import {parseMusicConfig,type MusicRoomConfig} from './music-config';
 declare const __CONTENT_SERVER__: string;
 export function defaultContentServer(){return typeof __CONTENT_SERVER__==='string'?__CONTENT_SERVER__:''}
 type Portal = {label:string;url:string};
+export let cloudAnnouncement:ReturnType<typeof validateAnnouncement>;
 export let cloudPortals: Portal[] = [];
 export let cloudGiftGames:NonNullable<ReturnType<typeof validateGiftGames>>={};
 export let cloudScenes:CloudScene[]=[];
@@ -29,13 +33,13 @@ function readSnapshot(raw:unknown) {
   if(!item || typeof item.label!=='string'||item.label.length>32) throw Error('Invalid portal');
   return {label:item.label,url:validatePortalUrl(item.url)};
  });
- return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames)};
+ return {schema:1,revision:data.revision,texts:Object.fromEntries(entries) as Record<string,string>,portals:safePortals,musicRoom:validateCloudPlaylist(data.musicRoom),media:validateCloudMedia(data.media),interactions:validateCloudInteractions(data.interactions),scenes:validateCloudScenes(data.scenes),giftGames:validateGiftGames(data.giftGames),gifts:validateGiftOverrides(data.gifts),announcement:validateAnnouncement(data.announcement)};
 }
 
 export async function verifyCloudSnapshot(raw:unknown){
  const snapshot=readSnapshot(raw);
  const body={schema:1,texts:snapshot.texts,portals:snapshot.portals,musicRoom:snapshot.musicRoom,
-  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames};
+  media:snapshot.media,interactions:snapshot.interactions,scenes:snapshot.scenes,giftGames:snapshot.giftGames,gifts:snapshot.gifts,announcement:snapshot.announcement};
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(body)));
  const revision=Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,'0')).join('');
  if(revision!==snapshot.revision)throw Error('Content checksum mismatch');
@@ -64,6 +68,16 @@ export async function syncCloudContent(){
  if(snapshot){
   Object.assign(personal.texts,snapshot.texts);
   Object.assign(personal,snapshot.media);
+  cloudAnnouncement=snapshot.announcement;
+  for(const gift of birthdayConfig.gifts){
+   const override=snapshot.gifts?.[gift.id];
+   if(!override)continue;
+   for(const field of ['name','subtitle','message','variant'] as const)if(override[field]!==undefined)Object.assign(personal.texts,{['gift.'+gift.id+'.'+field]:override[field]});
+   if(override.point&&!roomWalkable({x:override.point[0],y:override.point[1]})){
+    const {point,x,y,...copy}=override;
+    Object.assign(gift,copy);
+   }else Object.assign(gift,override);
+  }
   cloudPortals=snapshot.portals;
   cloudScenes=snapshot.scenes??[];
   cloudGiftGames=snapshot.giftGames??{};
@@ -71,3 +85,4 @@ export async function syncCloudContent(){
   cloudMusicRoom=snapshot.musicRoom?parseMusicConfig(snapshot.musicRoom):undefined;
  }
 }
+

@@ -1,5 +1,5 @@
 export type GiftId = 'moon'|'keychain'|'chestnuts'|'earphones'|'band'|'doll'|'chocolate'|'letter'|'notes'|'hat'|'labubu'|'mystery';
-export type Gift = { id:GiftId; name:string; subtitle:string; message:string; variant:string; icon:number; x:number; y:number; point:[number,number] };
+export type Gift = { id:GiftId; name:string; subtitle:string; message:string; variant:string; image?:string; icon:number; x:number; y:number; point:[number,number] };
 export const birthdayConfig = {
   girlName:'你', boyName:'我', birthdayDisplayText:'只属于你的特别日子', birthDateForMoon:'', moonImage:'',
   welcome:'你来啦。今天不用赶路，慢慢拆。',
@@ -21,7 +21,7 @@ export const birthdayConfig = {
     {id:'chocolate',name:'把甜分给你',subtitle:'明治雪吻巧克力',icon:6,x:146,y:255,point:[201,270],message:'【待填写赠言】这一颗给你，下一颗也给你。',variant:''},
     {id:'letter',name:'一封认真写的信',subtitle:'烫金浮雕信封 · 写给你',icon:7,x:96,y:181,point:[167,201],message:'有些话，想写在纸上，慢慢交给你。',variant:''},
     {id:'notes',name:'日子里的小纸条',subtitle:'华晨宇周边便签本',icon:8,x:111,y:152,point:[167,171],message:'几句短短的话，留给平常的每一天。',variant:''},
-    {id:'hat',name:'今天也很可爱',subtitle:'猫耳针织帽 · 可以试戴',icon:9,x:57,y:329,point:[99,337],message:'【待填写赠言】天气凉的时候，让它代替我抱抱你的脑袋。',variant:''},
+    {id:'hat',name:'今天也很可爱',subtitle:'猫耳针织帽 · 可以试戴',icon:9,x:33,y:334,point:[107,340],message:'【待填写赠言】天气凉的时候，让它代替我抱抱你的脑袋。',variant:''},
     {id:'labubu',name:'神秘 LABUBU',subtitle:'是哪一只呢？亲手打开才知道',icon:10,x:520,y:69,point:[504,155],message:'答案藏在包装里面。',variant:''},
     {id:'mystery',name:'最后一个小秘密',subtitle:'神秘盒子 · 只等你亲手打开',icon:11,x:550,y:266,point:[495,294],message:'有一个惊喜，一直在这里等你。',variant:''},
   ] as Gift[]

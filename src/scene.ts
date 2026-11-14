@@ -15,7 +15,7 @@ import {HandFormation} from './hand-formation';
 import {indoorZones,renderWindowWeather} from './window-weather';
 import {furnishings,seatDefinition,actorHeights} from './layouts';
 import Phaser from 'phaser';
-import {birthdayConfig as config} from '../content/birthday-config';
+import {birthdayConfig as config,type Gift} from '../content/birthday-config';
 import {save,persist,grantItem} from './state';
 import {Signals} from './signals';
 import {assetUrl,textureFiles,additionalTextureFiles,coreTextureKeys} from './assets';
@@ -38,7 +38,7 @@ export class Cottage extends Phaser.Scene {
  calendarPaused=false;calendarState:CalendarSnapshot=calendarSnapshot(save.calendar,save.sky);private calendarSignature='';private calendarSaveElapsed=0;weather='clear'; daylight='night'; holding=false;
  blocked=true;entered=false;zone:Zone='room';nearby:Item|undefined;joystick={x:0,y:0};seated='';movingTo:Item|undefined;
  player!:Phaser.GameObjects.Image;boy!:Phaser.GameObjects.Image;hat!:Phaser.GameObjects.Image;band!:Phaser.GameObjects.Image;earwear!:Phaser.GameObjects.Image;
- private outdoorEnvironment?:OutdoorEnvironment;private background!:Phaser.GameObjects.Image;private shadow!:Phaser.GameObjects.Ellipse;private boyShadow!:Phaser.GameObjects.Ellipse;
+ private companionHat!:Phaser.GameObjects.Image;private outdoorEnvironment?:OutdoorEnvironment;private background!:Phaser.GameObjects.Image;private shadow!:Phaser.GameObjects.Ellipse;private boyShadow!:Phaser.GameObjects.Ellipse;
  private climateGround?:Phaser.GameObjects.Graphics;private trail!:Phaser.GameObjects.Graphics;private glow!:Phaser.GameObjects.Graphics;private effects!:Phaser.GameObjects.Graphics;
  private markers:Phaser.GameObjects.Container[]=[];private giftMarkers=new Map<string,Phaser.GameObjects.Container>();private props=new Map<string,Phaser.GameObjects.Image>();private objects:Item[]=[];
  private keys!:Record<string,Phaser.Input.Keyboard.Key>;private path:Point[]=[];private boyPath:Point[]=[];private pending?:()=>void;private moveTime=0;private idleTime=0;private follower=new FootstepFollower();private dir=0;private lastMotionAt=-1;private starTime=0;private focusId='';private sitReturn?:Point;private boyReturn?:Point;
@@ -48,8 +48,9 @@ export class Cottage extends Phaser.Scene {
  preload(){
   this.failedAssets.clear();this.readyToEnter=false;
   for(const key of this.bootKeys)this.load.image(key,assetUrl(textureFiles[key]));
+  for(const gift of config.gifts as Gift[])if(gift.image)this.load.image('cloud-gift-'+gift.id,gift.image);
   this.load.on('progress',(progress:number)=>this.bridge.emit('load-progress',progress));
-  this.load.on('loaderror',(file:{key:string})=>{this.failedAssets.add(file.key);this.bridge.emit('asset-error',file.key)});
+  this.load.on('loaderror',(file:{key:string})=>{if(file.key.startsWith('cloud-gift-'))return;this.failedAssets.add(file.key);this.bridge.emit('asset-error',file.key)});
  }
 
  private objectAnimations=new Map<string,()=>void>();private objectTickets=new Map<string,symbol>();
@@ -81,8 +82,10 @@ export class Cottage extends Phaser.Scene {
   this.shadow=this.add.ellipse(320,356,19,6,0x2d2030,.3).setDepth(5);this.boyShadow=this.add.ellipse(365,343,19,6,0x2d2030,.3).setDepth(5);
   this.player=this.add.image(320,356,'girl0').setOrigin(.5,1).setDisplaySize(23,37).setDepth(10);this.boy=this.add.image(363,338,'__DEFAULT').setOrigin(.5,1).setDisplaySize(24,37).setDepth(9);
   this.buildActionFrames();
+  for(const gift of config.gifts as Gift[]){if(!gift.image)continue;const key='cloud-gift-'+gift.id;if(!this.textures.exists(key))continue;const source=this.textures.get(key).getSourceImage() as HTMLImageElement;const canvas=document.createElement('canvas');const scale=Math.min(1,512/Math.max(source.width,source.height));canvas.width=Math.max(1,Math.round(source.width*scale));canvas.height=Math.max(1,Math.round(source.height*scale));canvas.getContext('2d')!.drawImage(source,0,0,canvas.width,canvas.height);this.textures.remove('gift-'+gift.id);this.textures.addCanvas('gift-'+gift.id,canvas)}
   this.boy.setTexture(this.textures.exists('boy-pose-0')?'boy-pose-0':'__DEFAULT');
   this.hat=this.add.image(0,0,'wear-hat').setDisplaySize(28,20).setDepth(12);this.band=this.add.image(0,0,'wear-band').setDepth(12);
+  this.companionHat=this.add.image(0,0,'rack-navy').setVisible(false);
   this.earwear=this.add.image(0,0,'gift-earphones').setDisplaySize(16,16).setDepth(13);
   this.cakeDark=this.add.rectangle(320,213.333,640,426.667,0x0b1022,.5).setDepth(20).setVisible(false);
   this.keys=this.input.keyboard!.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,E') as Record<string,Phaser.Input.Keyboard.Key>;this.input.keyboard!.on('keydown-E',()=>{if(!this.blocked&&!this.seated)this.interactNearest()});
@@ -106,7 +109,7 @@ export class Cottage extends Phaser.Scene {
    source=this.poseSource(who,0);
   }finally{save.appearance[who]=previous}
   if(!source)return '';
-  const gear=local?this.networkEquipment():remote?.equipment;
+  const gear=local?this.networkEquipment():remote?.equipment??(!network&&who==='boy'&&save.companionHat?{hat:true,band:false,earphones:false}:undefined);
   if(!gear||!gear.hat&&!gear.earphones&&!gear.band)return source.toDataURL();
   const canvas=document.createElement('canvas');
   const headWidth=source.width*.86,pad=Math.ceil(headWidth*.45);
@@ -115,7 +118,7 @@ export class Cottage extends Phaser.Scene {
   context.imageSmoothingEnabled=false;
   context.drawImage(source,pad,pad);
   const head={x:canvas.width/2,top:pad,width:headWidth,height:source.height*.48,facing:0};
-  if(gear.hat)drawHat(context,this.textures.get('wear-hat').getSourceImage() as HTMLCanvasElement,head);
+  if(gear.hat)drawHat(context,this.textures.get(!network&&who==='boy'?'rack-navy':'wear-hat').getSourceImage() as HTMLCanvasElement,head);
   if(gear.earphones)drawEarphones(context,this.textures.get('gift-earphones').getSourceImage() as HTMLCanvasElement,head);
   if(gear.band){const size=Math.max(3,source.width*.14);context.drawImage(this.textures.get('wear-band').getSourceImage() as HTMLCanvasElement,pad+source.width*.77,pad+source.height*.68,size,size*.6)}
   return canvas.toDataURL();
@@ -235,10 +238,18 @@ export class Cottage extends Phaser.Scene {
 
  private rebuild(){
   this.motion?.rebuild();this.markers.forEach(m=>m.destroy());this.markers=[];this.giftMarkers.clear();this.props.clear();this.trail.clear();for(const prop of furnishings[this.zone]??[]){const icon=this.add.image(0,0,prop.texture??'furnishing-'+prop.frame).setOrigin(.5,1).setDisplaySize(prop.w,prop.h);this.markers.push(this.add.container(prop.x,prop.y,[icon]).setDepth(prop.floor?1:10+prop.y/1000));this.props.set(prop.id,icon)}
+  if(this.zone==='room'){
+   const patch=this.add.image(0,0,'rack-background').setOrigin(0).setDisplaySize(76/2.4,126/2.4);
+   this.markers.push(this.add.container(111/2.4,768/2.4,[patch]).setDepth(.1));
+  }
   const gifts=this.zone==='room'?config.gifts.filter(g=>!this.isWornGift(g.id)).map(g=>({...g})):[];
   this.objects=[...gifts,...worlds[this.zone].items.map(item=>({...item})),{id:'boy',name:config.boyName==='我'?'等你的那个人':config.boyName,action:'说说话',x:this.boy.x,y:this.boy.y-14,point:[this.boy.x-27,this.boy.y]}];
-  for(const g of gifts){const opened=save.opened.includes(g.id);const icon=this.add.image(0,0,opened?'gift-'+g.id:(g.id==='mystery'?'gift-mystery':'gift-labubu')).setDisplaySize(g.id==='moon'&&opened?22:16,17);const group=this.add.container(g.x,g.y,[icon]).setDepth(4);this.markers.push(group);this.giftMarkers.set(g.id,group);if(opened){this.trail.fillStyle(0xe9c5b3,.85);this.trail.fillRect(g.point[0]+8,g.point[1]+2,6,3);this.trail.fillStyle(0xbd6683);this.trail.fillRect(g.point[0]+10,g.point[1]+1,2,5)}}
+  for(const g of gifts){const opened=save.opened.includes(g.id);const icon=this.add.image(0,0,g.id==='hat'&&!this.textures.exists('cloud-gift-hat')?'rack-ivory':(opened||('image' in g&&g.image&&this.textures.exists('cloud-gift-'+g.id)))?'gift-'+g.id:(g.id==='mystery'?'gift-mystery':'gift-labubu')).setDisplaySize(g.id==='hat'?17:g.id==='moon'&&opened?22:16,g.id==='hat'?15:17);const group=this.add.container(g.x,g.y,[icon]).setDepth(4);this.markers.push(group);this.giftMarkers.set(g.id,group);if(opened){this.trail.fillStyle(0xe9c5b3,.85);this.trail.fillRect(g.point[0]+8,g.point[1]+2,6,3);this.trail.fillStyle(0xbd6683);this.trail.fillRect(g.point[0]+10,g.point[1]+1,2,5)}}
  for(const item of worlds[this.zone].items){
+   if(item.id==='rack-companion-hat'&&(!save.companionHat||this.onlineWorld?.active)){
+    const icon=this.add.image(0,0,'rack-navy').setDisplaySize(17,15);
+    this.markers.push(this.add.container(item.x,item.y,[icon]).setDepth(4));
+   }
    if(item.prop!==undefined||item.texture){const icon=this.add.image(0,0,item.texture??'prop-'+item.prop).setOrigin(.5,1).setDisplaySize(item.prop===7?20:25,item.prop===7?27:26);const group=this.add.container(item.x,item.y+5,[icon]).setDepth(4);this.markers.push(group);this.props.set(item.id,icon)}
    const placed=save.placements[this.zone+':'+item.id];if(placed&&!this.isWornGift(placed)){const texture=this.textures.exists('gift-'+placed)?'gift-'+placed:placed==='shell'?'prop-5':placed==='lantern'?'prop-0':'gift-notes';const icon=this.add.image(0,0,texture).setOrigin(.5,1).setDisplaySize(20,22);this.markers.push(this.add.container(item.x,item.y,[icon]).setDepth(7))}else if(item.kind==='collect'&&!save.inventory.includes(item.collect??'')){const icon=this.add.image(0,0,item.collect==='flower'?'ui-flower':item.collect==='shell'?'prop-5':'ui-letter').setDisplaySize(18,18);this.markers.push(this.add.container(item.x,item.y,[icon]).setDepth(7))}
    if(item.to){const icon=this.add.image(0,0,'ui-sign').setDisplaySize(24,24);this.markers.push(this.add.container(item.x,item.y-8,[icon]).setDepth(6))}
@@ -368,8 +379,8 @@ export class Cottage extends Phaser.Scene {
  private pairTexture(index:number,holding=false){
   const integrated='holding-allgear-'+index;
   const defaultLooks=Object.values(save.appearance).every(appearance=>Object.values(appearance).every(value=>value===0));
-  if(holding&&save.hat&&save.band&&save.earphones&&defaultLooks&&this.textures.exists(integrated))return integrated;
-  const base=(holding?'holding-art-':'pair-art-')+index,key=base+'-'+JSON.stringify(save.appearance)+'-'+save.hat+'-'+save.earphones+'-'+save.band;if(this.textures.exists(key))return key;const source=this.textures.get(base).getSourceImage() as HTMLCanvasElement,c=document.createElement('canvas');c.width=source.width;c.height=source.height;const g=c.getContext('2d')!;g.imageSmoothingEnabled=false;for(const [who,left,right]of [['girl',0,c.width*.53],['boy',c.width*.53,c.width]] as const){g.save();g.beginPath();g.rect(left,0,right-left,c.height);g.clip();g.drawImage(this.textures.get(this.appearanceKey(who,base)).getSourceImage() as HTMLCanvasElement,0,0);g.restore()}for(const who of ['girl','boy'] as const){if(save.appearance[who].hair===0)continue;const pose=index%4,front=holding?Math.floor(index/4):0,key=who+'-head-'+(save.appearance[who].hair*4+front);const head=this.textures.get(this.appearanceKey(who,'head-'+key)).getSourceImage() as HTMLCanvasElement;const x=c.width*(who==='girl'?(!holding&&index<4&&pose>0?.34:.25):.74),h=c.height*(who==='girl'?.52:.49),w=h*head.width/head.height;g.drawImage(head,x-w/2,0,w,h)}const girlHead={x:c.width*(!holding&&index<4&&index%4>0?.34:.25),top:0,width:c.width*.43,height:c.height*.52,facing:holding?Math.floor(index/4):0};if(save.hat)drawHat(g,this.textures.get('wear-hat').getSourceImage() as HTMLCanvasElement,girlHead);if(save.earphones)drawEarphones(g,this.textures.get('gift-earphones').getSourceImage() as HTMLCanvasElement,girlHead);if(save.band){g.fillStyle='#e7a7c2';g.fillRect(c.width*.42,c.height*.65,Math.max(2,c.width*.025),Math.max(2,c.height*.025))}this.textures.addCanvas(key,c);return key}
+  if(holding&&(!save.companionHat||this.onlineWorld?.active)&&save.hat&&save.band&&save.earphones&&defaultLooks&&this.textures.exists(integrated))return integrated;
+  const base=(holding?'holding-art-':'pair-art-')+index,key=base+'-'+JSON.stringify(save.appearance)+'-'+save.hat+'-'+save.earphones+'-'+save.band+'-'+(save.companionHat&&!this.onlineWorld?.active);if(this.textures.exists(key))return key;const source=this.textures.get(base).getSourceImage() as HTMLCanvasElement,c=document.createElement('canvas');c.width=source.width;c.height=source.height;const g=c.getContext('2d')!;g.imageSmoothingEnabled=false;for(const [who,left,right]of [['girl',0,c.width*.53],['boy',c.width*.53,c.width]] as const){g.save();g.beginPath();g.rect(left,0,right-left,c.height);g.clip();g.drawImage(this.textures.get(this.appearanceKey(who,base)).getSourceImage() as HTMLCanvasElement,0,0);g.restore()}for(const who of ['girl','boy'] as const){if(save.appearance[who].hair===0)continue;const pose=index%4,front=holding?Math.floor(index/4):0,key=who+'-head-'+(save.appearance[who].hair*4+front);const head=this.textures.get(this.appearanceKey(who,'head-'+key)).getSourceImage() as HTMLCanvasElement;const x=c.width*(who==='girl'?(!holding&&index<4&&pose>0?.34:.25):.74),h=c.height*(who==='girl'?.52:.49),w=h*head.width/head.height;g.drawImage(head,x-w/2,0,w,h)}const girlHead={x:c.width*(!holding&&index<4&&index%4>0?.34:.25),top:0,width:c.width*.43,height:c.height*.52,facing:holding?Math.floor(index/4):0};if(save.companionHat&&!this.onlineWorld?.active)drawHat(g,this.textures.get('rack-navy').getSourceImage() as HTMLImageElement,{x:c.width*.74,top:0,width:c.width*.4,height:c.height*.49,facing:girlHead.facing});if(save.hat)drawHat(g,this.textures.get('wear-hat').getSourceImage() as HTMLCanvasElement,girlHead);if(save.earphones)drawEarphones(g,this.textures.get('gift-earphones').getSourceImage() as HTMLCanvasElement,girlHead);if(save.band){g.fillStyle='#e7a7c2';g.fillRect(c.width*.42,c.height*.65,Math.max(2,c.width*.025),Math.max(2,c.height*.025))}this.textures.addCanvas(key,c);return key}
  private updateAction(dt:number){
   if(!this.pairReady){this.buddy.update(this.boy,dt,this.walkable);return}
   this.actionTime+=dt;
@@ -483,7 +494,7 @@ export class Cottage extends Phaser.Scene {
  }
  resetOnlineControl(){this.onlineSeat=undefined;this.onlinePose='idle';this.onlinePoseUntil=0;this.seated='';this.seatedPhase=0;this.seatTargets=undefined;this.stop();if(this.onlineBoyGear){this.onlineBoyGear.hat.setVisible(false);this.onlineBoyGear.ear.setVisible(false);this.onlineBoyGear.band.setVisible(false)}this.syncFollowing()}
  renderOnlineActor(actor:Phaser.GameObjects.Image,who:'girl'|'boy',direction:number,moving:boolean,pose='idle',appearance?:Record<string,number>){const prior=save.appearance[who];try{if(appearance)save.appearance[who]={hair:appearance.hair??0,color:appearance.color??0,skin:appearance.skin??0,outfit:appearance.outfit??0};if(pose.startsWith('sit'))this.setPose(actor,who,'sit',direction);else if(pose!=='idle'&&pose!=='move')this.setPose(actor,who,'action',pose==='dance'?12+Math.floor(this.idleTime*7)%4:8+Math.floor(this.idleTime*4)%4);else this.renderMoving(actor,who,direction,moving,Math.floor(this.idleTime*8)%4);actor.setDepth(10+actor.y/1000)}finally{save.appearance[who]=prior}}
- private updateOnline(dt:number){const net=this.onlineWorld!,local=this.controlledActor,who=net.role==='guest'?'boy':'girl',old={x:local.x,y:local.y};
+ private updateOnline(dt:number){this.companionHat.setVisible(false);const net=this.onlineWorld!,local=this.controlledActor,who=net.role==='guest'?'boy':'girl',old={x:local.x,y:local.y};
   if(this.onlineSeat){const seat=this.onlineSeat;seat.elapsed+=dt;const t=Math.min(1,seat.elapsed/.65),ease=t*t*(3-2*t);local.setPosition(seat.from.x+(seat.to.x-seat.from.x)*ease,seat.from.y+(seat.to.y-seat.from.y)*ease);if(seat.standing&&t===1){this.onlineSeat=undefined;this.seated='';this.seatedPhase=0;this.finishStanding()}}
   if(!this.blocked&&this.entered&&!this.onlineSeat){const dx=(this.keys.D.isDown||this.keys.RIGHT.isDown?1:0)-(this.keys.A.isDown||this.keys.LEFT.isDown?1:0)+this.joystick.x,dy=(this.keys.S.isDown||this.keys.DOWN.isDown?1:0)-(this.keys.W.isDown||this.keys.UP.isDown?1:0)+this.joystick.y,d=Math.hypot(dx,dy);if(d>.13){if(!(net.role==='host'&&net.handWalking))net.cancelAffection();net.cancelFollowing();this.actor.cancel();this.onlinePose='idle';moveWithCollision(local,dx/Math.max(1,d)*84*dt,dy/Math.max(1,d)*84*dt,this.walkable)}else this.actor.update(local,dt,this.walkable)}
   const dx=local.x-old.x,dy=local.y-old.y,moving=Math.hypot(dx,dy)>.01;if(moving&&!this.onlineSeat){this.onlineDirection=Math.abs(dx)>Math.abs(dy)?dx<0?1:3:dy<0?2:0;this.onlinePose='move'}else if(this.idleTime>=this.onlinePoseUntil)this.onlinePose='idle';
@@ -521,7 +532,7 @@ export class Cottage extends Phaser.Scene {
   const hatSource=this.textures.get('wear-hat').getSourceImage() as HTMLCanvasElement;const hatWidth=headWidth*.86,hatHeight=hatWidth*hatSource.height/hatSource.width;
   this.hat.setDisplaySize(hatWidth,hatHeight).setPosition(this.player.x,headTop-hatHeight*.03).setAngle(this.player.angle).setVisible(save.hat&&!this.pairImage?.visible&&!this.integratedWalkGear);
   if(save.earphones&&!this.pairImage?.visible){const key='wear-ear-'+facing;if(!this.textures.exists(key)){const canvas=document.createElement('canvas');canvas.width=128;canvas.height=100;drawEarphones(canvas.getContext('2d')!,this.textures.get('gift-earphones').getSourceImage() as HTMLCanvasElement,{x:64,top:0,width:110,height:100,facing});this.textures.addCanvas(key,canvas)}this.earwear.setTexture(key).setDisplaySize(headWidth*128/110,headHeight).setPosition(this.player.x,headTop+headHeight/2).setVisible(true)}else this.earwear?.setVisible(false);
-  this.band.setPosition(this.player.x+(facing===1?-12:12)*actorScale,this.player.y-(this.seated?14:25)*actorScale).setVisible(save.band&&!this.pairImage?.visible&&!this.integratedWalkGear);this.player.setDepth(this.hasSeatedBody?11:10+this.player.y/1000);this.boy.setDepth(this.hasSeatedBody?11:10+this.boy.y/1000);const accessoryDepth=this.player.depth+.02;this.hat.setDepth(accessoryDepth+.01);this.earwear.setDepth(accessoryDepth);this.band.setDepth(accessoryDepth);
+  this.band.setPosition(this.player.x+(facing===1?-12:12)*actorScale,this.player.y-(this.seated?14:25)*actorScale).setVisible(save.band&&!this.pairImage?.visible&&!this.integratedWalkGear);this.player.setDepth(this.hasSeatedBody?11:10+this.player.y/1000);this.boy.setDepth(this.hasSeatedBody?11:10+this.boy.y/1000);const accessoryDepth=this.player.depth+.02;this.companionHat.setDisplaySize(hatWidth,hatWidth*.9).setPosition(this.boy.x,this.boy.y-this.boy.displayHeight).setDepth(this.boy.depth+.03).setVisible(save.companionHat&&this.boy.visible);this.hat.setDepth(accessoryDepth+.01);this.earwear.setDepth(accessoryDepth);this.band.setDepth(accessoryDepth);
 
   const npc=this.getItem('boy');if(npc){npc.x=this.boy.x;npc.y=this.boy.y-14;const options=[[-27,0],[27,0],[0,27],[0,-27]].map(([x,y])=>({x:this.boy.x+x,y:this.boy.y+y})).filter(p=>this.walkable(p)).sort((a,b)=>Math.hypot(a.x-this.player.x,a.y-this.player.y)-Math.hypot(b.x-this.player.x,b.y-this.player.y));const approach=options[0]??this.boy;npc.point=[approach.x,approach.y]}
   let nearest:Item|undefined;

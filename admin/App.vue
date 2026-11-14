@@ -13,6 +13,9 @@ const sections = [
  ['texts','文案','按稳定 ID 修改对白、赠言和界面文字。',{}],
  ['scenes','场景','设置背景、行走区域和双向入口。',[]],
  ['interactions','互动','配置场景点位、反馈和小游戏入口。',[]],
+ ['bundled','包内配置','查看随客户端发布的完整配置和点位。',null],
+ ['gifts','礼物配置','按礼物 ID 修改内容、HTTPS 配图、坐标 x/y 和落脚点 point。',{}],
+ ['announcement','游戏私告','启用后在玩家进入小屋时显示。',{enabled:false,title:'',body:''}],
  ['giftGames','礼物小游戏','以礼物 ID 绑定独立游戏的 HTTPS 地址。',{}],
  ['musicRoom','唱片房','设置在线歌单或自选曲目。',null],
  ['media','替换素材','设置礼物图片、回忆照片和演唱会音源。',{}],
@@ -24,7 +27,7 @@ const sections = [
 ];
 
 const sectionGroups=[
- ['内容',['texts','scenes','interactions','giftGames','musicRoom','media','portals','all']],
+ ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','bundled','musicRoom','media','portals','all']],
  ['发布与资源',['history','packages','assets']],
 ];
 const labels=Object.fromEntries(sections.map(([id,label])=>[id,label]));
@@ -38,7 +41,7 @@ const structuredFields={
 const formSections=['texts','giftGames','musicRoom','media',...Object.keys(structuredFields)];
 
   const selected=ref('texts'), token=ref(''), draft=ref({}), revision=ref('');
-  const baseline=ref({}),summary=ref([]),savedAt=ref(''),draftAvailable=ref(false);
+  const bundled=ref({}),baseline=ref({}),summary=ref([]),savedAt=ref(''),draftAvailable=ref(false);
   const storageKey='lovehouse-publisher-draft:'+import.meta.env.BASE_URL;
   const publicRevision=ref(''), publicPackages=ref({}), authState=ref('idle');
   const draftRevision=ref(null);
@@ -53,7 +56,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
   const text=ref('{}'), status=ref(''), success=ref(false), busy=ref(false), confirm=ref(false);
   const section=computed(()=>sections.find(([id])=>id===selected.value));
   function collect(){
-   if(['assets','history','packages'].includes(selected.value))return;
+   if(['assets','history','packages','bundled'].includes(selected.value))return;
    let value;
    if(specialForm.value)value=objectValue.value;
    else if(form.value&&fields.value){
@@ -66,7 +69,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
    }else if(form.value){
     const pairs=entries.value.map(({key,value})=>[key.trim(),value]);
     if(pairs.some(([key])=>!key)||new Set(pairs.map(([key])=>key)).size!==pairs.length)throw Error('请填写唯一的稳定 ID');
-    value=Object.fromEntries(pairs);
+    value=Object.fromEntries(selected.value==='texts'?pairs.filter(([key,value])=>bundled.value.texts?.[key]!==value):pairs);
    }else value=JSON.parse(text.value);
    if(selected.value==='all'){
     if(!value||typeof value!=='object'||Array.isArray(value))throw Error('完整配置必须是 JSON 对象');
@@ -79,7 +82,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
    try{
     collect();
     const leavingPackages=selected.value==='packages'&&id!=='packages';
-    selected.value=id;form.value=formSections.includes(id);search.value='';refreshText();status.value='';
+    selected.value=id;if(token.value.trim())void readBundled();form.value=formSections.includes(id);search.value='';refreshText();status.value='';
     if(leavingPackages)void refreshPublic();
    }
    catch(error){report(error.message)}
@@ -89,7 +92,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
    try{refreshEditorFields()}finally{refreshingEditor=false}
   }
   function refreshEditorFields(){
-   const value=selected.value==='all'?draft.value:draft.value[selected.value]??section.value[3];
+   const value=selected.value==='all'?draft.value:selected.value==='texts'?{...bundled.value.texts,...draft.value.texts}:draft.value[selected.value]??section.value[3];
    text.value=JSON.stringify(value,null,2);
    if(specialForm.value)objectValue.value=JSON.parse(JSON.stringify(value??{}));
    else if(form.value&&fields.value){
@@ -115,6 +118,20 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
   }
   form.value=true;
   function report(message,ok=false){status.value=message;success.value=ok}
+  let catalogToken='';
+  async function readBundled(){
+   const current=token.value.trim();if(!current||catalogToken===current)return;
+   catalogToken=current;
+   try{
+    const response=await fetch(import.meta.env.BASE_URL+'api/bundled',{headers:{Authorization:'Bearer '+current}});
+    if(!response.ok)throw Error('读取包内目录失败');
+    const data=await response.json();
+    if(current===token.value.trim()){
+     if(selected.value==='texts')collect();
+     bundled.value=data.baseline;refreshText();
+    }
+   }catch{if(catalogToken===current)catalogToken=''}
+  }
   async function request(action){
    busy.value=true;
    try{
@@ -132,6 +149,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
      throw Error(data.error||'请求失败');
     }
     if(action==='snapshot'){
+     await readBundled();
      const {schema,revision:live,...config}=data;
      draft.value=config;baseline.value=structuredClone(config);revision.value=live??'';publicRevision.value=revision.value;draftRevision.value=revision.value;loaded.value=true;draftAvailable.value=false;refreshText();saveLocal();
     }
@@ -316,6 +334,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
     </div>
     <p v-if="!visibleEntries.length" class="empty">{{search?'没有匹配条目':'暂无条目，可新增或导入草稿。'}}</p>
    </div>
+   <el-input v-else-if="selected==='bundled'" :model-value="JSON.stringify(bundled,null,2)" readonly type="textarea" :rows="20"/>
    <el-input v-else v-model="text" type="textarea" :rows="17" resize="vertical" aria-label="配置 JSON" class="code"/>
    <div class="publish"><div class="actions">
     <el-button :disabled="busy || !loaded" @click="replaceConfirm=true">载入线上配置</el-button>

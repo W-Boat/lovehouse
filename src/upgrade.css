@@ -196,3 +196,12 @@ body[data-cloud-offline=true] .game-hud::before{content:'离线';position:absolu
 .scene-activity-external-game:has(.external-game-controls){padding-bottom:54px}
 .external-game-controls{position:absolute;right:8px;bottom:5px;display:flex;gap:6px}
 .external-game-controls button{min-height:44px}
+.hat-fit-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:460px;margin-inline:auto!important}
+.hat-fit-cell{min-width:0;min-height:44px;display:flex;align-items:center;flex-direction:column}
+.hat-fit-cell.hat-ready{outline:3px solid #d9953d}
+.hat-fit-stage{position:relative;width:min(130px,100%);height:clamp(76px,22vh,124px);display:block}
+.hat-fit-portrait,.hat-fit-hat{position:absolute;left:50%;object-fit:contain;image-rendering:pixelated;pointer-events:none}
+.hat-fit-portrait{width:42%;height:62%;top:30%;transform:translateX(-50%);object-position:top}
+.hat-fit-hat{width:38%;height:35%;top:1%;transform:translateX(calc(-50% + var(--hat-offset,0%)))}
+.hat-fit-hat.hat-fitted{top:19%}
+.hat-fit-guide{position:absolute;left:32%;top:17%;width:36%;height:12%;border:2px dashed #a77462}
