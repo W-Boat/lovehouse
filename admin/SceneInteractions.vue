@@ -1,6 +1,7 @@
 <script setup>
 import {computed,ref,watch} from 'vue';
 import {NButton,NCard,NCollapse,NCollapseItem,NEmpty,NForm,NFormItem,NInput,NInputNumber,NSelect,NTag} from 'naive-ui';
+import SceneLayers from './SceneLayers.vue';
 import InteractionBehavior from './InteractionBehavior.vue';
 
 const props=defineProps({
@@ -82,7 +83,8 @@ function remove(index){
       <n-input-number :value="record.point?.[axis]??null" :min="0" :max="max" @update:value="value=>point(index,axis,value)"/>
      </n-form-item>
     </n-form>
-    <InteractionBehavior :model-value="record" @update:model-value="value=>update(index,value)"/>
+    <SceneLayers :model-value="record.visual?[record.visual]:[]" :max-layers="1" :zone="record.zone" :interactions="modelValue" @update:model-value="value=>field(index,'visual',value[0])"/>
+     <InteractionBehavior :model-value="record" @update:model-value="value=>update(index,value)"/>
     <n-button class="remove-interaction" text type="error" @click="remove(index)">移除互动</n-button>
    </n-collapse-item>
   </n-collapse>

@@ -1,5 +1,6 @@
 import {createAnnouncementClaims} from './cloud-announcements.mjs';
-import {createStats,validateStats} from './cloud-stats.mjs';
+import {isIP} from 'node:net';
+import {clientIp,createStats,validateStats} from './cloud-stats.mjs';
 import {validateGiftOverrides,validateAnnouncement} from '../content/cloud-gifts.mjs';
 import {createBundledCatalog} from './cloud-bundled.mjs';
 import {createAndroidUpdateStore} from './cloud-android-update.mjs';
@@ -177,6 +178,24 @@ async function readJson(request) {
  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
+const disabledOpening={enabled:false,opensAt:null,allowIps:[]};
+
+function normalizedIp(value){
+ const ip=value.trim().replace(/^::ffff:(?=\d+\.)/i,'');
+ if(isIP(ip)===4)return ip;
+ if(isIP(ip)===6)return new URL('http://['+ip+']/').hostname.slice(1,-1);
+ throw Error('白名单包含无效 IP 地址');
+}
+
+function validateOpening(value){
+ if(!value||typeof value.enabled!=='boolean'||!Array.isArray(value.allowIps)||
+    value.allowIps.length>100||value.allowIps.some(ip=>typeof ip!=='string'))throw Error('无效的开放规则');
+ const time=typeof value.opensAt==='string'?Date.parse(value.opensAt):NaN;
+ if(value.enabled&&!Number.isFinite(time))throw Error('启用前请选择开放时间');
+ return {enabled:value.enabled,opensAt:Number.isFinite(time)?new Date(time).toISOString():null,
+  allowIps:[...new Set(value.allowIps.map(normalizedIp))]};
+}
+
 const assetTypes = new Map([['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8'],['svg','image/svg+xml'],['png','image/png'],['webp','image/webp'],['woff2','font/woff2'],['zip','application/zip']]);
 const adminDir = new URL('../admin/dist/',import.meta.url);
 
@@ -194,6 +213,11 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
  const loginSalt=process.env.LOVEHOUSE_ADMIN_PASSWORD_SALT;
  const sessions=new Map(),attempts=new Map();
  const passwordFile=file+'.password.json';
+ const openingFile=file+'.opening.json';
+ const readOpening=async()=>{
+  try{return validateOpening(JSON.parse(await readFile(openingFile,'utf8')))}
+  catch(error){if(error.code==='ENOENT')return disabledOpening;throw error}
+ };
  const currentPassword=async()=>{
   try{return JSON.parse(await readFile(passwordFile,'utf8'))}
   catch(error){if(error.code!=='ENOENT')throw error;return {salt:loginSalt,hash:loginHash}}
@@ -220,6 +244,18 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   try { url = new URL(request.url,'http://localhost') }
   catch { sendJson(response,400,{error:'Invalid request URL'}); return }
   const {pathname} = url;
+  if(pathname==='/opening'&&request.method==='GET'){
+   const headers={...jsonHeaders,'Access-Control-Allow-Origin':'*'};
+   try{
+    const rules=await readOpening(),now=Date.now();
+    const opensAt=rules.opensAt?Date.parse(rules.opensAt):null;
+    const scheduled=rules.enabled&&opensAt!==null&&now<opensAt;
+    let allowedIp=false;
+    if(scheduled){try{allowedIp=rules.allowIps.includes(normalizedIp(clientIp(request)))}catch{}}
+    response.writeHead(200,headers).end(JSON.stringify({allowed:!scheduled||allowedIp,scheduled,opensAt,serverTime:now}));
+   }catch{response.writeHead(503,headers).end(JSON.stringify({error:'无法读取开放时间'}))}
+   return;
+  }
   if(pathname==='/announcement-claim'&&request.method==='POST'){await claimAnnouncement(request,response);return}
   if(pathname==='/statistics'&&request.method==='POST'){await stats.record(request,response);return}
   if(pathname.startsWith('/android-update/')&&['GET','HEAD'].includes(request.method)){
@@ -246,7 +282,14 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   if (request.method==='GET' && pathname==='/content.json') {
    const headers = {...jsonHeaders,'Access-Control-Allow-Origin':'*','Cache-Control':'no-cache'};
    try {
-    const json = await readFile(file,'utf8');
+    let json = await readFile(file,'utf8');
+    const snapshot=JSON.parse(json);
+    if(url.searchParams.get('features')!=='animated-scenes-v1' &&
+      (snapshot.scenes?.some(scene=>scene.layers?.length)||snapshot.interactions?.some(item=>item.visual))){
+     snapshot.scenes=snapshot.scenes?.map(({layers,...scene})=>scene);
+     snapshot.interactions=snapshot.interactions?.map(({visual,...item})=>item);
+     json=prepareSnapshot(snapshot).json;
+    }
     const {revision} = JSON.parse(json);
     const etag = '"' + revision + '"';
     if (url.searchParams.get('revision')===revision || request.headers['if-none-match']===etag) {
@@ -368,6 +411,20 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
     try{
      const entry=await packages.save(platform,url.searchParams.get('version')??'',request,serialize);
      sendJson(response,201,entry);
+    }catch(error){sendJson(response,400,{error:error.message})}
+    return;
+   }
+   if(pathname==='/admin/api/opening'&&['GET','POST'].includes(request.method)){
+    try{
+     if(request.method==='GET'){sendJson(response,200,await readOpening());return}
+     const {current,next}=await readJson(request);
+     const expected=validateOpening(current),rules=validateOpening(next);
+     const saved=await serialize(async()=>{
+      if(JSON.stringify(expected)!==JSON.stringify(await readOpening()))return false;
+      await saveSnapshot(openingFile,JSON.stringify(rules));
+      return true;
+     });
+     sendJson(response,saved?200:412,saved?rules:{error:'开放规则已更新，请重新读取后修改'});
     }catch(error){sendJson(response,400,{error:error.message})}
     return;
    }

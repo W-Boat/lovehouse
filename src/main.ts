@@ -404,7 +404,7 @@ function openPortalPage(label:string,url:string,response?:string){
  showModal('<h2 id="modal-title">'+esc(label)+'</h2>'+(response?'<p class="body-copy">'+esc(response)+'</p>':'')+
   '<iframe title="'+esc(label)+'" sandbox="allow-scripts" referrerpolicy="no-referrer" style="width:100%;height:55vh;border:0"></iframe>','portal-page');
  const host=$('modal-content'),frame=host.querySelector('iframe');
- if(frame){showFrameLoading(frame,host,'正在加载传送门…');void preparedPage(url).then(page=>{if(page.html)frame.srcdoc=page.html;else frame.src=page.url})}
+ if(frame){if(new URL(url).origin==='https://letter.080726.xyz'){frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms');const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='在浏览器中打开信件';host.append(link)}showFrameLoading(frame,host,'正在加载传送门…');void preparedPage(url).then(page=>{if(page.html)frame.srcdoc=page.html;else frame.src=page.url})}
 }
 function enterTaoyuan(){
  if(taoyuan||!started)return;scene.stop();scene.blocked=true;cinematic=true;duckAudio(true);

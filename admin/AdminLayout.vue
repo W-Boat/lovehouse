@@ -23,7 +23,7 @@ import portalsIcon from '@iconify-icons/mdi/door-open';
 import allIcon from '@iconify-icons/mdi/cog-outline';
 import historyIcon from '@iconify-icons/mdi/history';
 import homeIcon from '@iconify-icons/mdi/home-heart';
-const icons={assets:image,statistics:chart,packages:packageIcon,guide:book,scenes:scenesIcon,interactions:interactionsIcon,gifts:giftsIcon,giftGames:giftGamesIcon,announcement:announcementIcon,notification:notificationIcon,bundled:bundledIcon,musicRoom:musicRoomIcon,media:mediaIcon,portals:portalsIcon,all:allIcon,history:historyIcon};
+const icons={opening:historyIcon,assets:image,statistics:chart,packages:packageIcon,guide:book,scenes:scenesIcon,interactions:interactionsIcon,gifts:giftsIcon,giftGames:giftGamesIcon,announcement:announcementIcon,notification:notificationIcon,bundled:bundledIcon,musicRoom:musicRoomIcon,media:mediaIcon,portals:portalsIcon,all:allIcon,history:historyIcon};
 const homeMarkup=homeIcon.body;
 const menuIcon=key=>()=>h(NIcon,null,{default:()=>h('svg',{viewBox:'0 0 24 24',innerHTML:(icons[key]??file).body})});
 const props=defineProps({groups:Array,labels:Object,selected:String});

@@ -57,6 +57,7 @@ export async function syncCloudContent(){
  let snapshot:ReturnType<typeof readSnapshot>|undefined;
  try {snapshot=await verifyCloudSnapshot(JSON.parse(localStorage.getItem(key)??'null'))}catch{}
  try {
+  endpoint.searchParams.set('features','animated-scenes-v1');
   if(snapshot)endpoint.searchParams.set('revision',snapshot.revision);
   const response=await fetch(endpoint,{signal:AbortSignal.timeout(2200),credentials:'omit',cache:'no-store'});
   if(response.status!==304 && response.status!==204){
@@ -143,7 +144,7 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
   if(checking||document.hidden)return;
   checking=true;
   try{
-   const url=new URL(endpoint);
+   const url=new URL(endpoint);url.searchParams.set('features','animated-scenes-v1');
    if(revision)url.searchParams.set('revision',revision);
    const response=await fetch(url,{signal:AbortSignal.timeout(2500),credentials:'omit',cache:'no-store'});
    if(response.status!==304&&response.status!==204&&response.ok){

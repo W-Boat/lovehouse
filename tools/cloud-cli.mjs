@@ -50,7 +50,6 @@ async function request(method,path,body,headers={}){
   ...(body instanceof Readable?{duplex:'half'}:{}),
  });
  if(!response.ok)throw Error('HTTP '+response.status+' '+(await response.text()).slice(0,1000));
- if(output){await writeFile(output,await response.text());print({output});return}
  if(response.status===204)return {};
  return response.json();
 }
@@ -61,7 +60,7 @@ async function sendFile(path,filename,headers={}){
 }
 const help={
  usage:'node tools/cloud-cli.mjs COMMAND [arguments] [--env .ENV] [--base HTTPS_BASE] [--token-file FILE] [--if-match REVISION] [--output FILE]',
- commands:{version:'CLI、Skill 与源码版本',
+ commands:{'opening-get':'查看定时开放规则','opening-set INPUT.json':'保存定时开放规则，文件包含 enabled、opensAt、allowIps',version:'CLI、Skill 与源码版本',
   snapshot:'读取线上配置',catalog:'全部包内素材和配置',assets:'素材列表',stats:'去重在线统计',
   history:'远程发布历史','history-show REVISION':'读取历史配置',packages:'安装包与历史','update-manifest':'公开签名资源清单',
   'check INPUT.json':'本地完整校验','publish INPUT.json --if-match REVISION':'校验并发布全部配置',
@@ -80,9 +79,14 @@ try{
   print({name:'lovehouse-cli',version:versions.cli,skillVersion:versions.skill,revision:git.status===0?git.stdout.trim():'unknown'});process.exit(0);
  }
  if(!command||command==='help'){print(help);process.exit(0)}
- const reads={snapshot:'snapshot',catalog:'bundled',assets:'assets',stats:'statistics',history:'history',packages:'packages'};
+ const reads={snapshot:'snapshot',catalog:'bundled',assets:'assets',stats:'statistics','opening-get':'opening',history:'history',packages:'packages'};
  let result;
  if(command in reads){requireArgs(0);result=await request('GET','admin/api/'+reads[command])}
+ else if(command==='opening-set'){
+  requireArgs(1);
+  const current=await request('GET','admin/api/opening');
+  result=await request('POST','admin/api/opening',JSON.stringify({current,next:await getJson(args[0])}),{'Content-Type':'application/json'});
+ }
  else if(command==='update-manifest'){requireArgs(0);result=await request('GET','android-update/update.json')}
  else if(command==='history-show'){requireArgs(1);result=await request('GET','admin/api/history/'+encodeURIComponent(args[0]))}
  else if(command==='check'){requireArgs(1);result={revision:prepareSnapshot(await getJson(args[0])).revision}}
@@ -115,5 +119,5 @@ try{
   if(binary){headers['Content-Type']='application/octet-stream';headers['Content-Length']=String((await stat(binary)).size)}
   result=await request(args[0],args[1],body,headers);
  }else throw Error('Unknown command. Run help.');
- if(result!==undefined)print(result);
+ if(result!==undefined){if(output){await writeFile(output,JSON.stringify(result,null,2));print({output})}else print(result)};
 }catch(error){console.error(JSON.stringify({error:error.message}));process.exitCode=1}

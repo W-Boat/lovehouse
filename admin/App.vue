@@ -10,6 +10,7 @@ import logoutIcon from '@iconify-icons/mdi/logout';
 import refreshIcon from '@iconify-icons/mdi/refresh';
 import {NInputNumber} from 'naive-ui';
 import {PublisherAlert,PublisherDialog} from './publisher-components.js';
+const OpeningRules=defineAsyncComponent(()=>import('./OpeningRules.vue'));
 const Guide=defineAsyncComponent({loader:()=>import('./Guide.vue'),loadingComponent:PageLoading,delay:120});
 import AdminLayout from './AdminLayout.vue';
 import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem,NPagination,NTabs,NTabPane,NCollapse,NCollapseItem,NDropdown,NSpin} from 'naive-ui';
@@ -31,6 +32,7 @@ const sections = [
  ['bundled','包内配置','查看随客户端发布的完整配置和点位。',null],
  ['gifts','礼物配置','按礼物 ID 修改内容、HTTPS 配图、坐标 x/y 和落脚点 point。',{}],
  ['resources','启动资源包','进入游戏时预下载这些文件。',[]],
+ ['opening','定时开放','设置开放时间和可提前进入的公网 IP。',null],
  ['statistics','在线统计','启用后采集 IP、基础设备和访问时间，每 5 分钟更新一次在线状态。',{enabled:false}],
  ['notification','系统通知','游戏运行期间会定期同步。填写标题、正文并启用后发布。',{enabled:false,title:'',body:''}],
  ['announcement','游戏私告','启用后在玩家进入小屋时显示。',{enabled:false,title:'',body:''}],
@@ -46,7 +48,7 @@ const sections = [
 ];
 
 const sectionGroups=[
- ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','notification','statistics','bundled','musicRoom','media','portals','all']],
+ ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','notification','opening','statistics','bundled','musicRoom','media','portals','all']],
  ['发布与资源',['history','packages','assets','resources']],
  ['帮助',['guide']],
 ];
@@ -299,7 +301,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     if(!response.ok)throw Error('无法读取发布状态');
     return response.json();
    };
-   const [content,packages]=await Promise.allSettled([read('content.json'),read('packages.json')]);
+   const [content,packages]=await Promise.allSettled([read('content.json?features=animated-scenes-v1'),read('packages.json')]);
    if(content.status==='fulfilled')publicRevision.value=content.value.revision??'';
    if(packages.status==='fulfilled')publicPackages.value=packages.value;
   }
@@ -414,6 +416,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   <section class="editor">
    <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div></div>
    <template v-if="selected==='guide'"><Guide/></template>
+   <OpeningRules v-else-if="selected==='opening'" :token="token"/>
    <template v-else-if="selected==='packages'">
     <Packages :token="token" @updated="refreshPublic"/>
    </template>

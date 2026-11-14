@@ -2,7 +2,7 @@
 import {computed} from 'vue';
 import {NButton,NCard,NForm,NFormItem,NInput,NInputNumber,NSelect,NSwitch,NCollapse,NCollapseItem} from 'naive-ui';
 import ResourceLink from './ResourceLink.vue';
-const props=defineProps({modelValue:Array,interactions:{type:Array,default:()=>[]},zone:String});
+const props=defineProps({modelValue:Array,interactions:{type:Array,default:()=>[]},zone:String,maxLayers:{type:Number,default:40}});
 const emit=defineEmits(['update:modelValue']);
 const layers=computed(()=>props.modelValue??[]);
 const triggerOptions=computed(()=>props.interactions.filter(item=>item.zone===props.zone).map(item=>({value:item.id,label:item.name||item.id})));
@@ -24,7 +24,7 @@ function add(){
 <template>
  <n-card title="动态分层与互动动画" size="small">
   <p>素材使用透明图片或等尺寸帧图集。每层可设置循环动画、移动路线和点击触发。</p>
-  <n-button size="small" :disabled="layers.length>=40" @click="add">添加图层</n-button>
+  <n-button size="small" :disabled="layers.length>=maxLayers" @click="add">添加图层</n-button>
   <n-collapse>
    <n-collapse-item v-for="(layer,index) in layers" :key="index" :title="layer.id" :name="index">
     <n-form label-placement="top">

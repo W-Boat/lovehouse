@@ -7,7 +7,7 @@ import {join} from 'node:path';
 import {createContentHandler,prepareSnapshot} from './cloud-content.mjs';
 
 function request(handler,method,url,headers={},body=''){
- const input=Object.assign(Readable.from([Buffer.from(body)]),{method,url,headers});
+ const input=Object.assign(Readable.from([Buffer.from(body)]),{method,url,headers,socket:{remoteAddress:'127.0.0.1'}});
  const result={status:0,headers:{} as Record<string,string>,body:''};
  const response={
   writeHead(status:number,headers:Record<string,string>){Object.assign(result,{status,headers});return response},
@@ -196,5 +196,48 @@ test('Android update endpoint rejects unsigned manifests and digest-mismatched r
   assert.equal((await request(handler,'POST','/admin/api/android-update/blobs/'+badHash,auth,'bad')).status,400);
   assert.equal((await request(handler,'HEAD','/android-update/blobs/'+badHash)).status,404);
   assert.equal((await request(handler,'HEAD','/android-update/update.json')).status,404);
+ }finally{await rm(directory,{recursive:true,force:true})}
+});
+
+
+test('animated scene projection keeps old clients usable without weakening modern revisions',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lovehouse-compat-'));
+ try{
+  const visual={id:'fish',src:'https://example.org/fish.webp',x:400,y:280,width:90,height:110,depth:5,autoplay:true};
+  const item={id:'cloud-fish',zone:'postoffice',x:400,y:280,point:[400,330],name:'大肥鱼',action:'读信',response:'来看看信。',url:'https://letter.080726.xyz/',visual};
+  const modern=prepareSnapshot({interactions:[item]});
+  const file=join(directory,'content.json');await writeFile(file,modern.json);
+  const handler=createContentHandler({file,token:'fixture-token'});
+  const legacy=JSON.parse((await request(handler,'GET','/content.json')).body);
+  assert.equal(legacy.interactions[0].visual,undefined);
+  assert.equal(prepareSnapshot(legacy).revision,legacy.revision);
+  assert.notEqual(legacy.revision,modern.revision);
+  assert.equal((await request(handler,'GET','/content.json?revision='+legacy.revision)).status,304);
+  const capable=JSON.parse((await request(handler,'GET','/content.json?features=animated-scenes-v1')).body);
+  assert.equal(capable.revision,modern.revision);
+  assert.deepEqual(capable.interactions[0].visual,visual);
+ }finally{await rm(directory,{recursive:true,force:true})}
+});
+
+test('scheduled opening keeps whitelist private and rejects stale changes',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lovehouse-opening-'));
+ try{
+  const handler=createContentHandler({file:join(directory,'content.json'),token:'fixture-token'});
+  const auth={authorization:'Bearer fixture-token','content-type':'application/json'};
+  const api='/admin/api/opening';
+  assert.equal((await request(handler,'GET',api)).status,401);
+  const current=JSON.parse((await request(handler,'GET',api,auth)).body);
+  assert.equal(JSON.parse((await request(handler,'GET','/opening')).body).allowed,true);
+  const next={enabled:true,opensAt:new Date(Date.now()+60000).toISOString(),allowIps:['2001:0db8:0:0::42']};
+  const update=JSON.stringify({current,next});
+  assert.equal((await request(handler,'POST',api,auth,update)).status,200);
+  assert.equal((await request(handler,'POST',api,auth,update)).status,412);
+  const publicStatus=JSON.parse((await request(handler,'GET','/opening',{'x-real-ip':'203.0.113.1'})).body);
+  assert.equal(publicStatus.allowed,false);
+  assert.equal(publicStatus.allowIps,undefined);
+  assert.equal(JSON.parse((await request(handler,'GET','/opening',{'x-real-ip':'2001:db8::42'})).body).allowed,true);
+  const saved=JSON.parse((await request(handler,'GET',api,auth)).body);
+  assert.equal((await request(handler,'POST',api,auth,JSON.stringify({current:saved,next:{...next,opensAt:'2000-01-01T00:00:00Z'}}))).status,200);
+  assert.equal(JSON.parse((await request(handler,'GET','/opening')).body).allowed,true);
  }finally{await rm(directory,{recursive:true,force:true})}
 });
