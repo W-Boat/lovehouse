@@ -8,24 +8,25 @@ import {FootstepFollower} from './follow';
 /** One local controller owns one actor. Network targets never write the local actor. */
 export class OnlineWorld{
  active=false;role:Role='host';playerId='';remote?:PlayerState;snapshot?:RoomSnapshot;
- private handFormation=new HandFormation();private affectionId='';private readySent='';private clockOffset=0;private affectionListeners=new Set<()=>void>();private equipmentSent='';private elapsed=0;private sent='';private remoteZone='';private follower=new FootstepFollower();private crossing='';
- constructor(private scene:Cottage,private client:Pick<OnlineClient,'send'>){}
+ private remoteTrack:{position:Position;at:number}[]=[];
+ private handFormation=new HandFormation();private affectionId='';private readySent='';private clockOffset=0;private affectionListeners=new Set<()=>void>();private equipmentSent='';private elapsed=0;private sent='';private follower=new FootstepFollower();private crossing='';
+ constructor(private scene:Cottage,private client:Pick<OnlineClient,'send'>,private now=()=>performance.now()){}
  handleMessage(message:{type:string;[key:string]:unknown}){
   if(message.type==='welcome'){this.playerId=String(message.playerId);this.role=message.role==='guest'?'guest':'host';this.handleSnapshot(message.snapshot as RoomSnapshot)}
   if(message.type==='snapshot')this.handleSnapshot(message.snapshot as RoomSnapshot);
-  if(message.type==='event'&&message.event==='move'&&message.playerId!==this.playerId&&this.remote){const p=message.data as Position;if(p&&p.zone in worlds&&Number.isFinite(p.x)&&Number.isFinite(p.y))this.remote={...this.remote,position:p}}
+  if(message.type==='event'&&message.event==='move'&&message.playerId!==this.playerId&&this.remote){const p=message.data as Position;if(p&&p.zone in worlds&&Number.isFinite(p.x)&&Number.isFinite(p.y)){this.remote={...this.remote,position:p};this.recordPosition(p)}}
  }
  handleSnapshot(snapshot:RoomSnapshot,playerId?:string){if(playerId)this.playerId=playerId;if(!snapshot||!Array.isArray(snapshot.players))return;this.snapshot=snapshot;const self=snapshot.players.find(p=>p.id===this.playerId);if(self)this.role=self.role;
   const wasActive=this.active;
   this.remote=snapshot.players.find(p=>p.id!==this.playerId&&p.connected);
   this.active=Boolean(self?.connected&&this.remote);
   if(wasActive!==this.active){
-   this.sent='';this.equipmentSent='';this.remoteZone='';this.affectionId='';this.readySent='';this.crossing='';
-   this.follower.enabled=false;this.scene.resetOnlineControl();
+   this.sent='';this.equipmentSent='';this.affectionId='';this.readySent='';this.crossing='';
+   this.remoteTrack=[];this.follower.enabled=false;this.scene.resetOnlineControl();
    this.scene.bridge?.emit('online-pair',this.active);
   }
   if(!this.active&&self?.connected)this.publishPosition(this.scene.player);if(typeof snapshot.serverNow==='number')this.clockOffset=snapshot.serverNow-Date.now();this.affectionListeners.forEach(fn=>fn())}
- handleConnection(state:ConnectionState){if(state!=='connected'){const wasActive=this.active;this.active=false;if(wasActive)this.scene.bridge?.emit('online-pair',false);if(this.snapshot)this.snapshot={...this.snapshot,affection:null};this.affectionId='';this.readySent='';this.affectionListeners.forEach(fn=>fn());this.remote=undefined;this.sent='';this.equipmentSent='';this.follower.enabled=false;this.scene.resetOnlineControl();this.scene.player?.setVisible(true);this.scene.boy?.setVisible(true);this.scene.syncFollowing()}}
+ handleConnection(state:ConnectionState){if(state!=='connected'){const wasActive=this.active;this.active=false;if(wasActive)this.scene.bridge?.emit('online-pair',false);if(this.snapshot)this.snapshot={...this.snapshot,affection:null};this.affectionId='';this.readySent='';this.affectionListeners.forEach(fn=>fn());this.remote=undefined;this.sent='';this.equipmentSent='';this.remoteTrack=[];this.follower.enabled=false;this.scene.resetOnlineControl();this.scene.player?.setVisible(true);this.scene.boy?.setVisible(true);this.scene.syncFollowing()}}
  subscribeAffection(fn:()=>void){this.affectionListeners.add(fn);return()=>{this.affectionListeners.delete(fn)}}
  requestAffection(kind:'hand'|'hug'){const s=this.scene,r=this.remote;if(!this.active||!r||r.position.zone!==s.zone||s.seated)return false;const leader=this.role==='host'?this.local:r.position;
   for(const dx of [s.actorHeight*.4375||28,-(s.actorHeight*.4375||28)]){const host={x:leader.x+Math.min(0,dx),y:leader.y},guest={x:leader.x+Math.max(0,dx),y:leader.y};if(!s.walkable(host)||!s.walkable(guest)||!segmentWalkable(host,guest,s.walkable)||!findPath(this.local,this.role==='host'?host:guest,s.walkable).length)continue;return this.client.send({type:'affection-invite',kind,zone:s.zone,host,guest,automatic:true})}return false}
@@ -43,10 +44,31 @@ export class OnlineWorld{
  cancelFollowing(){if(this.role==='guest'&&this.snapshot?.following){this.client.send({type:'follow-stop'});this.snapshot={...this.snapshot,following:false};this.follower.enabled=false}}
  update(dt:number){if(!this.active)return;const s=this.scene,remote=this.remote,other=this.role==='guest'?s.player:s.boy;
   if(this.role==='guest'&&this.snapshot?.following&&remote){if(remote.position.zone!==s.zone){if(!s.transitioning&&this.crossing!==remote.position.zone&&remote.position.zone in worlds){this.crossing=remote.position.zone;void s.transitionTo(remote.position.zone as Zone,()=>{this.crossing='';this.follower.enabled=false})}}else if(!s.blocked){if(!this.follower.enabled)this.follower.setEnabled(true,remote.position,this.local,s.walkable);const forming=this.handWalking&&this.handFormation.update(this.local,remote.position,dt,s.walkable,s.actorHeight*.4375||28);if(!forming)this.follower.update(this.local,remote.position,dt,s.walkable)}}else this.follower.enabled=false;
-  const visible=Boolean(remote&&remote.position.zone===s.zone);other.setVisible(visible);
-  if(visible&&remote){const p=remote.position,first=this.remoteZone!==p.zone;this.remoteZone=p.zone;if(first){other.setPosition(p.x,p.y)}else{const dx=p.x-other.x,dy=p.y-other.y,d=Math.hypot(dx,dy),step=Math.min(d,Math.max(100,d*7)*dt);if(d>.01)other.setPosition(other.x+dx/d*step,other.y+dy/d*step)}s.renderOnlineActor(other,this.role==='guest'?'girl':'boy',p.direction,Math.hypot(p.x-other.x,p.y-other.y)>1,p.pose,remote.appearance)}else this.remoteZone='';
+  const visible=remote?.position.zone===s.zone;other.setVisible(visible);
+  if(visible&&remote){
+   const latest=remote.position;
+   if(!this.remoteTrack.length||this.remoteTrack.at(-1)?.position.zone!==latest.zone){
+    this.remoteTrack=[];this.recordPosition(latest);
+   }
+   const now=this.now()-125,track=this.remoteTrack;
+   while(track.length>2&&track[1].at<=now)track.shift();
+   const [from,to]=track;
+   let p=from.position;
+   if(to){
+    const t=Math.max(0,Math.min(1,(now-from.at)/Math.max(1,to.at-from.at)));
+    p={...(t>=1?to.position:p),x:p.x+(to.position.x-p.x)*t,y:p.y+(to.position.y-p.y)*t};
+   }
+   other.setPosition(p.x,p.y);
+   s.renderOnlineActor(other,this.role==='guest'?'girl':'boy',p.direction,p.pose==='move',p.pose,remote.appearance);
+  }else{this.remoteTrack=[]}
   this.updateAffection();const equipment=s.networkEquipment?.();if(equipment){const key=JSON.stringify(equipment);if(key!==this.equipmentSent&&this.client.send({type:'equipment',...equipment}))this.equipmentSent=key}
   this.elapsed+=dt;if(this.elapsed>=.1){this.elapsed%=.1;this.publishPosition(this.local)}
+ }
+ private recordPosition(position:Position){
+  const last=this.remoteTrack.at(-1);
+  if(last&&last.position.zone!==position.zone)this.remoteTrack=[];
+  this.remoteTrack.push({position,at:this.now()});
+  if(this.remoteTrack.length>8)this.remoteTrack.shift();
  }
  private publishPosition(actor:{x:number;y:number}){const s=this.scene,p={zone:s.zone,x:actor.x,y:actor.y,direction:s.onlineDirection,pose:s.onlinePose},key=JSON.stringify(p);if(key!==this.sent&&this.client.send({type:'move',...p}))this.sent=key}
  dispose(){this.handleConnection('offline');this.scene.onlineWorld=undefined}

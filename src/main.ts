@@ -1,3 +1,4 @@
+import type {RoomSnapshot} from './online-protocol';
 import {nativeBridge} from './native-bridge';
 import {preparedPage} from './release-resources';
 import {showFrameLoading} from './frame-loading';
@@ -204,6 +205,7 @@ function closeSceneActivity(){
  const activity=sceneActivity;
  if(!activity)return;
  sceneActivity=undefined;
+ if(activity.kind==='film'&&cinemaSession){const id=cinemaSession;cinemaSession='';if(onlineWorld?.role==='host')online.client.send({type:'cinema-control',id,stop:true})}
  activity.dispose?.();
  if(activity.kind==='game')disposeGame();
  workshopVisit=undefined;
@@ -306,16 +308,35 @@ function openFerris(){
  if(!leave){closeSceneActivity();quietLine(uiCopy('theater.ride-unavailable'));return}
  activity.dispose=leave;
 }
+let cinemaSession='',cinemaClock=0,cinemaSeen='';
+function syncCinema(snapshot:RoomSnapshot){
+ if(typeof snapshot.serverNow==='number')cinemaClock=snapshot.serverNow-Date.now();
+ const cinema=snapshot.cinema;
+ if(!cinema){cinemaSeen='';if(cinemaSession){cinemaSession='';closeSceneActivity()}return}
+ if(scene.zone!=='cinema'||cinemaSeen===cinema.id)return;
+ cinemaSession='';closeSceneActivity();
+ cinemaSeen=cinema.id;cinemaSession=cinema.id;
+ const activity=mountSceneActivity('film-host','film','一起看片');
+ void screenFilm(cinema.film,activity,cinema.id);
+}
+function chooseFilm(id:'meet'|'travel'|'birthday',activity:SceneActivity){
+ if(scene.zone==='cinema'&&onlineWorld?.active&&onlineWorld.remote?.position.zone==='cinema'){
+  if(onlineWorld.role==='guest'){activity.host.textContent='等房主选择影片，两人会一起开始。';return}
+  if(online.client.send({type:'cinema-start',film:id})){activity.host.textContent='正在准备一起放映…';return}
+ }
+ void screenFilm(id,activity);
+}
 function openTheater(id:string){
  const activity=mountSceneActivity('film-host','film',mainText('cinema.pick'));
+ if(id==='cinema-seat'){chooseFilm('meet',activity);return}
  if(id!=='movie'){void screenFilm(id==='concert'?'concert':'meet',activity);return}
  for(const title of ['meet','travel','birthday'] as const){
   const choice=document.createElement('button');choice.className='secondary';
-  choice.textContent=films[title].title;choice.onclick=()=>void screenFilm(title,activity);
+  choice.textContent=films[title].title;choice.onclick=()=>chooseFilm(title,activity);
   activity.host.append(choice);
  }
 }
-async function screenFilm(id:string,activity:SceneActivity){
+async function screenFilm(id:string,activity:SceneActivity,sharedId?:string){
  activity.host.textContent=mainText('cinema.loading');
  const zone=scene.zone;
  const prepared=scene.prepareCinema();
@@ -345,7 +366,11 @@ async function screenFilm(id:string,activity:SceneActivity){
   frame=requestAnimationFrame(project);
  };
  project();
- const dispose=playCinema(id,activity.host,scene,closeSceneActivity,screen);
+ const screening=sharedId?{
+  read:()=>{const state=online.getSnapshot()?.cinema;return state?.id===sharedId?{state,now:Date.now()+cinemaClock}:undefined},
+  control:onlineWorld?.role==='host'?(position:number,paused:boolean)=>{online.client.send({type:'cinema-control',id:sharedId,position,paused})}:undefined,
+ }:undefined;
+ const dispose=playCinema(id,activity.host,scene,closeSceneActivity,screen,screening);
  activity.dispose=()=>{cancelAnimationFrame(frame);screen.remove();scene.frameProjection(false);dispose();release()};
 }
 function writeFuture(storageKey='birthday-future',title=mainText("future.title"),savedLine=mainText("future.saved"),onSaved?:()=>void){let old='';try{old=save.notes[storageKey]??localStorage.getItem(storageKey)??''}catch{}showModal(`<div class="subheading">${mainHtml("future.eyebrow")}</div><h2 id="modal-title">${esc(title)}</h2><p>${mainHtml("future.help")}</p><textarea id="future-note" maxlength="500" rows="5" placeholder="${mainHtml('future.placeholder')}"></textarea><div class="modal-actions"><button id="future-save" class="primary">${mainHtml("future.save")}</button></div><small>${mainHtml("future.storage-help")}</small>`);($('future-note') as HTMLTextAreaElement).value=old;action('future-save',()=>{try{save.notes[storageKey]=($('future-note') as HTMLTextAreaElement).value;if(storageKey==='birthday-postcard')grantItem('postcard');persist();closeModal();onSaved?.();scene.confetti();quietLine(savedLine)}catch{toast(mainText("future.save-error"))}})}
@@ -353,7 +378,7 @@ action('companion-toggle',()=>{if(started&&!scene.blocked){if(scene.seated){scen
 let taoyuan:ReturnType<typeof openTaoyuan>|undefined;
 let onlineWorld:ReturnType<typeof installOnlineWorld>|undefined;
 let onlineGame:ReturnType<typeof installOnlineGame>|undefined;
-const online=installOnlineUI({open:showModal,close:closeModal,toast,profile:role=>({name:save.names[role==='guest'?'boy':'girl'],appearance:save.appearance[role==='guest'?'boy':'girl']}),onSnapshot:s=>onlineWorld?.handleSnapshot(s,online.getPlayerId()),onMessage:m=>{onlineWorld?.handleMessage(m);onlineGame?.handleMessage(m);if(m.type==='event'&&m.event==='taoyuan-state')taoyuan?.receive({kind:'state',...(m.data as {save:string;route:string})});if(m.type==='event'&&m.event==='taoyuan-field')taoyuan?.receive({kind:'field',...(m.data as TaoyuanField)});if(m.type==='event'&&m.event==='taoyuan-action')taoyuan?.receive({kind:'command',...(m.data as {route:string;index:number;text:string})})},onConnection:s=>{onlineWorld?.handleConnection(s);taoyuan?.setConnected(s==='connected')},onGame:g=>onlineGame?.start(g)});
+const online=installOnlineUI({open:showModal,close:closeModal,toast,profile:role=>({name:save.names[role==='guest'?'boy':'girl'],appearance:save.appearance[role==='guest'?'boy':'girl']}),onSnapshot:s=>{onlineWorld?.handleSnapshot(s,online.getPlayerId());syncCinema(s)},onMessage:m=>{onlineWorld?.handleMessage(m);onlineGame?.handleMessage(m);if(m.type==='event'&&m.event==='taoyuan-state')taoyuan?.receive({kind:'state',...(m.data as {save:string;route:string})});if(m.type==='event'&&m.event==='taoyuan-field')taoyuan?.receive({kind:'field',...(m.data as TaoyuanField)});if(m.type==='event'&&m.event==='taoyuan-action')taoyuan?.receive({kind:'command',...(m.data as {route:string;index:number;text:string})})},onConnection:s=>{onlineWorld?.handleConnection(s);if(s==='offline'&&cinemaSession){cinemaSession='';cinemaSeen='';closeSceneActivity()}taoyuan?.setConnected(s==='connected')},onGame:g=>onlineGame?.start(g)});
 onlineWorld=installOnlineWorld(scene,online.client);
 installOnlineAffection(onlineWorld,{open:showModal,close:closeModal,toast});
 onlineGame=installOnlineGame({

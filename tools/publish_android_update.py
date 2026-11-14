@@ -20,6 +20,7 @@ def publish(folder, base, token):
             return None
 
     opener = build_opener(RefuseRedirect())
+    download_probe = build_opener()
     endpoint = base + 'admin/api/android-update/'
 
     def post(path, stream, size, content_type):
@@ -42,7 +43,7 @@ def publish(folder, base, token):
                 raise ValueError(f'Invalid resource file: {asset.name}')
             probe = Request(base + 'android-update/blobs/' + asset.name, method='HEAD')
             try:
-                with opener.open(probe, timeout=15) as response:
+                with download_probe.open(probe, timeout=15) as response:
                     if int(response.headers.get('Content-Length', '-1')) == asset.stat().st_size:
                         continue
             except HTTPError as error:

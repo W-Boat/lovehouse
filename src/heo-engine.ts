@@ -2,7 +2,7 @@ import {preparedResource} from './release-resources';
 import type {MusicRoomConfig,MusicTrack} from './music-config';
 export type HeoPlayer={audio:HTMLAudioElement;list:{audios:MusicTrack[];index:number;switch:(index:number)=>void};lrc?:{current:[number,string][]};on:(name:string,fn:()=>void)=>void;play:()=>Promise<void>|void;pause:()=>void;toggle:()=>void;skipForward:()=>void;skipBack:()=>void;seek:(seconds:number)=>void;volume:(value:number,remember?:boolean)=>void;destroy:()=>void};
 let metingRuntime:Promise<void>|undefined;
-type HeoGlobals=Window&{APlayer?:new(options:Record<string,unknown>)=>HeoPlayer;heo?:{setupMediaSessionHandlers:(player:HeoPlayer)=>void}};
+type HeoGlobals=Window&{APlayer?:new(options:Record<string,unknown>)=>HeoPlayer};
 const base=new URL('heomusic/',document.baseURI);
 let runtime:Promise<void>|undefined;
 function script(path:string){return new Promise<void>((resolve,reject)=>{const node=document.createElement('script');node.src=new URL(path,base).href;node.onload=()=>resolve();node.onerror=()=>{node.remove();reject(Error('播放器资源暂未载入'))};document.head.append(node)})}

@@ -1,3 +1,4 @@
+import type {CinemaState} from './online-protocol';
 import {uiCopy,formatCopy} from '../content/ui-copy';
 import type {Cottage} from './scene';
 import {worlds} from './world';
@@ -5,8 +6,9 @@ import {save} from './state';
 import {setAmbience} from './audio';
 import {films,filmMoment,concertSection,type FilmId} from '../content/films';
 import personal from '../content/personal.json';
+type Screening={read:()=>{state:CinemaState;now:number}|undefined;control?:(position:number,paused:boolean)=>void};
 /** Original frame-based shorts. Playback never moves the actors in the live world. */
-export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>void,projection?:HTMLElement){
+export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>void,projection?:HTMLElement,screening?:Screening){
  let disposed=false,paused=false,ended=false,time=0,last=0,raf=0,affection=false;
  const concert=id==='concert',filmId=(id in films?id:'meet') as FilmId,spec=films[filmId],duration=concert?90:spec.duration;
  const controls=document.createElement('div');controls.className='modal-actions';const title=document.createElement('h2');title.id='modal-title';title.textContent=concert?uiCopy('theater.concert-title'):spec.title;
@@ -14,19 +16,22 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
  const controller=new AbortController();const button=(label:string,run:()=>void)=>{const b=document.createElement('button');b.className='secondary';b.textContent=label;b.addEventListener('click',run,{signal:controller.signal});controls.append(b);return b};
  const pause=button(uiCopy('theater.pause'),()=>{
   if(ended)return;
+  if(screening){screening.control?.(time,!paused);return}
   paused=!paused;last=0;
   pause.textContent=paused?uiCopy('theater.resume'):uiCopy('theater.pause');
-  if(!paused)schedule();
+  if(screening||!paused)schedule();
  });
- button(uiCopy('theater.restart'),()=>{
+ const restart=button(uiCopy('theater.restart'),()=>{
+  if(screening){screening.control?.(0,false);return}
   time=0;last=0;ended=false;paused=false;pause.disabled=false;
   pause.textContent=uiCopy('theater.pause');schedule();
  });
+ if(screening&&!screening.control){pause.hidden=true;restart.hidden=true}
  button(uiCopy('theater.close'),done);
  document.addEventListener('visibilitychange',()=>{
   last=0;
   if(document.hidden){cancelAnimationFrame(raf);raf=0}
-  else if(!paused)schedule();
+  else if(screening||!paused)schedule();
  },{signal:controller.signal});
  if(concert)button(uiCopy('theater.cheer'),()=>affection=!affection);setAmbience(concert?'mars':'cinema');
  const photos:HTMLImageElement[]=[];for(const path of personal.memoryPhotos as string[]){const img=new Image();img.src=/^https:\/\//.test(path)?path:new URL('../'+path,import.meta.url).href;photos.push(img)}
@@ -76,7 +81,14 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
  function tick(now:number){
   raf=0;
   if(disposed||document.hidden)return;
-  if(!paused&&last)time=Math.min(duration,time+Math.max(0,now-last)/1000);
+  const shared=screening?.read();
+  if(shared){
+   const {state,now}=shared;
+   const position=Math.min(duration,state.position+(state.paused?0:Math.max(0,now-state.anchor)/1000));
+   if(position===time&&state.paused===paused&&last){schedule();return}
+   time=position;paused=state.paused;ended=time>=duration;
+   pause.disabled=ended;pause.textContent=ended?uiCopy('theater.completed'):paused?uiCopy('theater.resume'):uiCopy('theater.pause');
+  }else if(!paused&&last)time=Math.min(duration,time+Math.max(0,now-last)/1000);
   last=now;
   g.fillStyle='#151a2b';g.fillRect(0,0,960,540);
   if(concert)showConcert();else film();
@@ -87,7 +99,7 @@ export function playCinema(id:string,host:HTMLElement,scene:Cottage,done:()=>voi
    g.fillStyle='#ffe7c0';g.font='30px CottagePixel';g.textAlign='center';
    g.fillText(uiCopy('theater.end-card'),480,260);
   }
-  if(!paused)schedule();
+  if(screening||!paused)schedule();
  }
  schedule();
  return()=>{

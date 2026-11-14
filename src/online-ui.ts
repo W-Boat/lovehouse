@@ -19,8 +19,8 @@ export function installOnlineUI(ctx:Context){
  }catch{}
  let autoRejoining=false,probed=false;
  let snapshot:RoomSnapshot|undefined,playerId='',status:ConnectionState='offline',statusMessage='',draft='',draftRevision=0,dirty=false,pendingText:string|undefined,conflict=false,lastGame='';
- const chat:{name:string;text:string}[]=[];let host:HTMLElement|undefined;
- const client=new OnlineClient(raw=>receive(raw as ServerMessage),(state,message)=>{status=state;statusMessage=message||'';ctx.onConnection?.(state);paintStatus();if(state==='offline'){snapshot=undefined;playerId='';lastGame='';paintRoom()}});
+ const chat:{name:string;text:string}[]=[];let host:HTMLElement|undefined,chatPreview:HTMLElement|undefined,chatTimer:number|undefined;
+ const client=new OnlineClient(raw=>receive(raw as ServerMessage),(state,message)=>{status=state;statusMessage=message||'';ctx.onConnection?.(state);paintStatus();if(state==='offline'){chat.length=0;hideChatPreview();snapshot=undefined;playerId='';lastGame='';paintRoom()}});
  function clearRejoin(){try{localStorage.removeItem(rejoinKey)}catch{}}
  async function inviteOnFirstConnection(){
   if(probed||!configuredDefault)return;
@@ -65,7 +65,7 @@ export function installOnlineUI(ctx:Context){
    autoRejoining=false;
    const rejoin=client.rejoinDetails();
    if(rejoin)try{localStorage.setItem(rejoinKey,JSON.stringify(rejoin))}catch{}
-   playerId=message.playerId;if(snapshot?.roomId!==message.roomId){lastGame='';dirty=false;conflict=false;pendingText=undefined}}
+   playerId=message.playerId;if(snapshot?.roomId!==message.roomId){chat.length=0;hideChatPreview();lastGame='';dirty=false;conflict=false;pendingText=undefined}}
   if(message.type==='welcome'||message.type==='snapshot'){
    snapshot=message.snapshot;
    if(pendingText!==undefined&&snapshot.document.text===pendingText){dirty=draft!==pendingText;pendingText=undefined;draftRevision=snapshot.document.revision}
@@ -75,7 +75,7 @@ export function installOnlineUI(ctx:Context){
    if(snapshot.game&&!snapshot.game.finished){const id=snapshot.game.gameId+':'+snapshot.game.seed;if(lastGame!==id){lastGame=id;ctx.onGame?.(snapshot.game)}}
   }
   if(message.type==='event'&&message.event==='chat'){
-   const data=message.data as {text?:unknown};if(typeof data?.text==='string'){chat.push({name:snapshot?.players.find(p=>p.id===message.playerId)?.name||uiCopy('online.companion'),text:data.text});if(chat.length>100)chat.shift();paintChat()}
+   const data=message.data as {text?:unknown};if(typeof data?.text==='string'){chat.push({name:snapshot?.players.find(p=>p.id===message.playerId)?.name||uiCopy('online.companion'),text:data.text});if(chat.length>100)chat.shift();paintChat();if(message.playerId!==playerId&&!host?.isConnected)showChatPreview(chat.at(-1)!)}
   }
   if(message.type==='error'){
    if(client.state==='error'&&['ROOM_NOT_FOUND','BAD_TOKEN'].includes(message.code))clearRejoin();
@@ -87,6 +87,14 @@ export function installOnlineUI(ctx:Context){
   }
   ctx.onMessage?.(message);
  }
+ function hideChatPreview(){window.clearTimeout(chatTimer);chatPreview?.remove();chatPreview=undefined}
+ function showChatPreview(item:{name:string;text:string}){
+  const parent=document.getElementById('game-frame');if(!parent)return;
+  if(!chatPreview){chatPreview=element('aside','',parent);chatPreview.className='online-chat-preview';chatPreview.setAttribute('role','log');chatPreview.setAttribute('aria-live','polite')}
+  element('p',item.name+'：'+item.text,chatPreview);
+  while(chatPreview.childElementCount>3)chatPreview.firstElementChild?.remove();
+  window.clearTimeout(chatTimer);chatTimer=window.setTimeout(hideChatPreview,15000);
+ }
  function paintChat(){const list=host?.querySelector<HTMLElement>('#online-chat-list');if(!list)return;list.replaceChildren();for(const item of chat)element('p',item.name+'：'+item.text,list);list.scrollTop=list.scrollHeight}
  function paintDocument(){if(!host)return;const input=host.querySelector<HTMLTextAreaElement>('#online-document');if(input&&document.activeElement!==input)input.value=draft;const latest=host.querySelector<HTMLElement>('#online-document-latest');if(latest)latest.textContent=snapshot?.document.text||uiCopy('online.document.empty');const note=host.querySelector<HTMLElement>('#online-document-state');if(note)note.textContent=conflict?uiCopy('online.document.conflict'):dirty?uiCopy('online.document.dirty'):uiCopy('online.document.synced');const save=host.querySelector<HTMLButtonElement>('#online-document-save');if(save)save.disabled=status!=='connected'||conflict||pendingText!==undefined}
  function paintRoom(){
@@ -97,6 +105,7 @@ export function installOnlineUI(ctx:Context){
   paintStatus();paintDocument();
  }
  function openPanel(){
+  hideChatPreview();
   ctx.open(`<h2 id="modal-title">${htmlCopy('online.title')}</h2><div id="online-panel"></div>`,'online');host=document.getElementById('online-panel')!;host.className='online-panel';
   const connection=element('section','',host);element('h3',uiCopy('online.room.title'),connection);element('p','',connection).id='online-status';
   const server=field(connection,uiCopy('online.server.label'),addresses.server),defaults=field(connection,uiCopy('online.server.default-label'),addresses.defaultServer);server.placeholder=uiCopy('online.server.placeholder');defaults.placeholder=configuredDefault;

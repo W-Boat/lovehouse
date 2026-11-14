@@ -1,3 +1,4 @@
+import hairAnchors from '../content/hair-anchors.json';
 import {CloudMotion} from './cloud-motion';
 import {preparedResource} from './release-resources';
 import {loadCloudBackground} from './cloud-background';
@@ -129,7 +130,57 @@ export class Cottage extends Phaser.Scene {
   return canvas.toDataURL();
  }
  refreshAppearance(){for(const who of ['girl','boy'] as const){const prefix=who+'-styled-';for(const key of this.textures.getTextureKeys())if(key.startsWith(prefix)||((key.startsWith('pair-art-')||key.startsWith('holding-art-'))&&key.includes('{')))this.textures.remove(key)}this.setPose(this.player,'girl',this.seated?'sit':'idle',0);this.setPose(this.boy,'boy',this.seated?'sit':'idle',0)}
- private appearanceKey(who:'girl'|'boy',base:string){if(!this.textures.exists(base))return base;const a=save.appearance[who],key=who+'-styled-'+base+'-'+[a.hair,a.color,a.skin,a.outfit].join('-');if(this.textures.exists(key))return key;const source=this.textures.get(base).getSourceImage() as HTMLCanvasElement,c=document.createElement('canvas');c.width=source.width;c.height=source.height;const g=c.getContext('2d')!;g.imageSmoothingEnabled=false;g.drawImage(source,0,0);if(a.hair>0&&!base.startsWith('pair-')&&!base.startsWith('holding-')&&!base.startsWith('head-')){const index=Number(base.split('-').at(-1)),dir=base.includes('-soak-')||base.includes('-sitmove-')?0:base.includes('-stride-')?Math.floor(index/4):index<4?index:index<8?index-4:0;const headKey=who+'-head-'+(a.hair*4+dir);if(this.textures.exists(headKey)){const head=this.textures.get(headKey).getSourceImage() as HTMLCanvasElement;const h=c.height*(who==='girl'?.59:.51),w=h*head.width/head.height;const before=g.getImageData(0,0,c.width,Math.min(c.height,Math.ceil(h))),hands=captureRaisedHands(before.data,before.width,before.height,before.height);g.clearRect(0,0,c.width,h);g.drawImage(head,(c.width-w)/2,0,w,h);const composed=g.getImageData(0,0,c.width,before.height);restoreRaisedHands(composed.data,hands);g.putImageData(composed,0,0)}}const image=g.getImageData(0,0,c.width,c.height);recolorAppearance(image.data,c.width,c.height,who,a,base);g.putImageData(image,0,0);this.textures.addCanvas(key,c);return key}
+ private appearanceKey(who:'girl'|'boy',base:string){
+  if(!this.textures.exists(base))return base;
+  const appearance=save.appearance[who];
+  if(!Object.values(appearance).some(Boolean))return base;
+  const key=who+'-styled-'+base+'-'+[appearance.hair,appearance.color,appearance.skin,appearance.outfit].join('-');
+  if(this.textures.exists(key))return key;
+  const source=this.textures.get(base).getSourceImage() as HTMLCanvasElement;
+  const canvas=document.createElement('canvas');canvas.width=source.width;canvas.height=source.height;
+  const context=canvas.getContext('2d')!;context.imageSmoothingEnabled=false;context.drawImage(source,0,0);
+  const anchor=(hairAnchors as Record<string,number[]>)[base];
+  if(appearance.hair&&anchor){
+   const index=Number(base.split('-').at(-1));
+   const direction=base.includes('-stride-')?Math.floor(index/4):base.includes('-pose-')&&index<8?index%4:0;
+   this.replaceHair(context,who,direction,anchor);
+  }
+  const image=context.getImageData(0,0,canvas.width,canvas.height);
+  recolorAppearance(image.data,canvas.width,canvas.height,who,appearance,base);
+  context.putImageData(image,0,0);this.textures.addCanvas(key,canvas);return key;
+ }
+ private replaceHair(context:CanvasRenderingContext2D,who:'girl'|'boy',direction:number,anchor:number[],bounds?:[number,number]){
+  const [x,y,width,height]=anchor;
+  const texture=who+'-head-'+(save.appearance[who].hair*4+direction);
+  if(!this.textures.exists(texture))return;
+  const original=this.textures.get(who+'-head-'+direction).getSourceImage() as HTMLCanvasElement;
+  const head=this.textures.get(texture).getSourceImage() as HTMLCanvasElement;
+  const canvas=context.canvas;
+  const layer=document.createElement('canvas');layer.width=canvas.width;layer.height=canvas.height;
+  const mask=layer.getContext('2d')!;mask.imageSmoothingEnabled=false;
+  mask.drawImage(original,x,y,width,height);
+  const before=context.getImageData(0,0,canvas.width,canvas.height);
+  const hands=bounds?[]:captureRaisedHands(before.data,before.width,before.height,y+height);
+  context.save();
+  if(bounds){context.beginPath();context.rect(bounds[0],0,bounds[1]-bounds[0],canvas.height);context.clip()}
+  context.globalCompositeOperation='destination-out';
+  for(const [dx,dy] of [[0,0],[-2,0],[2,0],[0,2],[0,-2]])context.drawImage(layer,dx,dy);
+  context.globalCompositeOperation='source-over';
+  const fittedWidth=width*(head.width/head.height)/(original.width/original.height);
+  let replacement:CanvasImageSource=head;
+  if(bounds){
+   const headLayer=document.createElement('canvas');headLayer.width=head.width;headLayer.height=head.height;
+   const styled=headLayer.getContext('2d')!;
+   styled.drawImage(head,0,0);
+   const colors=styled.getImageData(0,0,head.width,head.height);
+   recolorAppearance(colors.data,head.width,head.height,who,{...save.appearance[who],outfit:0},'head-');
+   styled.putImageData(colors,0,0);
+   replacement=headLayer;
+  }
+  context.drawImage(replacement,0,0,head.width,head.height,x+(width-fittedWidth)/2,y,fittedWidth,height);
+  context.restore();
+  if(hands.length){const composed=context.getImageData(0,0,canvas.width,canvas.height);restoreRaisedHands(composed.data,hands);context.putImageData(composed,0,0)}
+ }
  private async ensureTexture(key:keyof typeof textureFiles|keyof typeof additionalTextureFiles){if(this.textures.exists(key))return;await new Promise<void>((resolve,reject)=>{const image=new Image();image.onload=()=>{if(!this.textures.exists(key))this.textures.addImage(key,image);resolve()};image.onerror=reject;image.src=assetUrl(({...textureFiles,...additionalTextureFiles})[key])})}
  async prepareInteractionArt(){await this.ensureTexture('interaction-props');this.sliceAtlas('interaction-props',4,4,effectFrames)}
  async prepareCalendar(){await this.ensureTexture('season-views')}
@@ -427,7 +478,10 @@ export class Cottage extends Phaser.Scene {
   const integrated='holding-allgear-'+index;
   const defaultLooks=Object.values(save.appearance).every(appearance=>Object.values(appearance).every(value=>value===0));
   if(holding&&(!save.companionHat||this.onlineWorld?.active)&&save.hat&&save.band&&save.earphones&&defaultLooks&&this.textures.exists(integrated))return integrated;
-  const base=(holding?'holding-art-':'pair-art-')+index,key=base+'-'+JSON.stringify(save.appearance)+'-'+save.hat+'-'+save.earphones+'-'+save.band+'-'+(save.companionHat&&!this.onlineWorld?.active);if(this.textures.exists(key))return key;const source=this.textures.get(base).getSourceImage() as HTMLCanvasElement,c=document.createElement('canvas');c.width=source.width;c.height=source.height;const g=c.getContext('2d')!;g.imageSmoothingEnabled=false;for(const [who,left,right]of [['girl',0,c.width*.53],['boy',c.width*.53,c.width]] as const){g.save();g.beginPath();g.rect(left,0,right-left,c.height);g.clip();g.drawImage(this.textures.get(this.appearanceKey(who,base)).getSourceImage() as HTMLCanvasElement,0,0);g.restore()}for(const who of ['girl','boy'] as const){if(save.appearance[who].hair===0)continue;const pose=index%4,front=holding?Math.floor(index/4):0,key=who+'-head-'+(save.appearance[who].hair*4+front);const head=this.textures.get(this.appearanceKey(who,'head-'+key)).getSourceImage() as HTMLCanvasElement;const x=c.width*(who==='girl'?(!holding&&index<4&&pose>0?.34:.25):.74),h=c.height*(who==='girl'?.52:.49),w=h*head.width/head.height;g.drawImage(head,x-w/2,0,w,h)}const girlHead={x:c.width*(!holding&&index<4&&index%4>0?.34:.25),top:0,width:c.width*.43,height:c.height*.52,facing:holding?Math.floor(index/4):0};if(save.companionHat&&!this.onlineWorld?.active)drawHat(g,this.textures.get('rack-navy').getSourceImage() as HTMLImageElement,{x:c.width*.74,top:0,width:c.width*.4,height:c.height*.49,facing:girlHead.facing});if(save.hat)drawHat(g,this.textures.get('wear-hat').getSourceImage() as HTMLCanvasElement,girlHead);if(save.earphones)drawEarphones(g,this.textures.get('gift-earphones').getSourceImage() as HTMLCanvasElement,girlHead);if(save.band){g.fillStyle='#e7a7c2';g.fillRect(c.width*.42,c.height*.65,Math.max(2,c.width*.025),Math.max(2,c.height*.025))}this.textures.addCanvas(key,c);return key}
+  const base=(holding?'holding-art-':'pair-art-')+index,key=base+'-'+JSON.stringify(save.appearance)+'-'+save.hat+'-'+save.earphones+'-'+save.band+'-'+(save.companionHat&&!this.onlineWorld?.active);if(this.textures.exists(key))return key;const source=this.textures.get(base).getSourceImage() as HTMLCanvasElement,c=document.createElement('canvas');c.width=source.width;c.height=source.height;const g=c.getContext('2d')!;g.imageSmoothingEnabled=false;for(const [who,left,right]of [['girl',0,c.width*.53],['boy',c.width*.53,c.width]] as const){g.save();g.beginPath();g.rect(left,0,right-left,c.height);g.clip();g.drawImage(this.textures.get(this.appearanceKey(who,base)).getSourceImage() as HTMLCanvasElement,0,0);g.restore()}for(const [who,left,right] of [['girl',0,c.width*.53],['boy',c.width*.53,c.width]] as const){
+   const anchor=(hairAnchors as Record<string,number[]>)[base+'-'+who];
+   if(save.appearance[who].hair&&anchor)this.replaceHair(g,who,anchor[4],anchor,[left,right]);
+  }const girlHead={x:c.width*(!holding&&index<4&&index%4>0?.34:.25),top:0,width:c.width*.43,height:c.height*.52,facing:holding?Math.floor(index/4):0};if(save.companionHat&&!this.onlineWorld?.active)drawHat(g,this.textures.get('rack-navy').getSourceImage() as HTMLImageElement,{x:c.width*.74,top:0,width:c.width*.4,height:c.height*.49,facing:girlHead.facing});if(save.hat)drawHat(g,this.textures.get('wear-hat').getSourceImage() as HTMLCanvasElement,girlHead);if(save.earphones)drawEarphones(g,this.textures.get('gift-earphones').getSourceImage() as HTMLCanvasElement,girlHead);if(save.band){g.fillStyle='#e7a7c2';g.fillRect(c.width*.42,c.height*.65,Math.max(2,c.width*.025),Math.max(2,c.height*.025))}this.textures.addCanvas(key,c);return key}
  private updateAction(dt:number){
   if(!this.pairReady){this.buddy.update(this.boy,dt,this.walkable);return}
   this.actionTime+=dt;

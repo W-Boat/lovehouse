@@ -6,10 +6,10 @@ const secret=()=>randomBytes(18).toString('base64url');
 const clean=(v,n)=>typeof v==='string'?v.replace(/[\u0000-\u001f]/g,'').trim().slice(0,n):'';
 export class RoomService{
  constructor({now=Date.now,reconnectMs=120000,maxRooms=1000}={}){this.now=now;this.reconnectMs=reconnectMs;this.maxRooms=maxRooms;this.rooms=new Map();this.clients=new Map()}
- snapshot(r){return{roomId:r.id,serverNow:this.now(),affection:r.affection??null,taoyuan:r.taoyuan,quiz:publicQuiz(r.quiz),players:[...r.players.values()].map(({token,send,expires,rates,...p})=>p),document:r.document,game:r.game,following:r.following,followInvitation:r.followInvitation}}
+ snapshot(r){return{roomId:r.id,serverNow:this.now(),cinema:r.cinema??null,affection:r.affection??null,taoyuan:r.taoyuan,quiz:publicQuiz(r.quiz),players:[...r.players.values()].map(({token,send,expires,rates,...p})=>p),document:r.document,game:r.game,following:r.following,followInvitation:r.followInvitation}}
  broadcast(r){for(const p of r.players.values())if(p.connected)p.send({type:'snapshot',snapshot:this.snapshot(r)})}
  event(r,p,event,data){for(const member of r.players.values())if(member.connected)member.send({type:'event',event,playerId:p.id,data})}
- disconnect(client){const entry=this.clients.get(client);if(!entry)return;const{r,p}=entry;this.clients.delete(client);p.connected=false;r.affection=null;p.expires=this.now()+this.reconnectMs;r.following=false;r.followInvitation=false;this.broadcast(r)}
+ disconnect(client){const entry=this.clients.get(client);if(!entry)return;const{r,p}=entry;this.clients.delete(client);p.connected=false;r.affection=null;if(p.role==='host')r.cinema=null;p.expires=this.now()+this.reconnectMs;r.following=false;r.followInvitation=false;this.broadcast(r)}
  sweep(){for(const [id,r]of this.rooms){for(const [pid,p]of r.players)if(!p.connected&&p.expires<=this.now()){r.players.delete(pid);r.quiz=null;}if(!r.players.size)this.rooms.delete(id);else this.broadcast(r)}}
  receive(client,message,send){
  const fail=(code,message)=>send({type:'error',code,message,requestId:typeof message?.requestId==='string'?message.requestId.slice(0,64):undefined});
@@ -47,8 +47,21 @@ export class RoomService{
  case 'affection-answer':{const a=r.affection;if(!a||a.id!==m.id||a.from===p.id||a.phase!=='invited'||typeof m.accept!=='boolean')return fail('AFFECTION','邀请已失效');if(!m.accept){r.affection=null;break}a.phase='approaching';a.expires=this.now()+30000;break}
  case 'affection-ready':{const a=r.affection;if(!a||a.id!==m.id||a.phase!=='approaching')return fail('AFFECTION','互动已失效');const target=a[p.role];if(p.position.zone!==a.zone||Math.hypot(p.position.x-target.x,p.position.y-target.y)>6)return fail('AFFECTION','请先走到约定位置');if(!a.ready.includes(p.id))a.ready.push(p.id);if(a.ready.length===2){a.phase='playing';if(a.kind==='hand')r.following=true;a.startedAt=this.now()+250;a.expires=this.now()+(a.kind==='hug'?5000:600000)}break}
  case 'affection-cancel':if(r.affection?.id===m.id){if(r.affection.kind==='hand')r.following=false;r.affection=null;}break;
- case 'leave':r.affection=null;r.quiz=null;this.clients.delete(client);r.players.delete(p.id);r.following=false;r.followInvitation=false;if(!r.players.size)this.rooms.delete(r.id);else this.broadcast(r);return;
- case 'move':if(!rate('move',30))return;if(!zones.has(m.zone)||![m.x,m.y,m.direction].every(Number.isFinite)||m.x<0||m.x>640||m.y<0||m.y>427||!Number.isInteger(m.direction)||m.direction<0||m.direction>3)return fail('POSITION','位置无效');if(r.affection){const a=r.affection;if(a.kind==='hand'&&a.phase==='playing'&&r.following){if(p.role==='host'&&a.zone!==m.zone){a.zone=m.zone;this.broadcast(r)}}else if(m.zone!==a.zone||(a.phase==='playing'&&Math.hypot(m.x-a[p.role].x,m.y-a[p.role].y)>8)){r.affection=null;this.broadcast(r)}}p.position={zone:m.zone,x:m.x,y:m.y,direction:m.direction,pose:clean(m.pose,32)};this.event(r,p,'move',p.position);return;
+ case 'leave':r.affection=null;if(p.role==='host')r.cinema=null;r.quiz=null;this.clients.delete(client);r.players.delete(p.id);r.following=false;r.followInvitation=false;if(!r.players.size)this.rooms.delete(r.id);else this.broadcast(r);return;
+ case 'move':if(!rate('move',30))return;if(!zones.has(m.zone)||![m.x,m.y,m.direction].every(Number.isFinite)||m.x<0||m.x>640||m.y<0||m.y>427||!Number.isInteger(m.direction)||m.direction<0||m.direction>3)return fail('POSITION','位置无效');if(r.affection){const a=r.affection;if(a.kind==='hand'&&a.phase==='playing'&&r.following){if(p.role==='host'&&a.zone!==m.zone){a.zone=m.zone;this.broadcast(r)}}else if(m.zone!==a.zone||(a.phase==='playing'&&Math.hypot(m.x-a[p.role].x,m.y-a[p.role].y)>8)){r.affection=null;this.broadcast(r)}}p.position={zone:m.zone,x:m.x,y:m.y,direction:m.direction,pose:clean(m.pose,32)};this.event(r,p,'move',p.position);if(r.cinema&&p.role==='host'&&m.zone!=='cinema'){r.cinema=null;this.broadcast(r)}return;
+ case 'cinema-start':{
+  if(p.role!=='host'||p.position.zone!=='cinema'||![...r.players.values()].some(member=>member.role==='guest'&&member.connected&&member.position.zone==='cinema'))return fail('CINEMA','两人到电影院后，由房主开始放映');
+  if(!['meet','travel','birthday'].includes(m.film)||!rate('cinema',8))return fail('CINEMA','无法开始放映');
+  r.cinema={id:secret(),film:m.film,position:0,paused:false,anchor:this.now()+600};
+  break;
+ }
+ case 'cinema-control':{
+  if(p.role!=='host'||!r.cinema||m.id!==r.cinema.id||!rate('cinema',8))return fail('CINEMA','只有房主可以控制放映');
+  if(m.stop===true){r.cinema=null;break}
+  if(!Number.isFinite(m.position)||m.position<0||m.position>72||typeof m.paused!=='boolean')return fail('CINEMA','播放进度无效');
+  r.cinema={...r.cinema,position:m.position,paused:m.paused,anchor:this.now()};
+  break;
+ }
  case 'chat':{const text=clean(m.text,500);if(!text)return fail('TEXT','消息不能为空');if(!rate('chat',5,10000))return fail('RATE_LIMIT','说慢一点');this.event(r,p,'chat',{text,at:this.now()});return}
  case 'follow-stop':if(r.affection?.kind==='hand')r.affection=null;r.followInvitation=false;r.following=false;break;
  case 'follow-invite':if(p.role!=='host')return fail('FORBIDDEN','仅主玩家可以邀请跟随');r.affection=null;r.followInvitation=true;r.following=false;break;
