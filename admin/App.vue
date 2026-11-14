@@ -1,4 +1,6 @@
 <script setup>
+import {sakuraTheme} from './sakura-theme.js';
+import {NConfigProvider} from 'naive-ui';
 import {configurationChanges} from "./configuration-changes.js";
 import ResourceLink from "./ResourceLink.vue";
 import IconButton from './IconButton.vue';
@@ -377,7 +379,8 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
 </script>
 
 <template>
-<main v-if="!token" class="publisher-login">
+<n-config-provider v-if="!token" :theme-overrides="sakuraTheme">
+<main class="publisher-login">
  <n-card title="生日小屋 · 内容发布后台" class="login-card">
   <n-form @submit.prevent="login" label-placement="top">
    <n-form-item label="账号"><n-input v-model:value="username" :input-props="{autocomplete:'username'}"/></n-form-item>
@@ -387,6 +390,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   </n-form>
  </n-card>
 </main>
+</n-config-provider>
 <AdminLayout v-else :groups="sectionGroups" :labels="labels" :selected="selected" @select="choose">
  <template #header>
   <div class="identity"><div><strong>{{labels[selected]}}</strong><small>内容发布后台</small></div></div>

@@ -1,5 +1,6 @@
 <!-- Adapted from vue-naive-admin 2.x normal layout. Copyright (c) 2023 Ronnie Zhang. -->
 <script setup>
+import {sakuraTheme as themeOverrides} from './sakura-theme.js';
 import {computed,h,ref,onMounted,onBeforeUnmount} from 'vue';
 import {NConfigProvider,NLayout,NLayoutSider,NScrollbar,NMenu,NIcon,NDrawer,NDrawerContent,zhCN,dateZhCN} from 'naive-ui';
 
@@ -40,7 +41,6 @@ function toggle(){if(mobile.value)drawer.value=!drawer.value;else collapsed.valu
 const options=computed(()=>props.groups.map(([label,ids])=>({
  type:'group',label,key:label,children:ids.map(key=>({key,label:props.labels[key],icon:menuIcon(key)})),
 })));
-const themeOverrides={common:{primaryColor:'#28624e',primaryColorHover:'#397d64',primaryColorPressed:'#1b4a3a',borderRadius:'7px'}};
 </script>
 
 <template>

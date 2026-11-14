@@ -1,5 +1,5 @@
 <script setup>
-import {NButton,NCard,NEmpty,NForm,NInput,NProgress,NTabPane,NTabs,NTag} from 'naive-ui';
+import {NButton,NCard,NEmpty,NForm,NInput,NProgress,NSwitch,NTabPane,NTabs,NTag} from 'naive-ui';
 import {PublisherAlert,PublisherColumn,PublisherDialog,PublisherFormItem,PublisherOption,PublisherSelect,PublisherTable} from './publisher-components.js';
 import {computed, ref} from 'vue';
 import AndroidUpdate from './AndroidUpdate.vue';
@@ -30,7 +30,8 @@ const historyLoaded=ref(false);
 const historyError=ref('');
 const publishing=ref(false);
 const switching=ref(false);
-const progress=ref(0);
+const progress=ref(0),phase=ref(''),uploaded=ref(0);
+const bucketAvailable=ref(false),direct=ref(false);
 const notice=ref(null);
 const pendingPublish=ref(null);
 const pendingSwitch=ref(null);
@@ -98,6 +99,9 @@ function chooseFile(event){
  const raw=event.target.files?.[0];event.target.value='';if(!raw)return;
  files.value=[{raw}];checkFile({raw});
 }
+function suggestedVersion(name){
+ return name.match(/(?:^|[-_])([a-f0-9]{7,40}|v?\d+\.\d+(?:\.\d+)?(?:[-_][a-z0-9.-]+)?)\.(?:apk|zip)$/i)?.[1]??'';
+}
 function checkFile(upload){
  const candidate=upload.raw;
  if(!candidate)return;
@@ -107,6 +111,7 @@ function checkFile(upload){
   report('error','安装包超过 600 MiB。');
  }else{
   notice.value=null;
+  if(!version.value.trim())version.value=suggestedVersion(candidate.name);
   return;
  }
  files.value=[];
@@ -114,14 +119,17 @@ function checkFile(upload){
 
 function stagePublish(){
  notice.value=null;
+ const normalized=version.value.normalize('NFKC').trim();
  if(!props.token.trim()){
   report('error','请先填写发布令牌。');
- }else if(!versionPattern.test(version.value)){
+ }else if(!normalized){
+  report('error','请输入安装包版本号，例如 9b1d5d95b526 或 v2.1.0。');
+ }else if(!versionPattern.test(normalized)){
   report('error','版本号应为 1 至 64 个字符，以字母或数字开头，可包含点、下划线和连字符。');
  }else if(!file.value){
   report('error','请选择要发布的安装包。');
  }else{
-  pendingPublish.value={platform:platform.value,version:version.value,file:file.value};
+  pendingPublish.value={platform:platform.value,version:normalized,file:file.value,direct:direct.value&&bucketAvailable.value};
  }
 }
 
@@ -134,23 +142,8 @@ async function publish(){
  publishing.value=true;
  progress.value=0;
  try{
-  const query=new URLSearchParams({platform:draft.platform,version:draft.version});
-  const entry=await new Promise((resolve,reject)=>{
-   const request=new XMLHttpRequest();
-   request.open('POST',base+'api/packages?'+query);
-   request.setRequestHeader('Authorization','Bearer '+token);
-   request.responseType='json';
-   request.timeout=30*60*1000;
-   request.upload.onprogress=event=>{
-    if(event.lengthComputable)progress.value=Math.min(99,Math.floor(event.loaded*100/event.total));
-   };
-   request.onload=()=>request.status===201&&request.response
-    ?resolve(request.response)
-    :reject(Error(request.response?.error??'上传失败（HTTP '+request.status+'）'));
-   request.onerror=()=>reject(Error('上传连接中断'));
-   request.ontimeout=()=>reject(Error('上传超时'));
-   request.send(draft.file);
-  });
+  uploaded.value=0;
+  const entry=draft.direct?await publishDirect(draft,token):await publishThroughServer(draft,token);
   progress.value=100;
   catalog.value={...catalog.value,[entry.platform]:entry};
   files.value=[];
@@ -163,6 +156,69 @@ async function publish(){
  }finally{
   publishing.value=false;
  }
+}
+
+function uploadFile({url,method,file,headers,direct}){
+ phase.value=direct?'正在直传储存桶':'正在上传到发布服务器';
+ return new Promise((resolve,reject)=>{
+  const xhr=new XMLHttpRequest();
+  xhr.open(method,url);
+  xhr.timeout=30*60*1000;
+  if(!direct)xhr.responseType='json';
+  for(const [key,value] of Object.entries(headers))xhr.setRequestHeader(key,value);
+  xhr.upload.onprogress=event=>{
+   uploaded.value=event.loaded;
+   progress.value=Math.min(100,Math.floor(event.loaded*100/file.size));
+  };
+  xhr.upload.onload=()=>{
+   uploaded.value=file.size;
+   progress.value=100;
+   phase.value=direct?'等待储存桶确认':'服务器正在校验并存储';
+  };
+  xhr.onload=()=>{
+   if(direct?xhr.status>=200&&xhr.status<300:xhr.status===201&&xhr.response)resolve(xhr.response);
+   else reject(Error(direct?'储存桶拒绝上传（HTTP '+xhr.status+'）':xhr.response?.error??'上传失败（HTTP '+xhr.status+'）'));
+  };
+  xhr.onerror=()=>reject(Error(direct?'无法直传储存桶。请检查网络和桶的 CORS，或选择经发布服务器上传。':'上传连接中断'));
+  xhr.ontimeout=()=>reject(Error('上传超时'));
+  xhr.send(file);
+ });
+}
+
+function publishThroughServer(draft,token){
+ const query=new URLSearchParams({platform:draft.platform,version:draft.version});
+ return uploadFile({url:base+'api/packages?'+query,method:'POST',file:draft.file,headers:{Authorization:'Bearer '+token}});
+}
+
+async function publishDirect(draft,token){
+ phase.value='正在计算文件 SHA-256';
+ const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',await draft.file.arrayBuffer()));
+ const sha256=Array.from(digest,value=>value.toString(16).padStart(2,'0')).join('');
+ const bytes=draft.file.size;
+ const body=JSON.stringify({platform:draft.platform,version:draft.version,sha256,bytes});
+ async function request(step){
+  const response=await fetch(base+'api/packages/direct/'+step,{
+   method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body,
+   cache:'no-store',signal:AbortSignal.timeout(step==='finish'?300000:30000),
+  });
+  const data=await response.json();
+  if(!response.ok)throw Error(data.error||'储存桶请求失败');
+  return data;
+ }
+ phase.value='正在请求上传链接';
+ const prepared=await request('prepare');
+ if(!prepared.exists){
+  const url=new URL(prepared.url);
+  if(url.protocol!=='https:')throw Error('储存桶上传地址必须使用 HTTPS');
+  await uploadFile({url:url.href,method:'PUT',file:draft.file,direct:true,
+   headers:{'Content-Type':prepared.contentType,'x-amz-checksum-sha256':btoa(String.fromCharCode(...digest))}});
+ }
+ progress.value=100;
+ uploaded.value=bytes;
+ phase.value='服务器正在从桶读回并校验';
+ const entry=await request('finish');
+ if(entry.sha256!==sha256||entry.bytes!==bytes)throw Error('发布后的安装包校验失败');
+ return entry;
 }
 
 function stageSwitch(row){
@@ -202,6 +258,9 @@ async function switchRelease(){
 }
 
 void readCatalog();
+void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+props.token.trim()},cache:'no-store'})
+ .then(async response=>{if(response.ok)bucketAvailable.value=(await response.json()).mode==='s3'})
+ .catch(()=>{});
 </script>
 
 <template>
@@ -225,7 +284,7 @@ void readCatalog();
          </publisher-select>
         </publisher-form-item>
         <publisher-form-item label="版本号">
-         <n-input v-model.trim="version" aria-label="安装包版本号" placeholder="例如 v2.1.0" maxlength="64" autocomplete="off"/>
+         <n-input v-model:value="version" aria-label="安装包版本号" placeholder="例如 9b1d5d95b526" maxlength="64" autocomplete="off"/>
         </publisher-form-item>
        </div>
        <publisher-form-item label="安装文件">
@@ -234,12 +293,17 @@ void readCatalog();
          </label><small>{{selectedPlatform.format}} · 最大 600 MiB</small>
          <n-button v-if="file" size="small" :disabled="busy" @click="files=[]">移除 {{file.name}}</n-button>
        </publisher-form-item>
+       <publisher-form-item v-if="bucketAvailable" label="上传路径">
+        <n-switch v-model:value="direct" :disabled="busy"/>
+        <span style="margin-left:8px">{{direct?'直传储存桶':'经发布服务器上传'}}</span>
+       </publisher-form-item>
        <div class="form-footer">
         <span v-if="file">{{readableBytes(file.size)}}</span>
         <n-button type="primary" attr-type="submit" :loading="publishing" :disabled="busy">审核并发布</n-button>
        </div>
        <div v-if="publishing" class="upload-progress" role="status">
-        <span>{{progress===99?'正在校验安装包':'正在上传安装包'}}</span>
+        <span>{{phase}}
+        <template v-if="file && (uploaded || phase.startsWith('正在上传') || phase==='正在直传储存桶')"> · {{readableBytes(uploaded)}} / {{readableBytes(file.size)}} · {{progress}}%</template></span>
         <n-progress type="line" :percentage="progress"/>
        </div>
       </n-form>
@@ -327,7 +391,7 @@ void readCatalog();
   <template v-if="pendingPublish">
    <p class="dialog-file">{{pendingPublish.file.name}}</p>
    <p class="metadata">{{platforms[pendingPublish.platform].name}} · {{pendingPublish.version}} · {{readableBytes(pendingPublish.file.size)}}</p>
-   <p>上传成功后，该平台的下载入口会切换到此版本。</p>
+   <p>{{pendingPublish.direct?'直传储存桶':'经发布服务器上传'}}。校验成功后更新下载入口。</p>
   </template>
   <template #footer>
    <n-button @click="pendingPublish=null">取消</n-button>
