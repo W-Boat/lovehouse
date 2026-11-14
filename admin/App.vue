@@ -98,6 +98,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    const session=token.value;token.value='';authState.value='idle';
    await fetch(import.meta.env.BASE_URL+'api/logout',{method:'POST',headers:{Authorization:'Bearer '+session}}).catch(()=>{});
   }
+  const resourceVersion=ref(null);
   const publicRevision=ref(''), publicPackages=ref({}), authState=ref('idle');
   const draftRevision=ref(null);
   const draftBase=ref(null),hasEdited=ref(false);
@@ -361,9 +362,10 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     if(!response.ok)throw Error('无法读取发布状态');
     return response.json();
    };
-   const [content,packages]=await Promise.allSettled([read('content.json?features=animated-scenes-v1'),read('packages.json?view=full')]);
+   const [content,packages,resources]=await Promise.allSettled([read('content.json?features=animated-scenes-v1'),read('packages.json?view=full'),read('android-update/status.json')]);
    if(content.status==='fulfilled')publicRevision.value=content.value.revision??'';
    if(packages.status==='fulfilled')publicPackages.value=packages.value;
+   if(resources.status==='fulfilled')resourceVersion.value=resources.value.active?.version??null;
   }
   onMounted(refreshPublic);
   async function pruneStoredDraft(live,controller){
@@ -513,6 +515,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    <span>CLI <b>{{publisherBuild.cli}}</b></span>
    <span>Skill <b>{{publisherBuild.skill}}</b></span>
    <span>内容 <b>{{publicRevision.slice(0,12)||'—'}}</b></span>
+   <span>资源热更新 <b>{{resourceVersion??'—'}}</b></span>
    <span>Android <b>{{publicPackages.android?.version||'—'}}</b></span>
    <span>Windows <b>{{publicPackages.windows?.version||'—'}}</b></span>
    <span v-if="storageMode">存储 <b>{{storageMode==='s3'?'对象存储':'本地磁盘'}}</b></span>

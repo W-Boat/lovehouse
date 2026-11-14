@@ -349,7 +349,7 @@ void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+props.token.trim
           <summary>SHA-256</summary>
           <code>{{catalog[key].sha256}}</code>
          </details>
-         <n-button tag="a" :href="catalog[key].path" size="small" plain>下载完整底包</n-button>
+         <n-button tag="a" :href="catalog[key].path" size="small" plain>{{catalog[key].baseVersion?'下载薄包':'下载安装包'}}</n-button>
          <div v-if="catalog[key].thinPackage" class="metadata">
           <n-tag type="info" size="small">关联薄包</n-tag>
           <strong v-if="catalog[key].thinPackage.title">{{catalog[key].thinPackage.title}}</strong>
@@ -400,14 +400,14 @@ void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+props.token.trim
         </div>
         <p class="file-name">{{row.name}}</p>
         <p class="metadata">{{readableBytes(row.bytes)}} · {{readableDate(row.publishedAt)}}</p>
-        <n-button v-if="!row.current&&!row.baseVersion" plain :disabled="busy" @click="stageSwitch(row)">设为当前版本</n-button>
+        <n-button v-if="!row.current" plain :disabled="busy" @click="stageSwitch(row)">设为当前版本</n-button>
        </article>
       </div>
      </template>
     </n-card>
    </div>
   </n-tab-pane>
-  <n-tab-pane name="resources" tab="Android 增量资源" lazy>
+  <n-tab-pane name="resources" tab="资源热更新" lazy>
    <AndroidUpdate :token="token" @updated="entry=>emit('updated',{kind:'android-resource',entry})"/>
   </n-tab-pane>
  </n-tabs>

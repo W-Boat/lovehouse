@@ -71,6 +71,7 @@ const help={
   'upload FILE':'上传图片、音频、HTML、JSON 或 ZIP 文件','asset-delete ID':'删除未引用素材','asset-refs ID':'查素材引用',
   'rollback REVISION --if-match CURRENT_REVISION':'回滚历史配置',
   'package-upload android|windows VERSION FILE':'流式上传安装包',
+  'update-releases':'查看资源热更新当前版本与历史',
   'package-select INPUT.json --if-match CURRENT_PATH':'选择历史安装包，INPUT 含 platform/path',
   'android-publish DIRECTORY':'上传签名清单及缺失哈希资源，需 Python',
   'request GET|POST|DELETE API_PATH [--file JSON_FILE|--binary FILE]':'覆盖全部发布后台接口。账号登录会话可用 LOVEHOUSE_ADMIN_TOKEN 传入',
@@ -101,6 +102,7 @@ try{
   const current=await request('GET','admin/api/opening');
   result=await request('POST','admin/api/opening',JSON.stringify({current,next:await getJson(args[0])}),{'Content-Type':'application/json'});
  }
+ else if(command==='update-releases'){requireArgs(0);result=await request('GET','admin/api/android-update/releases')}
  else if(command==='update-manifest'){requireArgs(0);result=await request('GET','android-update/update.json')}
  else if(command==='history-show'){requireArgs(1);result=await request('GET','admin/api/history/'+encodeURIComponent(args[0]))}
  else if(command==='check'){requireArgs(1);result={revision:prepareSnapshot(await getJson(args[0])).revision}}

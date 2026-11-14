@@ -1,7 +1,7 @@
 <script setup>
 import {NButton,NCard,NProgress,NStep,NSteps,NTag} from 'naive-ui';
 import {PublisherAlert,PublisherDialog} from './publisher-components.js';
-import {computed, ref} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 
 const props=defineProps({token:{type:String,required:true}});
 const emit=defineEmits(['updated']);
@@ -16,6 +16,27 @@ const confirm=ref(false);
 const phase=ref(0);
 const sentFiles=ref(0);
 const notice=ref(null);
+const active=ref(null),history=ref([]),refreshing=ref(false),loadError=ref('');
+async function readReleases(){
+ refreshing.value=true;loadError.value='';
+ try{
+  const response=await fetch(base+'releases',{headers:{Authorization:'Bearer '+props.token},cache:'no-store'});
+  if(!response.ok)throw Error('无法读取资源热更新版本。');
+  const data=await response.json();active.value=data.active;history.value=data.history;
+ }catch(error){loadError.value=error.message}
+ finally{refreshing.value=false}
+}
+onMounted(readReleases);
+async function downloadManifest(version){
+ try{
+  const response=await fetch(base+'releases/'+version,{headers:{Authorization:'Bearer '+props.token},cache:'no-store'});
+  if(!response.ok)throw Error('无法读取签名清单。');
+  const href=URL.createObjectURL(await response.blob());
+  const link=document.createElement('a');link.href=href;link.download='update-'+version+'.json';link.click();
+  setTimeout(()=>URL.revokeObjectURL(href),1000);
+ }catch(error){loadError.value=error.message}
+}
+
 const percentage=computed(()=>{
  if(phase.value===3)return 100;
  if(!draft.value)return 0;
@@ -108,8 +129,9 @@ async function publish(){
   const entry=await send('publish',release.manifest);
   phase.value=3;
   draft.value=null;
-  notice.value={type:'success',text:'已发布 Android 资源版本 '+entry.version};
+  notice.value={type:'success',text:'已发布资源热更新版本 '+entry.version};
   emit('updated',entry);
+  await readReleases();
  }catch(error){
   notice.value={type:'error',text:error.message};
  }finally{
@@ -122,12 +144,21 @@ async function publish(){
  <n-card shadow="never" class="resource-card">
   <template #header>
    <div class="resource-heading">
-    <h2>发布 Android 增量资源</h2>
-    <p>从 GitHub Actions 下载并解压 <code>lovehouse-content-update</code>。发布后，支持热更新的 Android 客户端在下次启动时检查资源。</p>
+    <h2>发布资源热更新</h2>
+    <p>从 GitHub Actions 下载并解压 <code>lovehouse-content-update</code>。发布后，支持热更新的安卓和 Windows 客户端在下次启动时检查资源。</p>
    </div>
   </template>
 
   <div class="resource-content">
+   <div class="folder-choice">
+    <div><strong>当前资源版本 {{active?.version??'—'}}</strong>
+    <p v-if="active">{{active.files}} 个文件 · {{readableBytes(active.bytes)}} · {{new Date(active.publishedAt).toLocaleString('zh-CN')}}</p><n-button v-if="active" size="small" text @click="downloadManifest(active.version)">导出签名清单</n-button></div>
+    <n-button plain :loading="refreshing" @click="readReleases">刷新版本</n-button>
+   </div>
+   <publisher-alert v-if="loadError" :title="loadError" type="error" :closable="false"/>
+   <details v-if="history.length"><summary>历史资源版本（{{history.length}}）</summary>
+    <p v-for="entry in history" :key="entry.version">{{entry.version}} · {{entry.files}} 个文件 · {{new Date(entry.publishedAt).toLocaleString('zh-CN')}} <n-button size="small" text @click="downloadManifest(entry.version)">导出签名清单</n-button></p>
+   </details>
    <n-steps class="resource-steps" :current="phase+1" :status="notice?.type==='error' && phase>0?'error':'process'" finish-status="success" simple>
     <n-step title="检查目录"/>
     <n-step title="上传资源"/>

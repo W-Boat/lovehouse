@@ -199,10 +199,10 @@ async function packageFor(platform:Platform){
  }finally{window.clearTimeout(timeout)}
  if(!entry||typeof entry.version!=='string')return;
  const native=window as Window&{__nativeBase?:string;__nativeRevision?:string};
- const shell=entry.thinPackage;
+ const shell=entry.baseVersion?entry:entry.thinPackage;
  const installedShell=latest?.nativeRevision||native.__nativeRevision;
  const installedBase=latest?.nativeBase||native.__nativeBase;
- const useShell=platform===currentPlatform()&&shell?.baseVersion===entry.version&&
+ const useShell=Boolean(entry.baseVersion)||platform===currentPlatform()&&shell?.baseVersion===entry.version&&
   (installedBase===entry.version||!installedBase&&entry.version==='9b1d5d95b526');
  const selected=useShell?shell:entry;
  if(typeof selected.path!=='string'||typeof selected.version!=='string'||!/^[-.\w]{1,64}$/.test(selected.version))return;

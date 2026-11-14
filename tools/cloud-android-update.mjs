@@ -1,6 +1,6 @@
 import {createHash,randomUUID,verify,X509Certificate} from 'node:crypto';
 import {createReadStream,createWriteStream} from 'node:fs';
-import {mkdir,readFile,rename,rm,stat,writeFile} from 'node:fs/promises';
+import {mkdir,readFile,readdir,rename,rm,stat,utimes,writeFile} from 'node:fs/promises';
 import {createBlobStore} from './cloud-blob-storage.mjs';
 import {join} from 'node:path';
 import {Transform} from 'node:stream';
@@ -71,6 +71,30 @@ export function createAndroidUpdateStore(directory,bucket){
      !data.files?.['index.html']||Object.keys(data.files).length>4096)throw Error('清单版本或资源列表无效');
   return data;
  }
+ async function readRelease(file){
+  try{const info=await stat(file);return {data:payload(JSON.parse(await readFile(file,'utf8'))),publishedAt:info.mtime.toISOString()}}
+  catch(error){if(error.code!=='ENOENT')throw error}
+ }
+ const historyDirectory=join(directory,'history');
+ const describe=({data,publishedAt})=>({
+  version:data.version,publishedAt,files:Object.keys(data.files).length,
+  bytes:Object.values(data.files).reduce((sum,file)=>sum+file.bytes,0),
+ });
+ async function releases(includeHistory=false){
+  const live=await readRelease(current);
+  const active=live?describe(live):null;
+  if(!includeHistory)return {active};
+  const names=await readdir(historyDirectory).catch(error=>{if(error.code==='ENOENT')return [];throw error});
+  const archived=await Promise.all(names.filter(name=>/^[0-9]+\.json$/.test(name)).map(name=>readRelease(join(historyDirectory,name))));
+  const records=archived.filter(Boolean).map(describe).filter(entry=>entry.version!==active?.version);
+  return {active,history:records.sort((a,b)=>b.version-a.version)};
+ }
+ async function exportRelease(version){
+  const live=await readRelease(current);
+  const file=live?.data.version===version?current:join(historyDirectory,version+'.json');
+  const raw=await readFile(file,'utf8').catch(error=>{if(error.code!=='ENOENT')throw error});
+  if(raw&&payload(JSON.parse(raw)).version===version)return raw;
+ }
  async function publish(request,serialize){
   const chunks=[];
   let bytes=0;
@@ -95,7 +119,18 @@ export function createAndroidUpdateStore(directory,bucket){
    catch(error){if(error.code!=='ENOENT')throw error}
    if(old&&old.version>=data.version)throw Error('资源版本必须高于当前版本');
    const temporary=current+'.'+randomUUID()+'.part';
-   try{await writeFile(temporary,JSON.stringify(envelope),{flag:'wx'});await rename(temporary,current)}
+   try{
+    if(old){
+     await mkdir(historyDirectory,{recursive:true});
+     const published=await readFile(current);
+     const historical=join(historyDirectory,old.version+'.json');
+     await writeFile(historical,published,{flag:'wx'}).catch(error=>{if(error.code!=='EEXIST')throw error});
+     const {mtime,atime}=await stat(current);
+     await utimes(historical,atime,mtime);
+    }
+    await writeFile(temporary,JSON.stringify(envelope),{flag:'wx'});
+    await rename(temporary,current);
+   }
    finally{await rm(temporary,{force:true})}
    return data.version;
   });
@@ -122,5 +157,5 @@ export function createAndroidUpdateStore(directory,bucket){
   else response.end();
   return true;
  }
- return {saveBlob,publish,serve};
+ return {saveBlob,publish,serve,releases,exportRelease};
 }

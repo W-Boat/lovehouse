@@ -96,7 +96,10 @@ test('a thin package is associated with its platform base without replacing it',
   assert.equal(released.android.version,'base1');
   assert.equal(released.android.thinPackage.version,'shell1');
   assert.equal(released.android.thinPackage.baseVersion,'base1');
-  assert.deepEqual(await store.select('android',released.android.thinPackage.path,released.android.path),{});
+  await store.select('android',released.android.thinPackage.path,released.android.path);
+  assert.equal((await store.catalog()).android.version,'shell1');
+  assert.equal((await store.history()).find(row=>row.version==='base1')?.current,false);
+  assert.equal((await store.select('android',released.android.path,released.android.path)).conflict,true);
   await assert.rejects(store.direct('finish',{platform:'windows',version:'shell1',baseVersion:'base1',sha256,bytes:12,verifiedLocally:true},serialize),/关联底包/);
  }finally{await rm(directory,{recursive:true,force:true})}
 });

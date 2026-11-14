@@ -37,6 +37,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   const current=await list();
   const records=await history();
   return Object.fromEntries(Object.entries(current).map(([platform,entry])=>{
+   if(entry.baseVersion)return [platform,entry];
    const shell=records.find(row=>row.platform===platform&&row.baseVersion===entry.version);
    return [platform,shell?{...entry,thinPackage:shell}:entry];
   }));
@@ -50,10 +51,16 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   const current=await list();
   if((current[platform]?.path??null)!==expected)return {conflict:true};
   const entry=(await history()).find(row=>row.platform===platform&&row.path===path);
-  if(!entry||entry.baseVersion)return {};
+  if(!entry)return {};
   delete entry.current;
   const id=entry.sha256+'.'+formats[platform].extension;
-  if(await blobsFor(platform).size(id,join(directory,id))!==entry.bytes)return {};
+  const destination=platform==='android'&&androidBucket?androidBucket:bucket;
+  const configured=typeof destination==='function'?await destination():destination;
+  // Sign-only APK storage is verified by the uploader before a release can enter history.
+  if(!configured?.signOnly&&await blobsFor(platform).size(id,join(directory,id))!==entry.bytes)return {};
+  const prior=current[platform];
+  if(prior)await writeFile(releasePath(prior),JSON.stringify(prior));
+
   await writeCatalog({...current,[platform]:entry});
   return {entry};
  }
@@ -93,7 +100,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
      path:publicPrefix+'/packages/'+sha256+'/'+name,...(baseVersion?{baseVersion}:{}),...(title?{title}:{})};
     if(previous[platform])await writeFile(releasePath(previous[platform]),JSON.stringify(previous[platform]));
     await writeFile(releasePath(entry),JSON.stringify(entry));
-    if(!baseVersion)await writeCatalog({...previous,[platform]:entry});
+    if(!baseVersion&&!previous[platform]?.baseVersion||baseVersion&&previous[platform]?.baseVersion===baseVersion)await writeCatalog({...previous,[platform]:entry});
     return entry;
   });
  }

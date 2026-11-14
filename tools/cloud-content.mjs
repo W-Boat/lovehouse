@@ -288,6 +288,29 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   try { url = new URL(request.url,'http://localhost') }
   catch { sendJson(response,400,{error:'Invalid request URL'}); return }
   const {pathname} = url;
+  if(pathname==='/download'&&['GET','HEAD'].includes(request.method)){
+   response.writeHead(308,{Location:publicPrefix+'/download/','Cache-Control':'no-store'}).end();
+   return;
+  }
+  if(pathname.startsWith('/download/')&&['GET','HEAD'].includes(request.method)){
+   const name=pathname.slice('/download/'.length)||'index.html';
+   const staticFiles={
+    'index.html':['../download/index.html','text/html; charset=utf-8'],
+    'download.js':['../download/download.js','text/javascript; charset=utf-8'],
+    'cottage.css':['../shell-bootstrap/cottage.css','text/css; charset=utf-8'],
+    'cottage.webp':['../shell-bootstrap/cottage.webp','image/webp'],
+    'pixel.woff2':['../shell-bootstrap/pixel.woff2','font/woff2'],
+   };
+   if(!Object.hasOwn(staticFiles,name)){sendJson(response,404,{error:'Not found'});return}
+   try{
+    const [file,mime]=staticFiles[name];
+    const bytes=await readFile(new URL(file,import.meta.url));
+    response.writeHead(200,{'Content-Type':mime,'Content-Length':bytes.length,
+     'Cache-Control':name==='index.html'?'no-store':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
+    response.end(request.method==='HEAD'?undefined:bytes);
+   }catch{sendJson(response,500,{error:'Unable to load download page'})}
+   return;
+  }
   if(pathname==='/opening'&&request.method==='GET'){
    const headers={...jsonHeaders,'Access-Control-Allow-Origin':'*'};
    try{
@@ -302,6 +325,11 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   }
   if(pathname==='/announcement-claim'&&request.method==='POST'){await claimAnnouncement(request,response);return}
   if(pathname==='/statistics'&&request.method==='POST'){await stats.record(request,response);return}
+  if(pathname==='/android-update/status.json'&&request.method==='GET'){
+   try{response.writeHead(200,{...jsonHeaders,'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'}).end(JSON.stringify(await androidUpdate.releases()))}
+   catch{if(!response.headersSent)sendJson(response,500,{error:'Unable to read resource release'})}
+   return;
+  }
   if(pathname.startsWith('/android-update/')&&['GET','HEAD'].includes(request.method)){
    try{
     if(!await androidUpdate.serve(request,response,pathname.slice('/android-update/'.length)))sendJson(response,404,{error:'No update available'});
@@ -311,9 +339,10 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   if(request.method==='GET'&&pathname==='/packages.json'){
    try{
     const catalog=await packages.catalog();
-    const base=catalog.android;
-    if(url.searchParams.get('view')!=='full'&&base?.thinPackage){
-     catalog.android={...base.thinPackage,fullPackage:base};
+    if(url.searchParams.get('view')!=='full'){
+     for(const [platform,entry] of Object.entries(catalog)){
+      if(entry.thinPackage)catalog[platform]={...entry.thinPackage,fullPackage:entry};
+     }
     }
     response.writeHead(200,{...jsonHeaders,'Access-Control-Allow-Origin':'*'}).end(JSON.stringify(catalog));
    }
@@ -431,6 +460,20 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
      if(!changed){sendJson(response,403,{error:'当前密码有误或登录已过期'});return}
      sendJson(response,200,{});
     }catch{sendJson(response,500,{error:'暂时无法修改密码'})}
+    return;
+   }
+   const historicalRelease=pathname.match(/^\/admin\/api\/android-update\/releases\/([1-9][0-9]{0,9})$/);
+   if(historicalRelease&&request.method==='GET'){
+    try{
+     const manifest=await androidUpdate.exportRelease(Number(historicalRelease[1]));
+     if(!manifest){sendJson(response,404,{error:'找不到资源版本'});return}
+     response.writeHead(200,{...jsonHeaders,'Content-Disposition':'attachment; filename="update-'+historicalRelease[1]+'.json"'}).end(manifest);
+    }catch{sendJson(response,500,{error:'无法读取签名清单'})}
+    return;
+   }
+   if(pathname==='/admin/api/android-update/releases'&&request.method==='GET'){
+    try{sendJson(response,200,await androidUpdate.releases(true))}
+    catch{sendJson(response,500,{error:'无法读取资源热更新版本'})}
     return;
    }
    if(pathname.startsWith('/admin/api/android-update/')&&request.method==='POST'){
