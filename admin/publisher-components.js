@@ -19,7 +19,8 @@ export const PublisherTable=defineComponent({
     const field=node.props??{},render=node.children?.default;
     return {key:field.prop??String(index),title:field.label,width:Number(field.width)||undefined,minWidth:Number(field['min-width'])||undefined,render:render?row=>render({row}):undefined};
    });
-   return h(NDataTable,{...attrs,data:props.data,columns},{empty:()=>props.emptyText||'暂无数据'});
+   const minTableWidth=columns.reduce((sum,column)=>sum+(column.width??column.minWidth??128),0);
+   return h(NDataTable,{scrollX:minTableWidth,...attrs,data:props.data,columns},{empty:()=>props.emptyText||'暂无数据'});
   };
  },
 });
@@ -27,7 +28,7 @@ export const PublisherDialog=defineComponent({
  props:{modelValue:Boolean,title:String,width:String},
  emits:['update:modelValue','close'],
  setup(props,{emit,slots}){
-  return ()=>h(NModal,{show:props.modelValue,preset:'card',title:props.title,style:{width:props.width||'min(560px,94vw)'},'onUpdate:show':value=>{
+  return ()=>h(NModal,{show:props.modelValue,preset:'card',class:'publisher-dialog',title:props.title,style:{width:props.width||'min(560px,94vw)'},'onUpdate:show':value=>{
    emit('update:modelValue',value);if(!value)emit('close');
   }},slots);
  },

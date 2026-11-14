@@ -8,7 +8,8 @@ const Assets=defineAsyncComponent(()=>import('./Assets.vue'));
 const Packages=defineAsyncComponent(()=>import('./Packages.vue'));
 const History=defineAsyncComponent(()=>import('./History.vue'));
 const ScenePreview=defineAsyncComponent(()=>import('./ScenePreview.vue'));
-const InteractionBehavior=defineAsyncComponent(()=>import('./InteractionBehavior.vue'));
+const SceneInteractions=defineAsyncComponent(()=>import('./SceneInteractions.vue'));
+const interactionZone=ref('');
 const MusicForm=defineAsyncComponent(()=>import('./MusicForm.vue'));
 const MediaForm=defineAsyncComponent(()=>import('./MediaForm.vue'));
 import { computed, ref, watch, onBeforeUnmount, onMounted, defineAsyncComponent } from 'vue';
@@ -46,7 +47,7 @@ const structuredFields={
  interactions:[['id','互动 ID'],['zone','场景 ID'],['name','名称'],['action','按钮文案'],['response','反馈'],['x','图标 X',1],['y','图标 Y',1],['point','落脚点',2],['game','内置小游戏 ID'],['gameUrl','独立小游戏 HTTPS 地址'],['url','网页 HTTPS 地址']],
  portals:[['label','名称'],['url','网页 HTTPS 地址']],
 };
-const formSections=['texts','giftGames','musicRoom','media',...Object.keys(structuredFields)];
+const formSections=['texts','giftGames','musicRoom','media','gifts','announcement','notification','statistics',...Object.keys(structuredFields)];
 
   const statisticsColumns=[['ip','IP'],['platform','设备'],['userAgent','客户端'],['enteredAt','进入时间'],['lastSeenAt','最后在线']].map(([key,title])=>({key,title,ellipsis:{tooltip:true}}));
   const statisticsReport=ref(null);
@@ -111,6 +112,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
   async function discardDraft(){
    discardConfirm.value=false;
    if(!loaded.value)return;
+   clearTimeout(saveTimer);saveTimer=undefined;
    draft.value=JSON.parse(JSON.stringify(baseline.value));
    draftRevision.value=revision.value;hasEdited=false;draftAvailable.value=false;savedAt.value='';
    try{localStorage.removeItem(storageKey)}catch{}
@@ -300,7 +302,8 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
      draft.value=structuredClone(config);draftRevision.value=revision.value;refreshText();
     }
     loaded.value=true;authState.value='ready';
-    report('已连接发布服务器。',true);
+    report('已载入线上配置。',true);
+    void readBundled();
    }catch(error){
     if(controller.signal.aborted)return;
     authState.value='error';report(error.message);
@@ -309,7 +312,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
   watch(token,()=>{
    authController?.abort();clearTimeout(authTimer);loaded.value=false;status.value='';
    authState.value=token.value.trim()?'checking':'idle';
-   if(token.value.trim())authTimer=setTimeout(connect,450);
+   if(token.value.trim())void connect();
   },{flush:'sync'});
   function rebaseDraft(){
    try{
@@ -356,7 +359,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
    <publisher-alert v-if="status" :title="status" :type="success?'success':'error'" :closable="false" show-icon />
    <publisher-alert v-if="draftAvailable" title="发现本机未发布草稿" type="info" :closable="false"><n-button @click="restoreLocal">恢复草稿</n-button></publisher-alert>
    <small v-if="savedAt" class="draft-status">本机草稿已保存 {{savedAt}}</small>
-   <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div><div v-if="!['assets','history','packages','guide'].includes(selected)" class="actions"><label class="import">导入 JSON<input type="file" accept=".json,application/json" @change="importDraft"></label><n-button @click="exportDraft">导出草稿</n-button><n-button :disabled="!loaded" @click="discardConfirm=true">放弃草稿</n-button><n-button @click="restoreLocal(true)">恢复覆盖前草稿</n-button></div></div>
+   <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div><div v-if="!['assets','history','packages','guide'].includes(selected)" class="actions"><label class="import">导入 JSON<input type="file" accept=".json,application/json" @change="importDraft"></label><n-button @click="exportDraft">导出草稿</n-button><n-button @click="restoreLocal(true)">恢复覆盖前草稿</n-button></div></div>
    <template v-if="selected==='guide'"><Guide/></template>
    <template v-else-if="selected==='packages'">
     <Packages :token="token" @updated="refreshPublic"/>
@@ -368,14 +371,16 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
     <History :token="token" :revision="revision" @import="importHistory" @restore="connect"/>
    </template>
    <template v-else>
-   <div v-if="formSections.includes(selected)" class="actions"><n-button v-if="form && fields" @click="addRecord">新增条目</n-button><template v-else-if="form && !specialForm"><n-input v-model:value="search" clearable placeholder="搜索 ID 或内容" aria-label="搜索条目"/><n-button @click="search=''; entries.push({key:'',value:''})">新增条目</n-button></template></div>
+   <div v-if="formSections.includes(selected) && selected!=='interactions'" class="actions"><n-button v-if="form && fields" @click="addRecord">新增条目</n-button><template v-else-if="form && !specialForm"><n-input v-model:value="search" clearable placeholder="搜索 ID 或内容" aria-label="搜索条目"/><n-button @click="search=''; entries.push({key:'',value:''})">新增条目</n-button></template></div>
    <MusicForm v-if="specialForm && selected==='musicRoom'" v-model="objectValue"/>
    <MediaForm v-else-if="specialForm && selected==='media'" v-model="objectValue"/>
+   <SceneInteractions v-else-if="selected==='interactions'" v-model="records" :scenes="draft.scenes" :worlds="bundled.worlds" :initial-zone="interactionZone"/>
    <div v-else-if="form && fields" class="record-list">
     <details v-for="(record,index) in records" :key="record" class="record">
      <summary>{{ record.name || record.label || record.id || '新条目' }}</summary>
      <ScenePreview v-if="selected==='scenes'" :scene="record" @update:scene="value=>records[index]=value"/>
-     <InteractionBehavior v-if="selected==='interactions'" :model-value="record" @update:model-value="value=>records[index]=value"/>
+     <n-button v-if="selected==='scenes' && record.id && record.id!=='cloud-'" size="small" @click="interactionZone=record.id; choose('interactions')">管理此场景的互动</n-button>
+
      <div class="record-fields">
       <div v-for="[key,label,size] in fields" :key="key" class="field">
        <span>{{label}}</span>
@@ -390,7 +395,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
     </details>
     <p v-if="!records.length" class="empty">暂无条目，可新增或导入草稿。</p>
    </div>
-   <div v-else-if="form" class="entry-list">
+   <div v-else-if="form && !specialForm" class="entry-list">
     <div v-for="row in visibleEntries" :key="entries.indexOf(row)" class="entry">
      <n-input v-model:value="row.key" aria-label="稳定 ID" placeholder="稳定 ID"/>
      <n-input v-model:value="row.value" :type="selected==='texts'?'textarea':'text'" aria-label="内容" :placeholder="selected==='texts'?'文字':'HTTPS 地址'"/>
@@ -441,6 +446,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
    <div v-else-if="selected==='all'" class="config-links"><n-card v-for="[id,title,help] in sections.filter(([id])=>!['all','guide','assets','history','packages'].includes(id))" :key="id" :title="title" size="small"><p>{{help}}</p><n-button size="small" @click="choose(id)">打开{{title}}</n-button></n-card></div>
    <div class="publish"><div class="actions">
     <n-button :disabled="busy || !loaded" @click="replaceConfirm=true">载入线上配置</n-button>
+    <n-button :disabled="busy || !loaded" @click="discardConfirm=true">放弃草稿</n-button>
     <n-button v-if="conflict" @click="rebaseDraft">确认以当前版本为基准</n-button>
     <n-button :disabled="busy || !loaded" @click="request('check')">校验草稿</n-button>
     <n-button type="primary" :disabled="busy || !loaded || conflict" @click="review">发布</n-button>

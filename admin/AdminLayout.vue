@@ -26,10 +26,13 @@ const homeMarkup=homeIcon.body;
 const menuIcon=key=>()=>h(NIcon,null,{default:()=>h('svg',{viewBox:'0 0 24 24',innerHTML:(icons[key]??file).body})});
 const props=defineProps({groups:Array,labels:Object,selected:String});
 const emit=defineEmits(['select']);
+const drawerWidth=ref(280);
 const collapsed=ref(false),mobile=ref(false),drawer=ref(false);
 const media=window.matchMedia('(max-width: 760px)');
-const measure=()=>{mobile.value=media.matches;drawer.value=false};
-measure();onMounted(()=>media.addEventListener('change',measure));onBeforeUnmount(()=>media.removeEventListener('change',measure));
+const measure=()=>{mobile.value=media.matches;drawerWidth.value=Math.min(280,window.innerWidth-24);drawer.value=false};
+const resizeDrawer=()=>{drawerWidth.value=Math.min(280,window.innerWidth-24)};
+measure();onMounted(()=>{media.addEventListener('change',measure);window.addEventListener('resize',resizeDrawer)});
+onBeforeUnmount(()=>{media.removeEventListener('change',measure);window.removeEventListener('resize',resizeDrawer)});
 function select(key){drawer.value=false;emit('select',key)}
 function toggle(){if(mobile.value)drawer.value=!drawer.value;else collapsed.value=!collapsed.value}
 const options=computed(()=>props.groups.map(([label,ids])=>({
@@ -45,7 +48,7 @@ const themeOverrides={common:{primaryColor:'#28624e',primaryColorHover:'#397d64'
     <div class="naive-brand"><span class="mark" aria-hidden="true"><n-icon size="23"><svg viewBox="0 0 24 24" v-html="homeMarkup"/></n-icon></span><strong>生日小屋</strong></div>
     <n-menu :options="options" :value="selected" @update:value="select"/>
    </n-layout-sider>
-   <n-layout>
+   <n-layout class="naive-work-area">
     <header class="naive-header">
      <n-button quaternary aria-label="切换后台导航" :aria-expanded="mobile?drawer:!collapsed" @click="toggle">菜单</n-button>
      <slot name="header"/>
@@ -53,8 +56,8 @@ const themeOverrides={common:{primaryColor:'#28624e',primaryColorHover:'#397d64'
     <main class="naive-content"><slot/></main>
    </n-layout>
   </n-layout>
-  <n-drawer v-model:show="drawer" placement="left" :width="280">
-   <n-drawer-content title="生日小屋" closable><n-menu :options="options" :value="selected" @update:value="select"/></n-drawer-content>
+  <n-drawer v-model:show="drawer" placement="left" :width="drawerWidth">
+   <n-drawer-content title="生日小屋" closable :native-scrollbar="false"><n-menu :options="options" :value="selected" @update:value="select"/></n-drawer-content>
   </n-drawer>
  </n-config-provider>
 </template>
