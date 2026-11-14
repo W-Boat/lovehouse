@@ -116,7 +116,16 @@ class MetingJSElement extends HTMLElement {
       listFolded: window.innerWidth < 768 ? true : false
     }
 
-    if (!data.length) return
+    if (!Array.isArray(data) || !data.length) {
+      this.dispatchEvent(new Event('lovehouse-player-error'))
+      return
+    }
+    defaultOption.audio = data.filter(track => typeof track?.url === 'string' && /^https:\/\//i.test(track.url))
+      .map(track => ({...track, cover: track.cover || track.pic || ''}))
+    if (!defaultOption.audio.length) {
+      this.dispatchEvent(new Event('lovehouse-player-error'))
+      return
+    }
 
     let options = {
       ...defaultOption,

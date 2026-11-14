@@ -97,7 +97,7 @@ worlds.magic=newRoom('魔法世界','今天，给普通的日子施一点魔法'
 worlds.haunted=newRoom('幽灵来做客','别怕，它只是想一起过生日','haunted','magic',[
  spot('haunted-seat','幽灵家的沙发',141,159,'抱团坐一会'),spot('ghost','害羞的小幽灵',430,247,'打个招呼'),spot('portrait','偷偷眨眼的画像',211,246,'对视三秒'),spot('ghost-lights','忽明忽暗的灯',491,244,'把灯点亮'),spot('ghost-box','咯咯笑的玩具箱',530,249,'打开看看'),spot('ghost-ribbon','幽灵送的小丝带',396,320,'收下','collect','ribbon')]);
 worlds.cinema=newRoom('两个人的电影院','电影会散场，今晚可以慢慢来','cinema','memory',[
- spot('cinema-seat','双人红绒座',106,163,'坐下选片'),spot('movie','只放给你看的电影',320,153,'选择影片'),spot('popcorn','两人份爆米花',530,239,'分一半'),spot('projector','还热着的放映机',493,245,'开机'),spot('movie-note','片尾的一句话',386,315,'写片尾留言'),spot('ticket','我们的电影票根',173,310,'收藏','collect','ticket')]);
+ spot('cinema-seat','双人红绒座',106,163,'坐下看电影'),spot('movie','只放给你看的电影',320,153,'选择影片'),spot('popcorn','两人份爆米花',530,239,'分一半'),spot('projector','还热着的放映机',493,245,'开机'),spot('movie-note','片尾的一句话',386,315,'写片尾留言'),spot('ticket','我们的电影票根',173,310,'收藏','collect','ticket')]);
 worlds.ferris=newRoom('海边摩天轮','慢慢升高，也慢慢靠近','ferris','garden',[
  spot('ferris-seat','候车软椅',112,190,'靠肩等一会'),spot('ferris-ride','只属于我们的车厢',320,316,'一起乘坐'),spot('ferris-wish','最高处的小愿望',390,286,'许愿'),spot('ferris-photo','拍下一点心动',232,287,'合影'),spot('ferris-lights','游乐园的灯海',473,245,'点亮灯海'),spot('ferris-token','小小乘车纪念章',490,328,'收藏','collect','token')]);
 worlds.mars=newRoom('火星演唱会','把今晚，唱给宇宙听','mars','station',[

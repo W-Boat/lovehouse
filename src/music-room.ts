@@ -9,6 +9,7 @@ type Context={scene:Cottage;open:(html:string,kind?:string)=>void;close:()=>void
 const esc=(value:string)=>value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export function installMusicRoom(ctx:Context){
  let player:HeoPlayer|undefined,disposeEngine:(()=>void)|undefined,layer:HTMLElement|undefined,cover:HTMLImageElement|undefined,floor:HTMLElement|undefined,controls:HTMLElement|undefined;
+ let offlineFallback=false;
  let frame=0,generation=0,current=-1,last=0,angle=0,speed=0,needleUntil=0,requestPlay=false,lastVolume=-1;
  const scene=ctx.scene,bounds=new WeakMap<HTMLElement,string>();
  const setText=(node:Element|null,value:string)=>{if(node&&node.textContent!==value)node.textContent=value};
@@ -18,7 +19,16 @@ export function installMusicRoom(ctx:Context){
   if(!player){requestPlay=true;status('唱片正在准备，准备好后请点一次播放。');return}
   if(!save.music){save.music=true;persist()}
   if(!player.audio.paused){player.pause();return}
-  try{void Promise.resolve(player.play()).catch(()=>status('点一下播放键，就可以落针了。'))}catch{status('歌曲暂时无法播放，请切换离线唱片。')}
+  const active=player;
+  try{
+   // Start through the actual media element while the tap still grants playback.
+   active.play();
+   void active.audio.play().catch(error=>{
+    if(active!==player||error.name==='AbortError')return;
+    if(error.name==='NotAllowedError')status('请再点一次播放。');
+    else useOffline();
+   });
+  }catch{useOffline()}
  }
  function project(element:HTMLElement,x:number,y:number,w:number,h:number){const a=scene.project(x,y),b=scene.project(x+w,y+h),key=[a.x,a.y,b.x,b.y].join(':');if(bounds.get(element)===key)return;bounds.set(element,key);Object.assign(element.style,{left:a.x+'px',top:a.y+'px',width:(b.x-a.x)+'px',height:(b.y-a.y)+'px'})}
  function trackChanged(){
@@ -27,15 +37,19 @@ export function installMusicRoom(ctx:Context){
   cover.hidden=false;cover.src=(track.cover?preparedResource(track.cover):'')||new URL('assets/loading-cottage.webp',document.baseURI).href;cover.alt='正在播放：'+track.name;
   status(track.name+' · '+track.artist);controls!.querySelector<HTMLButtonElement>('[data-music="like"]')!.textContent=save.notes['music-favorite']===track.name?'已放进喜欢':'喜欢这首';
  }
- async function start(){
-  stop();if(scene.zone!=='musicroom')return;const mine=generation;document.body.classList.add('music-room-active');setExternalMusic(true);
+ function useOffline(){
+  if(offlineFallback){status('这张唱片无法播放，请尝试下一首。');return}
+  void start(true);
+ }
+ async function start(fallback=false){
+  stop();if(scene.zone!=='musicroom')return;offlineFallback=fallback;const mine=generation;document.body.classList.add('music-room-active');setExternalMusic(true);
   layer=document.createElement('section');layer.className='music-scene-layer';layer.setAttribute('aria-label','两个人的唱片房');
   cover=document.createElement('img');cover.className='music-cover';cover.alt='待播放的唱片封面';cover.src=new URL('assets/loading-cottage.webp',document.baseURI).href;cover.onerror=()=>{if(!cover)return;const fallback=new URL('assets/loading-cottage.webp',document.baseURI).href;if(cover.src!==fallback)cover.src=fallback;else cover.hidden=true};
   floor=document.createElement('div');floor.className='music-floor'+(save.notes['music-projection']==='soft'?' soft':'');floor.innerHTML='<span class="lyric-previous"></span><strong class="lyric-current">把喜欢的歌，放给身边的人听</strong><span class="lyric-next">走近唱片机，或点下方播放</span>';
   const disc=document.createElement('div');disc.className='music-vinyl';disc.innerHTML='<svg viewBox="-80 -80 160 160" preserveAspectRatio="none" aria-hidden="true"><g><circle r="78" fill="#1e1a20" stroke="#b98d63" stroke-width="2"/>'+[25,32,39,46,53,60,67,73].map(r=>`<circle r="${r}" fill="none" stroke="#64534c" stroke-width=".7"/>`).join('')+'<path d="M-60 -42L-30 -13M33 26L60 47" stroke="#d3b188" opacity=".35" stroke-width="12"/><circle r="22" fill="#bc7e67"/><circle r="3" fill="#f5dbab"/></g></svg>';
   const arm=document.createElement('div');arm.className='music-needle';arm.innerHTML='<svg viewBox="0 0 120 80" preserveAspectRatio="none" aria-hidden="true"><path d="M105 13L76 21L30 65" fill="none" stroke="#553c25" stroke-width="9"/><path d="M105 10L76 18L30 62" fill="none" stroke="#e4bd79" stroke-width="5"/><circle cx="105" cy="12" r="10" fill="#b99054"/><path d="M24 58L38 64L32 74L18 69Z" fill="#e6b775"/></svg>';
   controls=document.createElement('nav');controls.className='music-room-controls';controls.setAttribute('aria-label','唱片控制');
-  controls.innerHTML='<p class="music-status" role="status">唱片正在准备…</p><div><button data-music="previous" aria-label="上一首">上一首</button><button data-music="play">播放</button><button data-music="next" aria-label="下一首">下一首</button></div><div class="music-small-actions"><button data-music="list">歌单</button><button data-music="like">喜欢这首</button><button data-music="sit">坐下听</button></div>';
+  controls.innerHTML='<p class="music-status" role="status">'+(fallback?'在线音源不可用，正在准备内置唱片…':'唱片正在准备…')+'</p><div><button data-music="previous" aria-label="上一首">上一首</button><button data-music="play">播放</button><button data-music="next" aria-label="下一首">下一首</button></div><div class="music-small-actions"><button data-music="list">歌单</button><button data-music="like">喜欢这首</button><button data-music="sit">坐下听</button></div>';
   layer.append(cover,disc,arm,floor,controls);document.getElementById('game-frame')!.append(layer);
   controls.addEventListener('pointerdown',event=>event.stopPropagation());
   controls.querySelectorAll<HTMLButtonElement>('[data-music]').forEach(button=>button.onclick=()=>{
@@ -56,7 +70,7 @@ export function installMusicRoom(ctx:Context){
    }
    frame=requestAnimationFrame(paint);
   };frame=requestAnimationFrame(paint);
-  try{const cleanup=await createHeoEngine(currentConfig(),p=>{if(mine!==generation){p.destroy();return}player=p;player.volume(save.settings.musicVolume,false);player.on('listswitch',trackChanged);player.on('error',()=>status('这首暂时播不了，可以换一首或切到离线唱片。'));trackChanged();if(requestPlay){requestPlay=false;status('唱片准备好了，点播放就可以落针。')}},status);if(mine!==generation)cleanup();else disposeEngine=cleanup}catch(error){if(mine===generation)status(error instanceof Error?error.message:'唱片暂未准备好，请重新进房间试试。')}
+  try{const cleanup=await createHeoEngine(fallback?{...defaultMusicConfig(),mode:'offline'}:currentConfig(),p=>{if(mine!==generation){p.destroy();return}player=p;player.volume(save.settings.musicVolume,false);player.on('listswitch',trackChanged);player.audio.addEventListener('error',()=>{if(mine===generation)useOffline()});trackChanged();if(fallback)status('已切换内置唱片，点播放即可收听。');if(requestPlay){requestPlay=false;status('唱片准备好了，点播放就可以落针。')}},message=>{if(mine===generation){if(fallback)status(message);else useOffline()}});if(mine!==generation)cleanup();else disposeEngine=cleanup}catch(error){if(mine===generation){if(fallback)status(error instanceof Error?error.message:'唱片暂未准备好，请重新进房间试试。');else useOffline()}}
  }
  const currentConfig=()=>save.musicRoomSource==='local'?save.musicRoom:cloudMusicRoom??defaultMusicConfig();
  function playlist(){

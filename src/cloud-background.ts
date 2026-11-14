@@ -44,12 +44,12 @@ export async function loadCloudBackground(url:string,progress?:(ratio:number|nul
  const blob=new Blob(chunks,{type:mime});
  progress?.(.98);
  const image=await decode(blob);
- if(cache){
+ if(cache)void (async()=>{
   try{
    await cache.put(url,new Response(blob,{headers:{'content-type':mime}}));
    const entries=await cache.keys();
-   for(const entry of entries.slice(0,-24))await cache.delete(entry);
+   await Promise.all(entries.slice(0,-24).map(entry=>cache.delete(entry)));
   }catch{}
- }
+ })();
  return image;
 }

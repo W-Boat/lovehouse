@@ -11,13 +11,13 @@ export class CloudMotion{
  constructor(private scene:Cottage){}
  async prepare(layers:CloudLayer[]){
   const keys=new Map<string,string>();
-  try{
-   for(const definition of layers){
+  await Promise.all(layers.map(async definition=>{
+   try{
     const key='cloud-layer-'+crypto.randomUUID();
     const image=new Image();
     image.crossOrigin='anonymous';
     await new Promise<void>((resolve,reject)=>{
-     const timer=setTimeout(()=>{image.src='';reject(Error('Layer timed out'))},12000);
+     const timer=setTimeout(()=>{image.onload=null;image.onerror=null;image.src='';reject(Error('Layer timed out'))},2500);
      image.onload=()=>{clearTimeout(timer);resolve()};
      image.onerror=()=>{clearTimeout(timer);reject(Error('Layer unavailable'))};
      image.src=preparedResource(definition.src);
@@ -29,14 +29,14 @@ export class CloudMotion{
      this.scene.textures.addSpriteSheet(key,image,{frameWidth:image.width/frames.columns,frameHeight:image.height/frames.rows});
     }else this.scene.textures.addImage(key,image);
     keys.set(definition.id,key);
-   }
-   return keys;
-  }catch(error){for(const key of keys.values())this.scene.textures.remove(key);throw error}
+   }catch{}
+  }));
+  return keys;
  }
  mount(layers:CloudLayer[],keys:Map<string,string>){
   this.clear();
   this.textures=new Set(keys.values());
-  this.instances=layers.map(definition=>{
+  this.instances=layers.filter(definition=>keys.has(definition.id)).map(definition=>{
    const key=keys.get(definition.id)!;
    const sprite=this.scene.add.image(definition.x,definition.y,key).setDisplaySize(definition.width,definition.height).setDepth(definition.depth);
    return {definition,sprite,start:this.clock,running:definition.autoplay,key};

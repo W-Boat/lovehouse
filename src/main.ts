@@ -182,6 +182,9 @@ scene.bridge.on('approaching',(item?:Item)=>{if(item){$('resting-line').classLis
 scene.bridge.on('destination',(point:{x:number;y:number})=>{const p=scene.project(point.x,point.y),el=$('destination-mark');el.style.left=p.x+'px';el.style.top=p.y+'px';el.classList.remove('ripple');void el.offsetWidth;el.classList.add('ripple')});
 scene.bridge.on('zone',(zone:Zone)=>{closeSceneActivity();setAmbience(zone);$('location-name').textContent=worlds[zone].name;$('location-caption').textContent=worlds[zone].caption;$('resting-line').classList.add('hidden');updateHUD()});
 scene.bridge.on('seated',(kind:string)=>{$('game-frame').classList.add('seated');$('stand').classList.remove('hidden');$('nearby').classList.add('hidden');quietLine(restingLines[kind]??mainText("resting.fallback"))});
+scene.bridge.on('seat-settled',(kind:string)=>{
+ if(scene.zone==='cinema'&&['cinema-seat','cinema-back-seat'].includes(kind)&&!sceneActivity&&!modalOpen&&!dialogueOpen&&!cinematic)openTheater('cinema-seat');
+});
 scene.bridge.on('stood',()=>{$('game-frame').classList.remove('seated');$('stand').classList.add('hidden');$('resting-line').classList.add('hidden')});
 $('stand').onclick=()=>scene.stand();$('dialogue-close').onclick=closeDialogue;$('cancel-walk').onclick=()=>scene.stop();$('nearby').onclick=e=>{e.stopPropagation();if(activeHint&&!scene.blocked)scene.approach(activeHint)};
 // Browsers require a real user gesture for fullscreen and audio, while entry is automatic.
