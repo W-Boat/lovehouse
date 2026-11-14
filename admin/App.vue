@@ -3,7 +3,7 @@ import {NInputNumber} from 'naive-ui';
 import {PublisherAlert,PublisherDialog} from './publisher-components.js';
 const Guide=defineAsyncComponent(()=>import('./Guide.vue'));
 import AdminLayout from './AdminLayout.vue';
-import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem,NPagination,NTabs,NTabPane,NCollapse,NCollapseItem} from 'naive-ui';
+import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem,NPagination,NTabs,NTabPane,NCollapse,NCollapseItem,NDropdown} from 'naive-ui';
 const Assets=defineAsyncComponent(()=>import('./Assets.vue'));
 const Packages=defineAsyncComponent(()=>import('./Packages.vue'));
 const History=defineAsyncComponent(()=>import('./History.vue'));
@@ -320,6 +320,22 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     report('已更新草稿的发布基准，请核对差异后再发布。',true);
    }catch(error){report(error.message)}
   }
+  const importInput=ref(null);
+  const publishOptions=computed(()=>[
+   {key:'load',label:'载入线上配置',disabled:busy.value||!loaded.value},
+   {key:'import',label:'导入草稿'},
+   {key:'export',label:'导出草稿'},
+   {key:'restore',label:'恢复覆盖前草稿'},
+   {key:'discard',label:'放弃草稿',disabled:busy.value||!loaded.value},
+   {type:'divider',key:'divider'},
+   {key:'rebase',label:'确认当前发布基准',disabled:!conflict.value},
+   {key:'check',label:'校验草稿',disabled:busy.value||!loaded.value},
+   {key:'publish',label:'发布',disabled:busy.value||!loaded.value||conflict.value},
+  ]);
+  function publishingAction(key){
+   const actions={load:()=>replaceConfirm.value=true,import:()=>importInput.value?.click(),export:exportDraft,restore:()=>restoreLocal(true),discard:()=>discardConfirm.value=true,rebase:rebaseDraft,check:()=>request('check'),publish:review};
+   actions[key]?.();
+  }
   function review(){
    try{collect();summary.value=[...new Set([...Object.keys(baseline.value),...Object.keys(draft.value)])].filter(key=>JSON.stringify(baseline.value[key])!==JSON.stringify(draft.value[key]));confirm.value=true}
    catch(e){report(e.message)}
@@ -344,6 +360,15 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
  <template #header>
   <div class="identity"><div><strong>{{labels[selected]}}</strong><small>内容发布后台</small></div></div>
   <div class="top-actions">
+   <input ref="importInput" type="file" accept=".json,application/json" hidden @change="importDraft">
+   <div class="desktop-publish-actions">
+    <n-button size="small" :disabled="busy||!loaded" @click="publishingAction('check')">校验草稿</n-button>
+    <n-button size="small" type="primary" :disabled="busy||!loaded||conflict" @click="publishingAction('publish')">发布</n-button>
+   </div>
+   <n-dropdown trigger="click" placement="bottom-end" :options="publishOptions" @select="publishingAction">
+    <n-button size="small" class="publishing-menu" aria-label="草稿与发布操作"><span class="publishing-menu-text">草稿操作</span><span class="publishing-menu-dots" aria-hidden="true">⋯</span></n-button>
+   </n-dropdown>
+
    <n-tag :type="authState==='ready'?'success':authState==='error'?'error':'info'">{{{idle:'访客',checking:'正在验证',ready:'已认证',error:'认证失败'}[authState]}}</n-tag>
    <n-button size="small" @click="passwordOpen=true">修改密码</n-button><n-button size="small" @click="logout">退出</n-button>
   </div>
@@ -359,7 +384,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    <publisher-alert v-if="status" :title="status" :type="success?'success':'error'" :closable="false" show-icon />
    <publisher-alert v-if="draftAvailable" title="发现本机未发布草稿" type="info" :closable="false"><n-button @click="restoreLocal">恢复草稿</n-button></publisher-alert>
    <small v-if="savedAt" class="draft-status">本机草稿已保存 {{savedAt}}</small>
-   <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div><div v-if="!['assets','history','packages','guide'].includes(selected)" class="actions"><label class="import">导入 JSON<input type="file" accept=".json,application/json" @change="importDraft"></label><n-button @click="exportDraft">导出草稿</n-button><n-button @click="restoreLocal(true)">恢复覆盖前草稿</n-button></div></div>
+   <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div></div>
    <template v-if="selected==='guide'"><Guide/></template>
    <template v-else-if="selected==='packages'">
     <Packages :token="token" @updated="refreshPublic"/>
@@ -444,13 +469,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     <p v-if="!bundledRows.length">没有可显示的包内条目。</p>
    </section>
    <div v-else-if="selected==='all'" class="config-links"><n-card v-for="[id,title,help] in sections.filter(([id])=>!['all','guide','assets','history','packages'].includes(id))" :key="id" :title="title" size="small"><p>{{help}}</p><n-button size="small" @click="choose(id)">打开{{title}}</n-button></n-card></div>
-   <div class="publish"><div class="actions">
-    <n-button :disabled="busy || !loaded" @click="replaceConfirm=true">载入线上配置</n-button>
-    <n-button :disabled="busy || !loaded" @click="discardConfirm=true">放弃草稿</n-button>
-    <n-button v-if="conflict" @click="rebaseDraft">确认以当前版本为基准</n-button>
-    <n-button :disabled="busy || !loaded" @click="request('check')">校验草稿</n-button>
-    <n-button type="primary" :disabled="busy || !loaded || conflict" @click="review">发布</n-button>
-   </div></div>
+
    </template>
   </section>
  </div>

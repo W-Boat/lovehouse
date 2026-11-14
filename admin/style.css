@@ -176,3 +176,5 @@ body { margin: 0; }
   .naive-content .n-input__input-el, .naive-content .n-input__textarea-el,
   .publisher-dialog .n-input__input-el, .publisher-dialog .n-input__textarea-el { font-size: 16px; }
 }
+.desktop-publish-actions{display:flex;gap:6px}.publishing-menu-dots{display:none}.publishing-menu{flex-shrink:0}
+@media(max-width:760px){.desktop-publish-actions,.publishing-menu-text{display:none}.publishing-menu-dots{display:inline;font-size:23px;line-height:1}.publishing-menu{min-width:44px}}
