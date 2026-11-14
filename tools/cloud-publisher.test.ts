@@ -171,5 +171,30 @@ test('package release requires authorization and a failed upload preserves the c
   const head=await request(handler,'HEAD',release.path.slice('/lovehouse'.length),{range:'bytes=0-3'});
   assert.equal(head.status,206);
   assert.equal(head.headers['Content-Range'],'bytes 0-3/7');
+  const secondUrl=url.replace('v1','v2');
+  assert.equal((await request(handler,'POST',secondUrl,auth,archive)).status,201);
+  const second=(await getCatalog()).android;
+  const switchVersion=expected=>request(handler,'POST','/admin/api/packages/select',
+   {...auth,'content-type':'application/json'},JSON.stringify({platform:'android',path:release.path,expected}));
+  assert.equal((await switchVersion(release.path)).status,412);
+  assert.equal((await switchVersion(second.path)).status,200);
+  assert.equal((await getCatalog()).android.version,'v1');
+
+ }finally{await rm(directory,{recursive:true,force:true})}
+});
+
+
+test('Android update endpoint rejects unsigned manifests and digest-mismatched resource files',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lovehouse-android-update-'));
+ try{
+  const handler=createContentHandler({file:join(directory,'content.json'),token:'fixture'});
+  const auth={authorization:'Bearer fixture'};
+  assert.equal((await request(handler,'POST','/admin/api/android-update/publish',{},'{}')).status,401);
+  const bad=JSON.stringify({payload:Buffer.from('{}').toString('base64'),signature:'AAAA'});
+  assert.equal((await request(handler,'POST','/admin/api/android-update/publish',auth,bad)).status,400);
+  const badHash='0'.repeat(64);
+  assert.equal((await request(handler,'POST','/admin/api/android-update/blobs/'+badHash,auth,'bad')).status,400);
+  assert.equal((await request(handler,'HEAD','/android-update/blobs/'+badHash)).status,404);
+  assert.equal((await request(handler,'HEAD','/android-update/update.json')).status,404);
  }finally{await rm(directory,{recursive:true,force:true})}
 });

@@ -1,17 +1,30 @@
 import {serverAddress} from './online-address';
 export type ConnectionState='offline'|'connecting'|'connected'|'reconnecting'|'error';
 type Envelope={type:string;[key:string]:unknown};
+export type RoomCredentials={roomId:string;token:string};
 type Entry={type:'create';name:string;appearance?:unknown}|{type:'join';roomId:string;name:string;appearance?:unknown};
 /** Transport owns sockets and retry timers. It never changes game coordinates. */
 export class OnlineClient{
  private socket?:WebSocket;private generation=0;private timer?:ReturnType<typeof setTimeout>;
  private address='';private entry?:Entry;private retries=0;private closed=true;
- private credentials?:{roomId:string;token:string};
+ private credentials?:RoomCredentials;
  state:ConnectionState='offline';
  constructor(private receive:(message:Envelope)=>void,private changed:(state:ConnectionState,message?:string)=>void,private Socket:typeof WebSocket=WebSocket){}
  connect(address:string,entry:Entry,pageUrl=location.href,defaultServer=''){
   const target=serverAddress(address,pageUrl,defaultServer);
-  this.disconnect();this.address=target;this.entry=entry;this.credentials=undefined;this.retries=0;this.closed=false;this.open();
+  this.start(target,entry);
+ }
+ resume(address:string,credentials:RoomCredentials,pageUrl=location.href){
+  this.start(serverAddress(address,pageUrl),undefined,credentials);
+ }
+ rejoinDetails(){
+  if(this.state!=='connected'||!this.credentials)return;
+  return {address:this.address,...this.credentials};
+ }
+ private start(address:string,entry?:Entry,credentials?:RoomCredentials){
+  this.disconnect();
+  this.address=address;this.entry=entry;this.credentials=credentials;this.retries=0;this.closed=false;
+  this.open();
  }
  private status(value:ConnectionState,message?:string){this.state=value;this.changed(value,message)}
  private open(){

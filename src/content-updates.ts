@@ -6,19 +6,24 @@ type UpdateStatus={phase:string;message:string;progress:number;version:number;ur
 type UpdateCommand={action:'status'|'ready'|'auto'|'check'|'install'|'rollback';url?:string};
 let latest:UpdateStatus|undefined,host:HTMLElement|undefined,listening=false;
 
+function defaultAndroidUpdateUrl(){
+ const server=defaultContentServer();
+ if(!server)return '';
+ try{
+  const url=new URL('android-update/update.json',server.replace(/\/?$/,'/'));
+  return url.protocol==='https:'?url.href:'';
+ }catch{return ''}
+}
+
+
 export function sendContentUpdate(command:UpdateCommand){
  const native=(window as Window&{CottageSave?:{postMessage:(message:string)=>void}}).CottageSave;
  if(!native)return false;
  if(command.action==='install'||command.action==='rollback')persist();
  native.postMessage(JSON.stringify({kind:'content-update',...command}));
  if(command.action==='ready'){
-  const server=defaultContentServer();
-  if(server){
-   try{
-    const url=new URL('android-update/update.json',server.replace(/\/?$/,'/'));
-    if(url.protocol==='https:')native.postMessage(JSON.stringify({kind:'content-update',action:'auto',url:url.href}));
-   }catch{}
-  }
+  const url=defaultAndroidUpdateUrl();
+  if(url)native.postMessage(JSON.stringify({kind:'content-update',action:'auto',url}));
  }
  return true;
 }
@@ -33,7 +38,7 @@ export function mountContentUpdates(parent:HTMLElement){
  element('h3',uiCopy('updates.title'));
  element('p',uiCopy('updates.help'));
  const label=element('label',uiCopy('updates.address'));
- const input=element('input','',label);input.id='content-update-url';input.type='url';input.maxLength=2048;input.placeholder='https://';input.value=latest?.url??'';
+ const input=element('input','',label);input.id='content-update-url';input.type='url';input.maxLength=2048;input.placeholder='https://';input.value=latest?.url||defaultAndroidUpdateUrl();
  const version=element('p');version.id='content-update-version';
  const status=element('output');status.id='content-update-status';status.setAttribute('role','status');
  const progress=element('div');progress.id='content-update-progress';progress.className='content-update-progress';progress.setAttribute('role','progressbar');progress.setAttribute('aria-label',uiCopy('updates.progress'));progress.setAttribute('aria-valuemin','0');progress.setAttribute('aria-valuemax','100');

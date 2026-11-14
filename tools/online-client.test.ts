@@ -20,3 +20,17 @@ test('connection waits for a real welcome and obsolete sockets cannot change the
  client.disconnect();assert.equal(client.state,'offline');assert.equal(JSON.parse(current.sent.at(-1)!).type,'leave');
  current.message({type:'welcome',roomId:'ABC123',token:'private'});assert.equal(events.length,1);
 });
+
+
+test('room restoration sends only the saved resume request and waits for welcome',()=>{
+ const client=new OnlineClient(()=>{},()=>{},Socket as any);
+ client.resume('wss://room.example/lovehouse/online',{roomId:'saved',token:'private'},'https://game.example/');
+ const socket=Socket.instances.at(-1)!;
+ socket.open();
+ assert.deepEqual(socket.sent.map(value=>JSON.parse(value)),[{type:'resume',roomId:'saved',token:'private'}]);
+ assert.equal(client.rejoinDetails(),undefined);
+ socket.message({type:'welcome',roomId:'saved',token:'new-token'});
+ assert.deepEqual(client.rejoinDetails(),{address:'wss://room.example/lovehouse/online',roomId:'saved',token:'new-token'});
+ client.disconnect();
+ assert.equal(client.rejoinDetails(),undefined);
+});

@@ -7,3 +7,8 @@
 .online-quiz .quiz-reward{background:#dce7b7;color:#314e3f}
 .online-quiz .quiz-penalty{background:#f0baba;color:#703c4a}
 .online-quiz .quiz-countdown{display:block;width:fit-content;margin:8px auto;padding:8px 16px;border:3px solid #9d754f;background:#fff0c5;color:#703c4a;font-size:28px}
+
+.online-first-invitation{position:absolute;z-index:39;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);padding:12px 16px;color:#674129;background:#fff0ca;border:3px solid #946638;box-shadow:3px 4px #291b2c99}
+.online-first-invitation p{margin:0 0 8px}
+.online-first-invitation div{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.online-first-invitation button{min-height:44px}
