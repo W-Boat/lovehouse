@@ -1,6 +1,7 @@
 <script setup>
+import {NRadioButton,NRadioGroup,NTag} from 'naive-ui';
+import {PublisherAlert} from './publisher-components.js';
 import {computed,ref,watch} from 'vue';
-import {ElAlert,ElRadioButton,ElRadioGroup,ElTag} from 'element-plus';
 
 const props=defineProps({scene:{type:Object,required:true}});
 const emit=defineEmits(['update:scene']);
@@ -45,12 +46,12 @@ function place(event){
 <template>
  <section class="scene-preview" aria-label="场景点位预览">
   <div class="scene-preview-toolbar">
-   <el-radio-group v-model="mode" size="small" aria-label="点位编辑模式">
-    <el-radio-button value="view">只预览</el-radio-button>
-    <el-radio-button value="spawn">设置到达点</el-radio-button>
-    <el-radio-button value="exit">设置返回点</el-radio-button>
-   </el-radio-group>
-   <el-tag effect="plain" type="info">640 × 426</el-tag>
+   <n-radio-group v-model:value="mode" size="small" aria-label="点位编辑模式">
+    <n-radio-button value="view">只预览</n-radio-button>
+    <n-radio-button value="spawn">设置到达点</n-radio-button>
+    <n-radio-button value="exit">设置返回点</n-radio-button>
+   </n-radio-group>
+   <n-tag effect="plain" type="info">640 × 426</n-tag>
   </div>
   <p class="scene-preview-help">{{mode==='view'?'绿色范围可行走，蓝色为到达点，橙色为返回点。':'点击背景设置点位，也可用上方坐标输入框精确调整。'}} 父场景入口在父场景中设置。</p>
   <div class="scene-preview-stage" :class="{'scene-preview-editing':mode!=='view'}">
@@ -66,14 +67,14 @@ function place(event){
     </g>
    </svg>
   </div>
-  <el-alert v-if="invalidPoints.length" :title="invalidPoints.join('、')+'在行走范围外，请调整后发布。'" type="warning" :closable="false" show-icon/>
+  <publisher-alert v-if="invalidPoints.length" :title="invalidPoints.join('、')+'在行走范围外，请调整后发布。'" type="warning" :closable="false" show-icon/>
  </section>
 </template>
 
 <style scoped>
-.scene-preview{grid-column:1/-1;display:grid;gap:10px;padding:14px;border:1px solid var(--el-border-color);border-radius:8px;background:var(--el-fill-color-light)}
+.scene-preview{grid-column:1/-1;display:grid;gap:10px;padding:14px;border:1px solid var(--n-border-color);border-radius:8px;background:var(--n-fill-color-light)}
 .scene-preview-toolbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
-.scene-preview-help{margin:0;color:var(--el-text-color-secondary);font-size:13px;line-height:1.6}
+.scene-preview-help{margin:0;color:var(--n-text-color-secondary);font-size:13px;line-height:1.6}
 .scene-preview-stage{position:relative;width:100%;max-width:760px;aspect-ratio:640/426;overflow:hidden;background:#edf1ec;border-radius:6px}
 .scene-preview-stage>img,.scene-preview-stage>svg,.scene-preview-placeholder{position:absolute;inset:0;width:100%;height:100%}
 .scene-preview-stage>img{object-fit:fill}

@@ -1,6 +1,7 @@
 <script setup>
+import {NForm,NInput} from 'naive-ui';
+import {PublisherAlert,PublisherFormItem,PublisherOption,PublisherSelect} from './publisher-components.js';
 import {computed} from 'vue';
-import {ElAlert,ElForm,ElFormItem,ElInput,ElOption,ElSelect} from 'element-plus';
 
 const props=defineProps({modelValue:{type:Object,default:()=>({})}});
 const emit=defineEmits(['update:modelValue']);
@@ -49,22 +50,22 @@ const urlError=computed(()=>{
 
 <template>
  <section class="interaction-behavior">
-  <el-alert v-if="conflicting" title="此条目包含多个目标。重新选择互动方式可修正为一个目标。" type="warning" :closable="false"/>
-  <el-form label-position="top">
-   <el-form-item label="互动方式">
-    <el-select :model-value="behavior" aria-label="互动方式" @update:model-value="choose">
-     <el-option v-for="option in types" :key="option.value" :value="option.value" :label="option.label"/>
-    </el-select>
-   </el-form-item>
-   <el-form-item v-if="behavior==='builtin'" label="内置小游戏" :error="!games.some(([id])=>id===record.game)?'请选择有效的内置小游戏':''">
-    <el-select :model-value="record.game" filterable aria-label="内置小游戏" @update:model-value="update">
-     <el-option v-for="[id,label] in games" :key="id" :value="id" :label="label+' · '+id"/>
-    </el-select>
-   </el-form-item>
-   <el-form-item v-else-if="behavior==='external'||behavior==='page'" :label="behavior==='external'?'独立小游戏地址':'网页地址'" :error="urlError">
-    <el-input :model-value="record[field]||''" placeholder="https://…" clearable :aria-label="behavior==='external'?'独立小游戏地址':'网页地址'" @update:model-value="update"/>
-   </el-form-item>
-  </el-form>
+  <publisher-alert v-if="conflicting" title="此条目包含多个目标。重新选择互动方式可修正为一个目标。" type="warning" :closable="false"/>
+  <n-form label-placement="top">
+   <publisher-form-item label="互动方式">
+    <publisher-select :value="behavior" aria-label="互动方式" @update:value="choose">
+     <publisher-option v-for="option in types" :key="option.value" :value="option.value" :label="option.label"/>
+    </publisher-select>
+   </publisher-form-item>
+   <publisher-form-item v-if="behavior==='builtin'" label="内置小游戏" :error="!games.some(([id])=>id===record.game)?'请选择有效的内置小游戏':''">
+    <publisher-select :value="record.game" filterable aria-label="内置小游戏" @update:value="update">
+     <publisher-option v-for="[id,label] in games" :key="id" :value="id" :label="label+' · '+id"/>
+    </publisher-select>
+   </publisher-form-item>
+   <publisher-form-item v-else-if="behavior==='external'||behavior==='page'" :label="behavior==='external'?'独立小游戏地址':'网页地址'" :error="urlError">
+    <n-input :value="record[field]||''" placeholder="https://…" clearable :aria-label="behavior==='external'?'独立小游戏地址':'网页地址'" @update:value="update"/>
+   </publisher-form-item>
+  </n-form>
   <p v-if="behavior==='message'">点击后显示此条目的反馈短句。</p>
   <p v-else-if="behavior==='builtin'">以内置玩法开启练习，完成后显示反馈短句。</p>
   <p v-else-if="behavior==='external'">在场景内打开独立编写的 HTML 游戏。目标站点需允许 iframe 嵌入。</p>
@@ -74,9 +75,9 @@ const urlError=computed(()=>{
 
 <style scoped>
 .interaction-behavior{grid-column:1/-1;padding:16px;border:1px solid #dce4dc;border-radius:8px;background:#fff}
-.interaction-behavior .el-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
-.interaction-behavior .el-form-item{margin-bottom:0}
-.interaction-behavior .el-select{width:100%}
+.interaction-behavior .n-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.interaction-behavior .n-form-item{margin-bottom:0}
+.interaction-behavior .n-select{width:100%}
 .interaction-behavior p{margin:12px 0 0;color:#54665a;font-size:13px;line-height:1.6}
-.interaction-behavior .el-alert{margin-bottom:14px}
+.interaction-behavior .n-alert{margin-bottom:14px}
 </style>

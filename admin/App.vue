@@ -1,6 +1,9 @@
 <script setup>
+import {NInputNumber} from 'naive-ui';
+import {PublisherAlert,PublisherDialog} from './publisher-components.js';
+import Guide from './Guide.vue';
 import AdminLayout from './AdminLayout.vue';
-import {NButton,NInput,NTag,NSwitch,NDataTable} from 'naive-ui';
+import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem} from 'naive-ui';
 import Assets from './Assets.vue';
 import Packages from './Packages.vue';
 import History from './History.vue';
@@ -9,7 +12,6 @@ import InteractionBehavior from './InteractionBehavior.vue';
 import MusicForm from './MusicForm.vue';
 import MediaForm from './MediaForm.vue';
 import { computed, ref, watch, onBeforeUnmount, onMounted } from 'vue';
-import { ElAlert, ElButton, ElInput, ElInputNumber, ElMenu, ElMenuItem, ElMenuItemGroup, ElTag, ElDialog } from 'element-plus';
 
 const sections = [
  ['texts','文案','按稳定 ID 修改对白、赠言和界面文字。',{}],
@@ -25,6 +27,7 @@ const sections = [
  ['media','替换素材','设置礼物图片、回忆照片和演唱会音源。',{}],
  ['portals','传送门','配置桃源乡旁的两个网页入口。',[]],
  ['history','发布历史','查看历史、导入旧稿或回滚线上配置。',null],
+ ['guide','项目文档','开发方法、发布 CLI、架构和构建说明。',null],
  ['packages','安装包','发布已构建的客户端，并提供下载入口。',null],
  ['assets','素材库','上传图片、音频和歌词，复制链接到发布配置。',null],
  ['all','完整配置','适用于批量修改和 Agent 生成的 JSON。',{}],
@@ -33,6 +36,7 @@ const sections = [
 const sectionGroups=[
  ['内容',['texts','scenes','interactions','gifts','giftGames','announcement','notification','statistics','bundled','musicRoom','media','portals','all']],
  ['发布与资源',['history','packages','assets']],
+ ['帮助',['guide']],
 ];
 const labels=Object.fromEntries(sections.map(([id,label])=>[id,label]));
 const base=import.meta.env.BASE_URL;
@@ -52,6 +56,22 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
   const selected=ref('texts'), token=ref(''), draft=ref({}), revision=ref('');
   const bundled=ref({}),baseline=ref({}),summary=ref([]),savedAt=ref(''),draftAvailable=ref(false);
   const storageKey='lovehouse-publisher-draft:'+import.meta.env.BASE_URL;
+  const username=ref(''),password=ref(''),loginError=ref(''),loggingIn=ref(false);
+  async function login(){
+   if(loggingIn.value)return;
+   loggingIn.value=true;loginError.value='';
+   try{
+    const response=await fetch(import.meta.env.BASE_URL+'api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value.trim(),password:password.value})});
+    const data=await response.json();
+    if(!response.ok)throw Error(data.error);
+    token.value=data.session;password.value='';
+   }catch(error){loginError.value=error.message||'登录失败'}
+   finally{loggingIn.value=false}
+  }
+  async function logout(){
+   const session=token.value;token.value='';authState.value='idle';
+   await fetch(import.meta.env.BASE_URL+'api/logout',{method:'POST',headers:{Authorization:'Bearer '+session}}).catch(()=>{});
+  }
   const publicRevision=ref(''), publicPackages=ref({}), authState=ref('idle');
   const draftRevision=ref(null);
   const conflict=computed(()=>loaded.value&&draftRevision.value!==revision.value);
@@ -65,7 +85,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
   const text=ref('{}'), status=ref(''), success=ref(false), busy=ref(false), confirm=ref(false);
   const section=computed(()=>sections.find(([id])=>id===selected.value));
   function collect(){
-   if(['assets','history','packages','bundled'].includes(selected.value))return;
+   if(['assets','history','packages','bundled','guide'].includes(selected.value))return;
    let value;
    if(specialForm.value)value=objectValue.value;
    else if(form.value&&fields.value){
@@ -276,12 +296,22 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
 </script>
 
 <template>
-<AdminLayout :groups="sectionGroups" :labels="labels" :selected="selected" @select="choose">
+<main v-if="!token" class="publisher-login">
+ <n-card title="生日小屋 · 内容发布后台" class="login-card">
+  <n-form @submit.prevent="login" label-placement="top">
+   <n-form-item label="账号"><n-input v-model:value="username" :input-props="{autocomplete:'username'}"/></n-form-item>
+   <n-form-item label="密码"><n-input v-model:value="password" type="password" show-password-on="click" :input-props="{autocomplete:'current-password'}"/></n-form-item>
+   <p v-if="loginError" role="alert">{{loginError}}</p>
+   <n-button block type="primary" attr-type="submit" :loading="loggingIn" :disabled="!username.trim()||!password">登录</n-button>
+  </n-form>
+ </n-card>
+</main>
+<AdminLayout v-else :groups="sectionGroups" :labels="labels" :selected="selected" @select="choose">
  <template #header>
   <div class="identity"><div><strong>{{labels[selected]}}</strong><small>内容发布后台</small></div></div>
   <div class="top-actions">
    <n-tag :type="authState==='ready'?'success':authState==='error'?'error':'info'">{{{idle:'访客',checking:'正在验证',ready:'已认证',error:'认证失败'}[authState]}}</n-tag>
-   <n-input v-model:value="token" type="password" show-password-on="click" placeholder="输入发布令牌" :input-props="{autocomplete:'off','aria-label':'发布令牌'}"/>
+   <n-button @click="logout">退出登录</n-button>
   </div>
  </template>
  <div class="workspace-main">
@@ -291,12 +321,13 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
    <div><span>Windows 便携包</span><strong>{{publicPackages.windows?.version||'—'}}</strong></div>
   </div>
   <section class="editor">
-   <el-alert v-if="conflict" title="草稿与线上版本的基准不同，请核对后确认发布基准。" type="warning" :closable="false"/>
-   <el-alert v-if="status" :title="status" :type="success?'success':'error'" :closable="false" show-icon />
-   <el-alert v-if="draftAvailable" title="发现本机未发布草稿" type="info" :closable="false"><el-button @click="restoreLocal">恢复草稿</el-button></el-alert>
+   <publisher-alert v-if="conflict" title="草稿与线上版本的基准不同，请核对后确认发布基准。" type="warning" :closable="false"/>
+   <publisher-alert v-if="status" :title="status" :type="success?'success':'error'" :closable="false" show-icon />
+   <publisher-alert v-if="draftAvailable" title="发现本机未发布草稿" type="info" :closable="false"><n-button @click="restoreLocal">恢复草稿</n-button></publisher-alert>
    <small v-if="savedAt" class="draft-status">本机草稿已保存 {{savedAt}}</small>
-   <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div><div v-if="!['assets','history','packages'].includes(selected)" class="actions"><label class="import">导入 JSON<input type="file" accept=".json,application/json" @change="importDraft"></label><el-button @click="exportDraft">导出草稿</el-button><el-button @click="restoreLocal(true)">恢复覆盖前草稿</el-button></div></div>
-   <template v-if="selected==='packages'">
+   <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div><div v-if="!['assets','history','packages','guide'].includes(selected)" class="actions"><label class="import">导入 JSON<input type="file" accept=".json,application/json" @change="importDraft"></label><n-button @click="exportDraft">导出草稿</n-button><n-button @click="restoreLocal(true)">恢复覆盖前草稿</n-button></div></div>
+   <template v-if="selected==='guide'"><Guide/></template>
+   <template v-else-if="selected==='packages'">
     <Packages :token="token" @updated="refreshPublic"/>
    </template>
    <template v-else-if="selected==='assets'">
@@ -306,7 +337,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
     <History :token="token" :revision="revision" @import="importHistory" @restore="connect"/>
    </template>
    <template v-else>
-   <div v-if="formSections.includes(selected)" class="actions"><el-button @click="toggleEditor">{{form?'编辑 JSON':'表单编辑'}}</el-button><el-button v-if="form && fields" @click="addRecord">新增条目</el-button><template v-else-if="form && !specialForm"><el-input v-model="search" clearable placeholder="搜索 ID 或内容" aria-label="搜索条目"/><el-button @click="search=''; entries.push({key:'',value:''})">新增条目</el-button></template></div>
+   <div v-if="formSections.includes(selected)" class="actions"><n-button @click="toggleEditor">{{form?'编辑 JSON':'表单编辑'}}</n-button><n-button v-if="form && fields" @click="addRecord">新增条目</n-button><template v-else-if="form && !specialForm"><n-input v-model:value="search" clearable placeholder="搜索 ID 或内容" aria-label="搜索条目"/><n-button @click="search=''; entries.push({key:'',value:''})">新增条目</n-button></template></div>
    <MusicForm v-if="specialForm && selected==='musicRoom'" v-model="objectValue"/>
    <MediaForm v-else-if="specialForm && selected==='media'" v-model="objectValue"/>
    <div v-else-if="form && fields" class="record-list">
@@ -317,38 +348,38 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
      <div class="record-fields">
       <div v-for="[key,label,size] in fields" :key="key" class="field">
        <span>{{label}}</span>
-       <el-input v-if="!size" v-model="record[key]" :aria-label="label"/>
-       <el-input-number v-else-if="size===1" v-model="record[key]" :aria-label="label" :controls="false" :min="0" :max="key==='x'?640:426"/>
+       <n-input v-if="!size" v-model:value="record[key]" :aria-label="label"/>
+       <n-input-number v-else-if="size===1" v-model:value="record[key]" :aria-label="label" :controls="false" :min="0" :max="key==='x'?640:426"/>
        <div v-else class="coordinates">
-        <el-input-number v-for="n in size" :key="n" v-model="record[key][n-1]" :aria-label="label+' '+n" :controls="false" :min="0" :max="n%2?640:426"/>
+        <n-input-number v-for="n in size" :key="n" v-model:value="record[key][n-1]" :aria-label="label+' '+n" :controls="false" :min="0" :max="n%2?640:426"/>
        </div>
       </div>
-      <el-button text type="danger" @click="records.splice(index,1)">移除条目</el-button>
+      <n-button text type="error" @click="records.splice(index,1)">移除条目</n-button>
      </div>
     </details>
     <p v-if="!records.length" class="empty">暂无条目，可新增或导入草稿。</p>
    </div>
    <div v-else-if="form" class="entry-list">
     <div v-for="row in visibleEntries" :key="entries.indexOf(row)" class="entry">
-     <el-input v-model="row.key" aria-label="稳定 ID" placeholder="稳定 ID"/>
-     <el-input v-model="row.value" :type="selected==='texts'?'textarea':'text'" aria-label="内容" :placeholder="selected==='texts'?'文字':'HTTPS 地址'"/>
-     <el-button text type="danger" @click="entries.splice(entries.indexOf(row),1)">移除</el-button>
+     <n-input v-model:value="row.key" aria-label="稳定 ID" placeholder="稳定 ID"/>
+     <n-input v-model:value="row.value" :type="selected==='texts'?'textarea':'text'" aria-label="内容" :placeholder="selected==='texts'?'文字':'HTTPS 地址'"/>
+     <n-button text type="error" @click="entries.splice(entries.indexOf(row),1)">移除</n-button>
     </div>
     <p v-if="!visibleEntries.length" class="empty">{{search?'没有匹配条目':'暂无条目，可新增或导入草稿。'}}</p>
    </div>
    <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch :value="JSON.parse(text).enabled" @update:value="value=>text=JSON.stringify({enabled:value})"/> 启用统计</label><n-button @click="readStatistics">刷新在线统计</n-button><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
-   <el-input v-else-if="selected==='bundled'" :model-value="JSON.stringify(bundled,null,2)" readonly type="textarea" :rows="20"/>
-   <el-input v-else v-model="text" type="textarea" :rows="17" resize="vertical" aria-label="配置 JSON" class="code"/>
+   <n-input v-else-if="selected==='bundled'" :value="JSON.stringify(bundled,null,2)" readonly type="textarea" :rows="20"/>
+   <n-input v-else v-model:value="text" type="textarea" :rows="17" resize="vertical" aria-label="配置 JSON" class="code"/>
    <div class="publish"><div class="actions">
-    <el-button :disabled="busy || !loaded" @click="replaceConfirm=true">载入线上配置</el-button>
-    <el-button v-if="conflict" @click="rebaseDraft">确认以当前版本为基准</el-button>
-    <el-button :disabled="busy || !loaded" @click="request('check')">校验草稿</el-button>
-    <el-button type="primary" :disabled="busy || !loaded || conflict" @click="review">发布</el-button>
+    <n-button :disabled="busy || !loaded" @click="replaceConfirm=true">载入线上配置</n-button>
+    <n-button v-if="conflict" @click="rebaseDraft">确认以当前版本为基准</n-button>
+    <n-button :disabled="busy || !loaded" @click="request('check')">校验草稿</n-button>
+    <n-button type="primary" :disabled="busy || !loaded || conflict" @click="review">发布</n-button>
    </div></div>
    </template>
   </section>
  </div>
+ <publisher-dialog v-model="replaceConfirm" title="载入线上配置？" width="min(440px,94vw)"><p>当前草稿会先保存到本机，然后载入线上内容。</p><template #footer><n-button @click="replaceConfirm=false">取消</n-button><n-button type="primary" @click="saveLocal(true); replaceConfirm=false; request('snapshot')">载入</n-button></template></publisher-dialog>
+ <publisher-dialog v-model="confirm" title="发布当前草稿？" width="min(440px, 94vw)"><p>玩家下次启动时会同步此配置。</p><p>变更分区 {{summary.map(id=>labels[id]||id).join('、') || '无变更'}}</p><template #footer><n-button @click="confirm=false">取消</n-button><n-button type="primary" @click="confirm=false; request('publish')">确认发布</n-button></template></publisher-dialog>
 </AdminLayout>
- <el-dialog v-model="replaceConfirm" title="载入线上配置？" width="min(440px,94vw)"><p>当前草稿会先保存到本机，然后载入线上内容。</p><template #footer><el-button @click="replaceConfirm=false">取消</el-button><el-button type="primary" @click="saveLocal(true); replaceConfirm=false; request('snapshot')">载入</el-button></template></el-dialog>
- <el-dialog v-model="confirm" title="发布当前草稿？" width="min(440px, 94vw)"><p>玩家下次启动时会同步此配置。</p><p>变更分区 {{summary.map(id=>labels[id]||id).join('、') || '无变更'}}</p><template #footer><el-button @click="confirm=false">取消</el-button><el-button type="primary" @click="confirm=false; request('publish')">确认发布</el-button></template></el-dialog>
  </template>

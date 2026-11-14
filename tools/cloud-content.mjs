@@ -8,7 +8,7 @@ import {validatePortalUrl} from '../content/cloud-portal-url.mjs';
 import {validateCloudInteractions,validateGiftGames} from '../content/cloud-interactions.mjs';
 import {validateCloudMedia} from '../content/cloud-media.mjs';
 import {validateCloudPlaylist} from '../content/cloud-playlist.mjs';
-import {createHash, randomUUID, timingSafeEqual} from 'node:crypto';
+import {createHash, randomUUID, timingSafeEqual, scryptSync, randomBytes} from 'node:crypto';
 import {createServer} from 'node:http';
 import {mkdir, readFile, readdir, rename, rm, stat, writeFile} from 'node:fs/promises';
 import {basename,join} from 'node:path';
@@ -174,6 +174,10 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
  const packages=createPackageStore(file+'.packages',publicPrefix);
  const stats=createStats(file);
  const androidUpdate=createAndroidUpdateStore(file+'.android-update');
+ const loginUser=process.env.LOVEHOUSE_ADMIN_USER;
+ const loginHash=process.env.LOVEHOUSE_ADMIN_PASSWORD_HASH;
+ const loginSalt=process.env.LOVEHOUSE_ADMIN_PASSWORD_SALT;
+ const sessions=new Map(),attempts=new Map();
  let pendingWrite=Promise.resolve();
  const serialize=operation=>{
   const result=pendingWrite.then(operation);
@@ -267,7 +271,30 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   }
   if (pathname.startsWith('/admin/api/')) {
    if (!token) { sendJson(response,503,{error:'Publisher authentication is not configured'}); return }
-   if (!authenticated(request.headers.authorization,token)) { sendJson(response,401,{error:'Invalid publisher token'}); return }
+   const now=Date.now();
+   const session=request.headers.authorization?.replace(/^Bearer /,'');
+   if(pathname==='/admin/api/login'&&request.method==='POST'){
+    if(!loginUser||!loginSalt||!loginHash||!/^[a-f0-9]{128}$/.test(loginHash)){sendJson(response,503,{error:'账号登录尚未配置'});return}
+    for(const [key,entry] of attempts)if(entry.until<=now)attempts.delete(key);
+    const address=request.headers['x-real-ip']||request.socket.remoteAddress;
+    const limit=attempts.get(address)||{count:0,until:now+600000};
+    if(limit.count>=8){sendJson(response,429,{error:'尝试过多，请十分钟后重试'});return}
+    limit.count++;attempts.set(address,limit);
+    try{
+     const {username,password}=await readJson(request);
+     if(typeof username!=='string'||typeof password!=='string'||username.length>80||password.length>256)throw Error();
+     const supplied=scryptSync(password,loginSalt,64);
+     if(!timingSafeEqual(supplied,Buffer.from(loginHash,'hex'))||username!==loginUser)throw Error();
+     attempts.delete(address);
+     for(const [key,expires] of sessions)if(expires<=now)sessions.delete(key);
+     const key=randomBytes(32).toString('hex');
+     sessions.set(key,now+8*3600000);
+     sendJson(response,200,{session:key});
+    }catch{sendJson(response,401,{error:'账号或密码错误'})}
+    return;
+   }
+   if(pathname==='/admin/api/logout'&&request.method==='POST'){sessions.delete(session);sendJson(response,200,{});return}
+   if (!authenticated(request.headers.authorization,token)&&!(sessions.get(session)>now)) { sendJson(response,401,{error:'登录已过期或发布令牌无效'}); return }
    if(pathname.startsWith('/admin/api/android-update/')&&request.method==='POST'){
     const target=pathname.slice('/admin/api/android-update/'.length);
     try{

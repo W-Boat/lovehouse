@@ -1,8 +1,7 @@
 <script setup>
+import {NButton,NCard,NProgress,NStep,NSteps,NTag} from 'naive-ui';
+import {PublisherAlert,PublisherDialog} from './publisher-components.js';
 import {computed, ref} from 'vue';
-import {
- ElAlert, ElButton, ElCard, ElDialog, ElProgress, ElSteps, ElStep, ElTag,
-} from 'element-plus';
 
 const props=defineProps({token:{type:String,required:true}});
 const emit=defineEmits(['updated']);
@@ -120,7 +119,7 @@ async function publish(){
 </script>
 
 <template>
- <el-card shadow="never" class="resource-card">
+ <n-card shadow="never" class="resource-card">
   <template #header>
    <div class="resource-heading">
     <h2>发布 Android 增量资源</h2>
@@ -129,13 +128,13 @@ async function publish(){
   </template>
 
   <div class="resource-content">
-   <el-steps class="resource-steps" :active="phase" :process-status="notice?.type==='error' && phase>0?'error':'process'" finish-status="success" simple>
-    <el-step title="检查目录"/>
-    <el-step title="上传资源"/>
-    <el-step title="发布清单"/>
-   </el-steps>
+   <n-steps class="resource-steps" :current="phase+1" :status="notice?.type==='error' && phase>0?'error':'process'" finish-status="success" simple>
+    <n-step title="检查目录"/>
+    <n-step title="上传资源"/>
+    <n-step title="发布清单"/>
+   </n-steps>
 
-   <el-alert v-if="notice" :title="notice.text" :type="notice.type" show-icon :closable="false"/>
+   <publisher-alert v-if="notice" :title="notice.text" :type="notice.type" show-icon :closable="false"/>
 
    <div class="folder-choice">
     <div>
@@ -143,13 +142,13 @@ async function publish(){
      <p>{{draft?'目录已读取，发布时由服务器校验签名。':'目录应包含 update.json 和 blobs 文件夹。'}}</p>
     </div>
     <input ref="folderInput" type="file" webkitdirectory multiple hidden :disabled="busy||reading" @change="readFolder">
-    <el-button plain :disabled="busy" :loading="reading" @click="folderInput?.click()">
+    <n-button plain :disabled="busy" :loading="reading" @click="folderInput?.click()">
      {{draft?'更换文件夹':'选择文件夹'}}
-    </el-button>
+    </n-button>
    </div>
 
    <dl v-if="draft" class="manifest-summary">
-    <div><dt>资源版本</dt><dd><el-tag effect="light">{{draft.version}}</el-tag></dd></div>
+    <div><dt>资源版本</dt><dd><n-tag effect="light">{{draft.version}}</n-tag></dd></div>
     <div><dt>资源文件</dt><dd>{{numberFormat.format(draft.blobs.length)}} 个</dd></div>
     <div><dt>上传体积</dt><dd>{{readableBytes(draft.bytes)}}</dd></div>
    </dl>
@@ -157,53 +156,53 @@ async function publish(){
    <div v-if="busy" class="progress-block" role="status">
     <span v-if="phase===1">已上传 {{sentFiles}} / {{draft.blobs.length}} 个资源</span>
     <span v-else>正在校验签名并切换资源版本</span>
-    <el-progress :percentage="percentage"/>
+    <n-progress type="line" :percentage="percentage"/>
    </div>
 
    <div class="resource-footer">
-    <el-button type="primary" :disabled="!draft||reading||busy" :loading="busy" @click="stagePublish">
+    <n-button type="primary" :disabled="!draft||reading||busy" :loading="busy" @click="stagePublish">
      {{phase>0 && notice?.type==='error'?'重试发布':'审核并发布资源'}}
-    </el-button>
+    </n-button>
    </div>
   </div>
- </el-card>
+ </n-card>
 
- <el-dialog v-model="confirm" title="确认发布 Android 资源" width="min(460px, 94vw)">
+ <publisher-dialog v-model="confirm" title="确认发布 Android 资源" width="min(460px, 94vw)">
   <template v-if="draft">
    <p>资源版本 {{draft.version}} · {{numberFormat.format(draft.blobs.length)}} 个文件 · {{readableBytes(draft.bytes)}}</p>
    <p>资源上传完毕后，服务器将校验签名清单并切换版本。</p>
   </template>
   <template #footer>
-   <el-button @click="confirm=false">取消</el-button>
-   <el-button type="primary" @click="publish">确认发布</el-button>
+   <n-button @click="confirm=false">取消</n-button>
+   <n-button type="primary" @click="publish">确认发布</n-button>
   </template>
- </el-dialog>
+ </publisher-dialog>
 </template>
 
 <style scoped>
-.resource-card{min-width:0;--el-card-border-radius:12px;--el-card-padding:18px}
+.resource-card{min-width:0;--n-card-border-radius:12px;--n-card-padding:18px}
 .resource-heading h2{margin:0;font-size:17px}
-.resource-heading p,.folder-choice p{margin:6px 0 0;color:var(--el-text-color-secondary);font-size:13px;line-height:1.55}
+.resource-heading p,.folder-choice p{margin:6px 0 0;color:var(--n-text-color-secondary);font-size:13px;line-height:1.55}
 .resource-heading code{overflow-wrap:anywhere}
 .resource-content,.progress-block{display:grid;gap:14px}
 .resource-steps{padding:12px}
-.resource-steps :deep(.el-step__title){font-size:13px}
-.folder-choice{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px;border:1px dashed var(--el-border-color);border-radius:8px;background:var(--el-fill-color-lighter);overflow-wrap:anywhere}
+.resource-steps :deep(.n-step__title){font-size:13px}
+.folder-choice{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px;border:1px dashed var(--n-border-color);border-radius:8px;background:var(--n-fill-color-lighter);overflow-wrap:anywhere}
 .manifest-summary{margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.manifest-summary div{min-width:0;padding:10px;border:1px solid var(--el-border-color-lighter);border-radius:8px}
-.manifest-summary dt,.progress-block{font-size:13px;color:var(--el-text-color-secondary)}
+.manifest-summary div{min-width:0;padding:10px;border:1px solid var(--n-border-color-lighter);border-radius:8px}
+.manifest-summary dt,.progress-block{font-size:13px;color:var(--n-text-color-secondary)}
 .manifest-summary dd{margin:6px 0 0;font-weight:600;font-size:14px;overflow-wrap:anywhere}
 .progress-block{gap:6px}
 .resource-footer{display:flex;justify-content:flex-end}
 @media(max-width:560px){
- .resource-card{--el-card-padding:13px}
+ .resource-card{--n-card-padding:13px}
  .resource-steps{padding:8px}
- .resource-steps :deep(.el-step__arrow){flex-grow:0;width:10px}
- .resource-steps :deep(.el-step__arrow::before),.resource-steps :deep(.el-step__arrow::after){width:4px}
+ .resource-steps :deep(.n-step__arrow){flex-grow:0;width:10px}
+ .resource-steps :deep(.n-step__arrow::before),.resource-steps :deep(.n-step__arrow::after){width:4px}
 }
 @media(max-width:360px){
- .resource-steps :deep(.el-step__head){display:none}
- .resource-steps :deep(.el-step__main){padding-left:0}
- .resource-steps :deep(.el-step__title){font-size:12px}
+ .resource-steps :deep(.n-step__head){display:none}
+ .resource-steps :deep(.n-step__main){padding-left:0}
+ .resource-steps :deep(.n-step__title){font-size:12px}
 }
 </style>
