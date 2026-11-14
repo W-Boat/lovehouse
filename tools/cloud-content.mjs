@@ -4,7 +4,7 @@ import {clientIp,createStats,validateStats} from './cloud-stats.mjs';
 import {validateGiftOverrides,validateAnnouncement} from '../content/cloud-gifts.mjs';
 import {createBundledCatalog} from './cloud-bundled.mjs';
 import {createAndroidUpdateStore} from './cloud-android-update.mjs';
-import {createBucket,defaultStorageRules,validateStorageRules} from './cloud-blob-storage.mjs';
+import {bucketEnvironment,createBucket,defaultStorageRules,testBucket,validateBucket,validateStorageRules} from './cloud-blob-storage.mjs';
 import {createPackageStore,isPackagePlatform} from './cloud-packages.mjs';
 import {validateCloudScenes} from '../content/cloud-scenes.mjs';
 import {validatePortalUrl} from '../content/cloud-portal-url.mjs';
@@ -86,10 +86,10 @@ export function prepareSnapshot(input) {
  return {revision,json};
 }
 
-async function saveSnapshot(output,json) {
+async function saveSnapshot(output,json,mode) {
  const staged = output + '.' + randomUUID() + '.part';
  try {
-  await writeFile(staged,json,{flag:'wx'});
+  await writeFile(staged,json,{flag:'wx',mode});
   await rename(staged,output);
  } finally {
   await rm(staged,{force:true});
@@ -200,20 +200,42 @@ function validateOpening(value){
 const assetTypes = new Map([['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8'],['svg','image/svg+xml'],['png','image/png'],['webp','image/webp'],['woff2','font/woff2'],['zip','application/zip']]);
 const adminDir = new URL('../admin/dist/',import.meta.url);
 
-export function createContentHandler({file,token,publicPrefix='',bundledDirectory,bundledCatalog,bucket=createBucket()}) {
+export function createContentHandler({file,token,publicPrefix='',bundledDirectory,bundledCatalog,bucket,probeBucket=testBucket}) {
  if(!/^(?:\/[a-zA-Z0-9_-]+)*$/.test(publicPrefix))throw Error('Invalid LOVEHOUSE_PUBLIC_PREFIX');
  const bundled=createBundledCatalog({publicPrefix,directory:bundledDirectory,catalog:bundledCatalog});
  const publicAsset=asset=>({...asset,path:publicPrefix+asset.path});
  const storageFile=file+'.storage.json';
+ const bucketFile=file+'.bucket.json';
+ const environment=bucketEnvironment();
+ let activeBucket,activeKey,probeRunning=false;
+ const readBucket=async()=>{
+  try{return {source:'admin',config:validateBucket(JSON.parse(await readFile(bucketFile,'utf8')))}}
+  catch(error){if(error.code!=='ENOENT')throw error}
+  return environment?{source:'environment',config:validateBucket(environment)}:{source:bucket?'injected':'none'};
+ };
+ const publicBucket=({source,config})=>({
+  source,configuration:config?{
+   bucket:config.bucket,region:config.region,endpoint:config.endpoint,prefix:config.prefix,pathStyle:config.pathStyle,
+   hasCredentials:Boolean(config.accessKeyId&&config.secretAccessKey),hasSessionToken:Boolean(config.sessionToken),
+  }:null,
+ });
+ const getBucket=async()=>{
+  const {config}=await readBucket();
+  if(!config)return bucket;
+  const key=JSON.stringify(config);
+  if(activeKey!==key){activeBucket=createBucket(config);activeKey=key}
+  return activeBucket;
+ };
+
  const readStorageRules=async()=>{
   try{return validateStorageRules(JSON.parse(await readFile(storageFile,'utf8')))}
   catch(error){if(error.code==='ENOENT')return defaultStorageRules;throw error}
  };
- const assets=createAssetStore(file+'.assets',bucket,readStorageRules);
- const packages=createPackageStore(file+'.packages',publicPrefix,bucket,readStorageRules);
+ const assets=createAssetStore(file+'.assets',getBucket,readStorageRules);
+ const packages=createPackageStore(file+'.packages',publicPrefix,getBucket,readStorageRules);
  const stats=createStats(file);
  const claimAnnouncement=createAnnouncementClaims(file);
- const androidUpdate=createAndroidUpdateStore(file+'.android-update',bucket,readStorageRules);
+ const androidUpdate=createAndroidUpdateStore(file+'.android-update',getBucket,readStorageRules);
  const loginUser=process.env.LOVEHOUSE_ADMIN_USER;
  const loginHash=process.env.LOVEHOUSE_ADMIN_PASSWORD_HASH;
  const loginSalt=process.env.LOVEHOUSE_ADMIN_PASSWORD_SALT;
@@ -420,9 +442,37 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
     }catch(error){sendJson(response,400,{error:error.message})}
     return;
    }
-   if(pathname==='/admin/api/storage'&&['GET','POST'].includes(request.method)){
-    const mode=bucket?'s3':'local';
+   if(pathname==='/admin/api/storage/bucket'&&request.method==='GET'){
+    try{sendJson(response,200,publicBucket(await readBucket()))}
+    catch{sendJson(response,500,{error:'无法读取储存桶配置'})}
+    return;
+   }
+   if(['/admin/api/storage/bucket','/admin/api/storage/bucket/test'].includes(pathname)&&request.method==='POST'){
+    if(probeRunning){sendJson(response,409,{error:'已有储存桶测试正在运行'});return}
+    probeRunning=true;
     try{
+     const draft=await readJson(request);
+     const previous=(await readBucket()).config;
+     const config=validateBucket(draft,previous);
+     const destinationChanged=previous&&['bucket','endpoint','prefix','region'].some(key=>previous[key]!==config[key]);
+     if(previous&&previous.endpoint!==config.endpoint&&
+        (!draft.accessKeyId?.trim()||!draft.secretAccessKey?.trim()||(previous.sessionToken&&!draft.sessionToken?.trim()&&draft.clearSessionToken!==true)))
+      throw Error('切换 API 端点时请重新填写该端点的访问凭据');
+     const saving=pathname==='/admin/api/storage/bucket';
+     if(saving&&destinationChanged&&draft.confirmDestinationChange!==true)
+      throw Error('切换桶位置前，请确认已迁移仅存于旧桶的文件');
+     await probeBucket(config);
+     if(saving){
+      await serialize(()=>saveSnapshot(bucketFile,JSON.stringify(config),0o600));
+      sendJson(response,200,publicBucket({source:'admin',config}));
+     }else sendJson(response,200,{ok:true});
+    }catch(error){sendJson(response,400,{error:error.message})}
+    finally{probeRunning=false}
+    return;
+   }
+   if(pathname==='/admin/api/storage'&&['GET','POST'].includes(request.method)){
+    try{
+     const mode=(await readBucket()).source==='none'?'local':'s3';
      if(request.method==='GET'){sendJson(response,200,{mode,rules:await readStorageRules()});return}
      const {current,next}=await readJson(request);
      const expected=validateStorageRules(current),rules=validateStorageRules(next);

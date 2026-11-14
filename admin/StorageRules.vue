@@ -1,8 +1,10 @@
 <script setup>
+import BucketConnection from './BucketConnection.vue';
 import {onMounted,ref} from 'vue';
 import {NAlert,NButton,NForm,NFormItem,NInputNumber,NSelect,NSpace} from 'naive-ui';
 
 const props=defineProps({token:String});
+const emit=defineEmits(['bucket-saved']);
 const current=ref(null),draft=ref(null),mode=ref('');
 const threshold=ref(null),busy=ref(false),notice=ref(null);
 const destinations=[{label:'服务器磁盘',value:'local'},{label:'储存桶',value:'s3'}];
@@ -39,6 +41,7 @@ onMounted(()=>request());
 </script>
 
 <template>
+ <BucketConnection :token="token" @saved="mode='s3'; emit('bucket-saved')"/>
  <n-form label-placement="top" style="max-width:640px" @submit.prevent="request(true)">
   <n-alert v-if="mode==='local'" type="info" style="margin-bottom:14px">当前服务器尚未配置储存桶，文件使用本地磁盘。规则可以先保存。</n-alert>
   <template v-if="draft">

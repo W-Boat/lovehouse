@@ -424,7 +424,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   <section class="editor">
    <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div></div>
    <template v-if="selected==='guide'"><Guide/></template>
-   <StorageRules v-else-if="selected==='storage'" :token="token"/>
+   <StorageRules v-else-if="selected==='storage'" :token="token" @bucket-saved="storageMode='s3'"/>
    <OpeningRules v-else-if="selected==='opening'" :token="token"/>
    <template v-else-if="selected==='packages'">
     <Packages :token="token" @updated="refreshPublic"/>

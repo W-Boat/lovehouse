@@ -241,3 +241,31 @@ test('scheduled opening keeps whitelist private and rejects stale changes',async
   assert.equal(JSON.parse((await request(handler,'GET','/opening')).body).allowed,true);
  }finally{await rm(directory,{recursive:true,force:true})}
 });
+
+test('bucket settings are authenticated, verified before saving, and never return credentials',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lovehouse-bucket-'));
+ try{
+  let probes=0;
+  const handler=createContentHandler({file:join(directory,'content.json'),token:'fixture-token',probeBucket:async config=>{
+   probes++;
+   if(config.secretAccessKey==='bad')throw Error('test failed');
+  }});
+  const auth={authorization:'Bearer fixture-token','content-type':'application/json'};
+  const endpoint='/admin/api/storage/bucket';
+  const draft={bucket:'lovehouse-test',region:'auto',prefix:'game',pathStyle:true,endpoint:'https://example.org',accessKeyId:'dummy-id',secretAccessKey:'dummy-secret'};
+  const post=(path,value)=>request(handler,'POST',path,auth,JSON.stringify(value));
+  assert.equal((await request(handler,'GET',endpoint)).status,401);
+  assert.equal((await post(endpoint+'/test',draft)).status,200);
+  assert.equal(JSON.parse((await request(handler,'GET',endpoint,auth)).body).source,'none');
+  assert.equal((await post(endpoint,{...draft,secretAccessKey:'bad'})).status,400);
+  const saved=await post(endpoint,draft);
+  assert.equal(saved.status,200);
+  assert.doesNotMatch(saved.body,/dummy-secret|dummy-id/);
+  const current=JSON.parse((await request(handler,'GET',endpoint,auth)).body);
+  assert.equal(current.configuration.hasCredentials,true);
+  assert.equal(JSON.parse((await request(handler,'GET','/admin/api/storage',auth)).body).mode,'s3');
+  assert.equal((await post(endpoint+'/test',{...current.configuration,endpoint:'https://other.example.org'})).status,400);
+  assert.equal((await post(endpoint+'/test',{...draft,endpoint:'https://127.0.0.1'})).status,400);
+  assert.equal(probes,3);
+ }finally{await rm(directory,{recursive:true,force:true})}
+});
