@@ -15,8 +15,9 @@ function entries(value,path=[],result=new Map()){
  }else if(value!==undefined)result.set(JSON.stringify(path),value);
  return result;
 }
-export function configurationChanges(before,after){
- const previous=entries(before),next=entries(after);
+export function configurationChanges(before,after,bundled={}){
+ const effective=config=>({...config,texts:{...bundled.texts,...config?.texts}});
+ const previous=entries(effective(before)),next=entries(effective(after));
  const changes={added:0,modified:0,removed:0,total:0};
  for(const [key,value] of next){
   if(!previous.has(key))changes.added++;

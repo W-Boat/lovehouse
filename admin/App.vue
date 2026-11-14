@@ -149,7 +149,8 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    }else if(form.value){
     const pairs=entries.value.map(({key,value})=>[key.trim(),value]);
     if(pairs.some(([key])=>!key)||new Set(pairs.map(([key])=>key)).size!==pairs.length)throw Error('请填写唯一的稳定 ID');
-    value=Object.fromEntries(selected.value==='texts'?pairs.filter(([key,value])=>bundled.value.texts?.[key]!==value):pairs);
+    const existing=draft.value.texts??{};
+    value=Object.fromEntries(selected.value==='texts'?pairs.filter(([key,value])=>Object.hasOwn(existing,key)||bundled.value.texts?.[key]!==value):pairs);
    }else value=JSON.parse(text.value);
    if(selected.value==='all'){
     if(!value||typeof value!=='object'||Array.isArray(value))throw Error('完整配置必须是 JSON 对象');
@@ -354,7 +355,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    actions[key]?.();
   }
   function review(){
-   try{collect();summary.value=configurationChanges(baseline.value,draft.value);confirm.value=true}
+   try{collect();summary.value=configurationChanges(baseline.value,draft.value,bundled.value);confirm.value=true}
    catch(e){report(e.message)}
   }
   function importHistory(snapshot){
