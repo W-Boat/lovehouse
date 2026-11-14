@@ -185,3 +185,9 @@ body { margin: 0; }
 .naive-sidebar .naive-brand{flex:0 0 64px;border-bottom:1px solid #e5eee8}
 .sidebar-menu-scroll{flex:1;min-height:0}
 .naive-sidebar.n-layout-sider--collapsed .naive-brand{padding-inline:0;justify-content:center}
+@media(min-width:761px){
+ .naive-admin,.naive-admin > .n-layout-scroll-container{height:100dvh;overflow:hidden}
+ .naive-admin .naive-sidebar{height:100%;position:relative;top:auto;flex-shrink:0}
+ .naive-admin .naive-work-area{height:100%;overflow:hidden}
+ .naive-admin .naive-work-area > .n-layout-scroll-container{height:100%;overflow:auto;overscroll-behavior:contain}
+}
