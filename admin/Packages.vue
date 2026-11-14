@@ -352,6 +352,7 @@ void fetch(base+'api/storage',{headers:{Authorization:'Bearer '+props.token.trim
          <n-button tag="a" :href="catalog[key].path" size="small" plain>下载完整底包</n-button>
          <div v-if="catalog[key].thinPackage" class="metadata">
           <n-tag type="info" size="small">关联薄包</n-tag>
+          <strong v-if="catalog[key].thinPackage.title">{{catalog[key].thinPackage.title}}</strong>
           {{catalog[key].thinPackage.version}} · {{readableBytes(catalog[key].thinPackage.bytes)}}
           <n-button tag="a" :href="catalog[key].thinPackage.path" text>下载薄包</n-button>
          </div>

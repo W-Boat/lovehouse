@@ -82,7 +82,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
    return await register(platform,version,sha256,bytes,serialize);
   }finally{await rm(temporary,{force:true})}
  }
- async function register(platform,version,sha256,bytes,serialize,baseVersion){
+ async function register(platform,version,sha256,bytes,serialize,baseVersion,title){
   await mkdir(directory,{recursive:true});
   return serialize(async()=>{
     const previous=await list();
@@ -90,20 +90,23 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
      throw Error('找不到该平台的关联底包');
     const name=releaseName(platform,version);
     const entry={platform,version,name,bytes,sha256,publishedAt:new Date().toISOString(),
-     path:publicPrefix+'/packages/'+sha256+'/'+name,...(baseVersion?{baseVersion}:{})};
+     path:publicPrefix+'/packages/'+sha256+'/'+name,...(baseVersion?{baseVersion}:{}),...(title?{title}:{})};
     if(previous[platform])await writeFile(releasePath(previous[platform]),JSON.stringify(previous[platform]));
     await writeFile(releasePath(entry),JSON.stringify(entry));
     if(!baseVersion)await writeCatalog({...previous,[platform]:entry});
     return entry;
   });
  }
- async function direct(action,{platform,version,sha256,bytes,verifiedLocally=false,baseVersion},serialize){
+ async function direct(action,{platform,version,sha256,bytes,verifiedLocally=false,baseVersion,title},serialize){
   if(!isPackagePlatform(platform)||typeof version!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(version)||
      typeof sha256!=='string'||!/^[a-f0-9]{64}$/.test(sha256)||!Number.isSafeInteger(bytes)||bytes<4||bytes>packageLimit)
    throw Error('Invalid package metadata');
   if(baseVersion!==undefined&&(typeof baseVersion!=='string'||!/^[-.\w]{1,64}$/.test(baseVersion)||version===baseVersion||
     !(await history()).some(row=>!row.baseVersion&&row.platform===platform&&row.version===baseVersion)))
    throw Error('关联底包不存在或版本号无效');
+  if(title!==undefined&&(typeof title!=='string'||!title.trim()||title.trim().length>80||/[\u0000-\u001f\u007f]/.test(title)))
+   throw Error('更新标题须为 1 至 80 个字符');
+  title=title?.trim();
   const destination=platform==='android'&&androidBucket?androidBucket:bucket;
   const active=typeof destination==='function'?await destination():destination;
   if(!active)throw Error('Storage bucket is not enabled');
@@ -115,7 +118,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   }
   if(active.signOnly){
    if(verifiedLocally!==true)throw Error('Local bucket read-back SHA-256 verification is required');
-   return register(platform,version,sha256,bytes,serialize,baseVersion);
+   return register(platform,version,sha256,bytes,serialize,baseVersion,title);
   }
   if(await active.size(key)!==bytes)throw Error('Bucket file size mismatch');
   const digest=createHash('sha256');
@@ -127,7 +130,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
    digest.update(chunk);
   }
   if(received!==bytes||digest.digest('hex')!==sha256||header.toString('hex')!=='504b0304')throw Error('Bucket package verification failed');
-  return register(platform,version,sha256,bytes,serialize,baseVersion);
+  return register(platform,version,sha256,bytes,serialize,baseVersion,title);
  }
  async function serve(request,response,pathname){
   const match=/^\/packages\/([a-f0-9]{64})\/(lovehouse-(android|windows)-[A-Za-z0-9._-]+\.(apk|zip))$/.exec(pathname);

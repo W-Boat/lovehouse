@@ -202,7 +202,7 @@ async function packageFor(platform:Platform){
  const local=__BUILD_INFO__.version,version=selected.version as string;
  const same=version===local||(/^[a-f0-9]{7,40}$/i.test(version)&&/^[a-f0-9]{7,40}$/i.test(local)&&(local.startsWith(version)||version.startsWith(local)));
  const newer=useShell?installedShell!==version:!same&&Date.parse(selected.publishedAt)>Date.parse(__BUILD_INFO__.builtAt);
- return {url:url.href,version,newer,thin:useShell};
+ return {url:url.href,version,newer,thin:useShell,title:typeof selected.title==='string'?selected.title.trim().slice(0,80):''};
 }
 let checkedOnEntry=false;
 let checkingPackage=false;
@@ -218,7 +218,7 @@ export async function checkPackageOnEntry(){
   const dialog=document.createElement('dialog');
   dialog.className='package-update-dialog';
   const title=document.createElement('h2');
-  title.textContent=entry.thin?'发现 '+platformNames[platform]+' 薄包更新':'发现 '+platformNames[platform]+' 更新';
+  title.textContent=entry.title||(entry.thin?'发现 '+platformNames[platform]+' 薄包更新':'发现 '+platformNames[platform]+' 更新');
   const version=document.createElement('p');version.textContent='可下载版本 '+entry.version;
   const actions=document.createElement('div');actions.className='modal-actions';
   const later=document.createElement('button');later.type='button';later.className='secondary';later.textContent='稍后';
