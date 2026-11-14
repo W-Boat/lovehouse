@@ -43,6 +43,7 @@ fn main() {
         let init = format!("window.__storageMode='{}';window.__portableReadonly={};", mode, mode == "system");
         tauri::WebviewWindowBuilder::new(app,"main",tauri::WebviewUrl::App("index.html".into()))
             .title("生日小屋").inner_size(1280.0,800.0).min_inner_size(800.0,500.0)
+            .center().resizable(true)
             .data_directory(storage).initialization_script(init.as_str()).build()?;
         Ok(())
     }).run(tauri::generate_context!()).expect("The birthday cottage could not open");

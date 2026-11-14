@@ -1,3 +1,4 @@
+import {preparedResource} from './release-resources';
 import type {Cottage} from './scene';
 import {save,persist} from './state';
 import {defaultMusicConfig,parseMusicConfig,validMusicTrack} from './music-config';
@@ -12,18 +13,18 @@ export function installMusicRoom(ctx:Context){
  const scene=ctx.scene,bounds=new WeakMap<HTMLElement,string>();
  const setText=(node:Element|null,value:string)=>{if(node&&node.textContent!==value)node.textContent=value};
  const status=(text:string)=>{const label=controls?.querySelector('.music-status');if(label)label.textContent=text};
- function stop(){document.body.classList.remove('music-room-active');generation++;cancelAnimationFrame(frame);frame=0;disposeEngine?.();disposeEngine=undefined;player=undefined;layer?.remove();layer=undefined;controls=undefined;floor=undefined;cover=undefined;current=-1;lastVolume=-1;setExternalMusic(false)}
+ function stop(){document.body.classList.remove('music-room-active');generation++;cancelAnimationFrame(frame);frame=0;disposeEngine?.();disposeEngine=undefined;player=undefined;layer?.remove();layer=undefined;controls=undefined;floor=undefined;cover=undefined;current=-1;lastVolume=-1;requestPlay=false;last=0;setExternalMusic(false)}
  function play(){
   if(!player){requestPlay=true;status('唱片正在准备，准备好后请点一次播放。');return}
   if(!save.music){save.music=true;persist()}
   if(!player.audio.paused){player.pause();return}
-  player.play();void player.audio.play().catch(()=>status('点一下播放键，就可以落针了。'));
+  try{void Promise.resolve(player.play()).catch(()=>status('点一下播放键，就可以落针了。'))}catch{status('歌曲暂时无法播放，请切换离线唱片。')}
  }
  function project(element:HTMLElement,x:number,y:number,w:number,h:number){const a=scene.project(x,y),b=scene.project(x+w,y+h),key=[a.x,a.y,b.x,b.y].join(':');if(bounds.get(element)===key)return;bounds.set(element,key);Object.assign(element.style,{left:a.x+'px',top:a.y+'px',width:(b.x-a.x)+'px',height:(b.y-a.y)+'px'})}
  function trackChanged(){
   if(!player||!cover)return;const track=player.list.audios[player.list.index];if(!track)return;
   current=player.list.index;needleUntil=performance.now()+1000;
-  cover.hidden=false;cover.src=track.cover||new URL('assets/loading-cottage.webp',document.baseURI).href;cover.alt='正在播放：'+track.name;
+  cover.hidden=false;cover.src=(track.cover?preparedResource(track.cover):'')||new URL('assets/loading-cottage.webp',document.baseURI).href;cover.alt='正在播放：'+track.name;
   status(track.name+' · '+track.artist);controls!.querySelector<HTMLButtonElement>('[data-music="like"]')!.textContent=save.notes['music-favorite']===track.name?'已放进喜欢':'喜欢这首';
  }
  async function start(){
@@ -62,7 +63,7 @@ export function installMusicRoom(ctx:Context){
   if(!player){configure();return}
   const tracks=player.list.audios;
   ctx.open(`<h2 id="modal-title">今晚的唱片</h2><p>选一首，唱针会替你换好。${save.notes['music-favorite']?'上次喜欢：'+esc(save.notes['music-favorite']):''}</p><div class="record-track-list">${tracks.slice(0,200).map((track,i)=>`<button class="${i===player!.list.index?'primary':'secondary'}" data-track="${i}">${esc(track.name)}<small>${esc(track.artist)}</small></button>`).join('')}</div><div class="modal-actions"><button class="secondary" id="record-config">配置歌单 / 音源</button></div>`,'music-list');
-  document.querySelectorAll<HTMLButtonElement>('[data-track]').forEach(button=>button.onclick=()=>{const index=Number(button.dataset.track);ctx.close();needleUntil=performance.now()+1000;player?.list.switch(index);player?.play()});
+  document.querySelectorAll<HTMLButtonElement>('[data-track]').forEach(button=>button.onclick=()=>{const index=Number(button.dataset.track);ctx.close();needleUntil=performance.now()+1000;player?.list.switch(index);if(player?.audio.paused)play()});
   document.getElementById('record-config')!.onclick=configure;
  }
  function configure(){

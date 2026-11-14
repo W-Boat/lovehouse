@@ -417,6 +417,14 @@ const enhancements=installUI({scene,canUse:()=>!cinematic&&!openingGift&&!scene.
 const musicRoom=installMusicRoom({scene,open:showModal,close:closeModal,toast,photo:()=>{void takePhoto()},note:()=>writeFuture('music-dedication','夹在唱片里的小纸条','这张点歌小纸条，已经收进唱片套里。')});
 installRewards({scene,canUse:()=>started&&!cinematic&&!openingGift&&!scene.transitioning,close:()=>{closeSceneActivity();if(dialogueOpen)closeDialogue();if(modalOpen)closeModal()},openGift:id=>openGift(config.gifts.find(g=>g.id===id)!,true),refresh:()=>{scene.refresh();updateHUD();enhancements.refresh()},toast});
 scene.bridge.on('online-pair',(active:boolean)=>toast(active?'两位玩家已到齐，双人模式已启动。':'同伴已离开，等待重新加入。'));
+scene.bridge.on('scene-cover',(zone?:Zone)=>{
+ const existing=document.getElementById('scene-transition-cover');
+ if(!zone){existing?.classList.add('leaving');window.setTimeout(()=>existing?.remove(),220);return}
+ existing?.remove();
+ const cover=document.createElement('div');cover.id='scene-transition-cover';
+ cover.setAttribute('role','status');cover.textContent='正在前往 '+worlds[zone].name;
+ $('game-frame').append(cover);
+});
 scene.bridge.on('cloud-scene-load',(zone?:Zone,ratio?:number|null)=>{
  const frame=$('game-frame');
  let loading=frame.querySelector<HTMLElement>('#cloud-scene-loading');

@@ -221,3 +221,5 @@ body[data-cloud-offline=true] .game-hud::before{content:'离线';position:absolu
 #app .hud-tools:not(.expanded)>#map-toggle{display:block;flex:none}
 #app .hud-tools{z-index:8}
 #app #round-minimap{z-index:7}
+#scene-transition-cover{position:absolute;inset:0;z-index:75;display:grid;place-items:center;background:#241e26;color:#fff0cf;font-family:CottagePixel,monospace;font-size:20px;pointer-events:auto;opacity:1;transition:opacity .2s steps(6)}
+#scene-transition-cover.leaving{opacity:0;pointer-events:none}

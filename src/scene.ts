@@ -229,13 +229,13 @@ export class Cottage extends Phaser.Scene {
  }
  project(x:number,y:number){const c=this.cameras.main;return{x:(x-c.worldView.x)*c.zoom,y:(y-c.worldView.y)*c.zoom}}
  async transitionTo(zone:Zone,done:()=>void){
-  if(!this.onlineWorld?.handWalking)this.onlineWorld?.cancelAffection();const generation=++this.transitionGeneration;this.transitionTarget=zone;this.transitioning=true;this.transitionCleanup?.();this.transitionCleanup=undefined;this.blocked=true;this.stop();
-  try{await this.ensureZone(zone,generation)}catch{if(generation===this.transitionGeneration){this.transitioning=false;this.blocked=false;this.cameras.main.fadeIn(200,19,17,28);this.bridge.emit('zone-error')}return}
+  if(!this.onlineWorld?.handWalking)this.onlineWorld?.cancelAffection();const generation=++this.transitionGeneration;this.transitionTarget=zone;this.transitioning=true;this.transitionCleanup?.();this.transitionCleanup=undefined;this.blocked=true;this.stop();this.bridge.emit('scene-cover',zone);
+  try{await this.ensureZone(zone,generation)}catch{if(generation===this.transitionGeneration){this.transitioning=false;this.blocked=false;this.cameras.main.fadeIn(200,19,17,28);this.bridge.emit('scene-cover',undefined);this.bridge.emit('zone-error')}return}
   if(generation!==this.transitionGeneration)return;
   this.blocked=true;this.stop();this.clearHint();const camera=this.cameras.main,duration=save.reduced?1:300;
   let switched=false;
   let fadeInFallback:ReturnType<typeof setTimeout>|undefined;
-  const arrived=()=>{if(generation!==this.transitionGeneration||!this.transitioning)return;this.transitionCleanup?.();this.transitionCleanup=undefined;this.transitioning=false;this.blocked=false;done()};
+  const arrived=()=>{if(generation!==this.transitionGeneration||!this.transitioning)return;this.transitionCleanup?.();this.transitionCleanup=undefined;this.transitioning=false;this.blocked=false;this.bridge.emit('scene-cover',undefined);done()};
   const covered=()=>{if(generation!==this.transitionGeneration||switched)return;switched=true;this.changeZone(zone);this.resizeView();camera.once('camerafadeincomplete',arrived);fadeInFallback=setTimeout(arrived,duration+500);camera.fadeIn(duration,19,17,28)};
   const fadeOutFallback=setTimeout(covered,duration+500);
   this.transitionCleanup=()=>{clearTimeout(fadeOutFallback);clearTimeout(fadeInFallback);camera.off('camerafadeoutcomplete',covered);camera.off('camerafadeincomplete',arrived)};
