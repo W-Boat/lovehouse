@@ -61,7 +61,7 @@ async function readCatalog(){
  catalogBusy.value=true;
  catalogError.value='';
  try{
-  const response=await fetch(base+'../packages.json',{cache:'no-store'});
+  const response=await fetch(base+'../packages.json?view=full',{cache:'no-store'});
   if(!response.ok)throw Error('无法读取安装包目录');
   catalog.value=await response.json();
  }catch(error){

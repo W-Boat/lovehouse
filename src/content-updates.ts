@@ -177,7 +177,7 @@ function currentPlatform():Platform|undefined{
  if(native.__storageMode)return 'windows';
 }
 async function packageFor(platform:Platform){
- const catalog=new URL('packages.json',defaultContentServer().replace(/\/?$/,'/'));
+ const catalog=new URL('packages.json?view=full',defaultContentServer().replace(/\/?$/,'/'));
  if(catalog.protocol!=='https:')throw Error('HTTPS required');
  const controller=new AbortController();
  const timeout=window.setTimeout(()=>controller.abort(),15000);

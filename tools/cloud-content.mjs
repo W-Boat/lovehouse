@@ -309,7 +309,14 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
    return;
   }
   if(request.method==='GET'&&pathname==='/packages.json'){
-   try{response.writeHead(200,{...jsonHeaders,'Access-Control-Allow-Origin':'*'}).end(JSON.stringify(await packages.catalog()))}
+   try{
+    const catalog=await packages.catalog();
+    const base=catalog.android;
+    if(url.searchParams.get('view')!=='full'&&base?.thinPackage){
+     catalog.android={...base.thinPackage,fullPackage:base};
+    }
+    response.writeHead(200,{...jsonHeaders,'Access-Control-Allow-Origin':'*'}).end(JSON.stringify(catalog));
+   }
    catch{sendJson(response,500,{error:'Unable to read package releases'})}
    return;
   }

@@ -306,7 +306,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     if(!response.ok)throw Error('无法读取发布状态');
     return response.json();
    };
-   const [content,packages]=await Promise.allSettled([read('content.json?features=animated-scenes-v1'),read('packages.json')]);
+   const [content,packages]=await Promise.allSettled([read('content.json?features=animated-scenes-v1'),read('packages.json?view=full')]);
    if(content.status==='fulfilled')publicRevision.value=content.value.revision??'';
    if(packages.status==='fulfilled')publicPackages.value=packages.value;
   }
