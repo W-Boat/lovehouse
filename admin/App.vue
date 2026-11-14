@@ -1,17 +1,17 @@
 <script setup>
 import {NInputNumber} from 'naive-ui';
 import {PublisherAlert,PublisherDialog} from './publisher-components.js';
-import Guide from './Guide.vue';
+const Guide=defineAsyncComponent(()=>import('./Guide.vue'));
 import AdminLayout from './AdminLayout.vue';
-import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem} from 'naive-ui';
-import Assets from './Assets.vue';
-import Packages from './Packages.vue';
-import History from './History.vue';
-import ScenePreview from './ScenePreview.vue';
-import InteractionBehavior from './InteractionBehavior.vue';
-import MusicForm from './MusicForm.vue';
-import MediaForm from './MediaForm.vue';
-import { computed, ref, watch, onBeforeUnmount, onMounted } from 'vue';
+import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem,NPagination,NTabs,NTabPane,NCollapse,NCollapseItem} from 'naive-ui';
+const Assets=defineAsyncComponent(()=>import('./Assets.vue'));
+const Packages=defineAsyncComponent(()=>import('./Packages.vue'));
+const History=defineAsyncComponent(()=>import('./History.vue'));
+const ScenePreview=defineAsyncComponent(()=>import('./ScenePreview.vue'));
+const InteractionBehavior=defineAsyncComponent(()=>import('./InteractionBehavior.vue'));
+const MusicForm=defineAsyncComponent(()=>import('./MusicForm.vue'));
+const MediaForm=defineAsyncComponent(()=>import('./MediaForm.vue'));
+import { computed, ref, watch, onBeforeUnmount, onMounted, defineAsyncComponent } from 'vue';
 
 const sections = [
  ['texts','文案','按稳定 ID 修改对白、赠言和界面文字。',{}],
@@ -30,7 +30,7 @@ const sections = [
  ['guide','项目文档','开发方法、发布 CLI、架构和构建说明。',null],
  ['packages','安装包','发布已构建的客户端，并提供下载入口。',null],
  ['assets','素材库','上传图片、音频和歌词，复制链接到发布配置。',null],
- ['all','完整配置','适用于批量修改和 Agent 生成的 JSON。',{}],
+ ['all','配置总览','按栏目查看和修改配置。',{}],
 ];
 
 const sectionGroups=[
@@ -78,14 +78,49 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
   let authTimer,authController,hasEdited=false,refreshingEditor=false;
   const loaded=ref(false), form=ref(false), entries=ref([]), search=ref('');
   const records=ref([]),objectValue=ref({});
-  const specialForm=computed(()=>form.value&&['musicRoom','media'].includes(selected.value));
+  const specialForm=computed(()=>form.value&&['musicRoom','media','gifts','announcement','notification','statistics'].includes(selected.value));
   const fields=computed(()=>selected.value==='interactions'?structuredFields.interactions.filter(([key])=>!['game','gameUrl','url'].includes(key)):structuredFields[selected.value]);
-  const visibleEntries=computed(()=>entries.value.filter(row=>!search.value||row.key.includes(search.value)||row.value.includes(search.value)));
+  const entryPage=ref(1),entryPageSize=24;
+  const matchingEntries=computed(()=>entries.value.filter(row=>!search.value||row.key.includes(search.value)||row.value.includes(search.value)));
+  const visibleEntries=computed(()=>matchingEntries.value.slice((entryPage.value-1)*entryPageSize,entryPage.value*entryPageSize));
+  watch(search,()=>{entryPage.value=1});
+  watch(()=>matchingEntries.value.length,count=>{entryPage.value=Math.min(entryPage.value,Math.max(1,Math.ceil(count/entryPageSize)))});
+  const giftFields=[['name','名称'],['subtitle','副标题'],['message','赠言'],['variant','补充说明'],['image','配图 HTTPS 地址']];
+  const giftIds=['moon','keychain','chestnuts','earphones','band','doll','chocolate','letter','notes','hat','labubu','mystery'];
+  const builtinGift=id=>bundled.value.gifts?.[id]??{};
+  function setGift(id,field,value){
+   const fields={...objectValue.value[id]};
+   if(value===undefined||value===null||value==='')delete fields[field];else fields[field]=value;
+   if(Object.keys(fields).length)objectValue.value[id]=fields;else delete objectValue.value[id];
+  }
+  function setGiftPoint(id,index,value){
+   const point=[...(objectValue.value[id]?.point??builtinGift(id).point??[320,350])];
+   point[index]=value??builtinGift(id).point?.[index]??0;setGift(id,'point',point);
+  }
+  const bundledTab=ref('texts'),bundledQuery=ref('');
+  const bundledRows=computed(()=>Object.entries(bundled.value[bundledTab.value]??{}).map(([key,value])=>({key,value,summary:typeof value==='string'?value:value?.name??value?.mode??key})).filter(row=>!bundledQuery.value||row.key.includes(bundledQuery.value)||String(row.summary).includes(bundledQuery.value)));
+  const discardConfirm=ref(false),passwordOpen=ref(false),currentPassword=ref(''),newPassword=ref(''),passwordStatus=ref('');
+  async function changePassword(){
+   passwordStatus.value='';
+   try{
+    const r=await fetch(import.meta.env.BASE_URL+'api/password',{method:'POST',headers:{Authorization:'Bearer '+token.value,'Content-Type':'application/json'},body:JSON.stringify({current:currentPassword.value,next:newPassword.value})});
+    const result=await r.json();if(!r.ok)throw Error(result.error);
+    currentPassword.value='';newPassword.value='';passwordOpen.value=false;await logout();loginError.value='密码已修改，请重新登录。';
+   }catch(error){passwordStatus.value=error.message}
+  }
+  async function discardDraft(){
+   discardConfirm.value=false;
+   if(!loaded.value)return;
+   draft.value=JSON.parse(JSON.stringify(baseline.value));
+   draftRevision.value=revision.value;hasEdited=false;draftAvailable.value=false;savedAt.value='';
+   try{localStorage.removeItem(storageKey)}catch{}
+   refreshText();report('已放弃本机草稿',true);
+  }
   const replaceConfirm=ref(false);
   const text=ref('{}'), status=ref(''), success=ref(false), busy=ref(false), confirm=ref(false);
   const section=computed(()=>sections.find(([id])=>id===selected.value));
   function collect(){
-   if(['assets','history','packages','bundled','guide'].includes(selected.value))return;
+   if(['assets','history','packages','bundled','guide','all'].includes(selected.value))return;
    let value;
    if(specialForm.value)value=objectValue.value;
    else if(form.value&&fields.value){
@@ -311,7 +346,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
   <div class="identity"><div><strong>{{labels[selected]}}</strong><small>内容发布后台</small></div></div>
   <div class="top-actions">
    <n-tag :type="authState==='ready'?'success':authState==='error'?'error':'info'">{{{idle:'访客',checking:'正在验证',ready:'已认证',error:'认证失败'}[authState]}}</n-tag>
-   <n-button @click="logout">退出登录</n-button>
+   <n-button size="small" @click="passwordOpen=true">修改密码</n-button><n-button size="small" @click="logout">退出</n-button>
   </div>
  </template>
  <div class="workspace-main">
@@ -325,7 +360,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
    <publisher-alert v-if="status" :title="status" :type="success?'success':'error'" :closable="false" show-icon />
    <publisher-alert v-if="draftAvailable" title="发现本机未发布草稿" type="info" :closable="false"><n-button @click="restoreLocal">恢复草稿</n-button></publisher-alert>
    <small v-if="savedAt" class="draft-status">本机草稿已保存 {{savedAt}}</small>
-   <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div><div v-if="!['assets','history','packages','guide'].includes(selected)" class="actions"><label class="import">导入 JSON<input type="file" accept=".json,application/json" @change="importDraft"></label><n-button @click="exportDraft">导出草稿</n-button><n-button @click="restoreLocal(true)">恢复覆盖前草稿</n-button></div></div>
+   <div class="heading"><div><h1>{{section[1]}}</h1><p>{{section[2]}}</p></div><div v-if="!['assets','history','packages','guide'].includes(selected)" class="actions"><label class="import">导入 JSON<input type="file" accept=".json,application/json" @change="importDraft"></label><n-button @click="exportDraft">导出草稿</n-button><n-button :disabled="!loaded" @click="discardConfirm=true">放弃草稿</n-button><n-button @click="restoreLocal(true)">恢复覆盖前草稿</n-button></div></div>
    <template v-if="selected==='guide'"><Guide/></template>
    <template v-else-if="selected==='packages'">
     <Packages :token="token" @updated="refreshPublic"/>
@@ -337,7 +372,7 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
     <History :token="token" :revision="revision" @import="importHistory" @restore="connect"/>
    </template>
    <template v-else>
-   <div v-if="formSections.includes(selected)" class="actions"><n-button @click="toggleEditor">{{form?'编辑 JSON':'表单编辑'}}</n-button><n-button v-if="form && fields" @click="addRecord">新增条目</n-button><template v-else-if="form && !specialForm"><n-input v-model:value="search" clearable placeholder="搜索 ID 或内容" aria-label="搜索条目"/><n-button @click="search=''; entries.push({key:'',value:''})">新增条目</n-button></template></div>
+   <div v-if="formSections.includes(selected)" class="actions"><n-button v-if="form && fields" @click="addRecord">新增条目</n-button><template v-else-if="form && !specialForm"><n-input v-model:value="search" clearable placeholder="搜索 ID 或内容" aria-label="搜索条目"/><n-button @click="search=''; entries.push({key:'',value:''})">新增条目</n-button></template></div>
    <MusicForm v-if="specialForm && selected==='musicRoom'" v-model="objectValue"/>
    <MediaForm v-else-if="specialForm && selected==='media'" v-model="objectValue"/>
    <div v-else-if="form && fields" class="record-list">
@@ -365,11 +400,49 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
      <n-input v-model:value="row.value" :type="selected==='texts'?'textarea':'text'" aria-label="内容" :placeholder="selected==='texts'?'文字':'HTTPS 地址'"/>
      <n-button text type="error" @click="entries.splice(entries.indexOf(row),1)">移除</n-button>
     </div>
+    <n-pagination v-if="matchingEntries.length>entryPageSize" v-model:page="entryPage" :page-size="entryPageSize" :item-count="matchingEntries.length" :page-slot="5"/>
     <p v-if="!visibleEntries.length" class="empty">{{search?'没有匹配条目':'暂无条目，可新增或导入草稿。'}}</p>
    </div>
-   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch :value="JSON.parse(text).enabled" @update:value="value=>text=JSON.stringify({enabled:value})"/> 启用统计</label><n-button @click="readStatistics">刷新在线统计</n-button><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
-   <n-input v-else-if="selected==='bundled'" :value="JSON.stringify(bundled,null,2)" readonly type="textarea" :rows="20"/>
-   <n-input v-else v-model:value="text" type="textarea" :rows="17" resize="vertical" aria-label="配置 JSON" class="code"/>
+   <n-collapse v-else-if="selected==='gifts'" accordion>
+    <n-collapse-item v-for="id in giftIds" :key="id" :name="id" :title="objectValue[id]?.name||builtinGift(id).name||id">
+     <n-form label-placement="top">
+      <n-form-item v-for="[key,label] in giftFields" :key="key" :label="label">
+       <n-input :value="objectValue[id]?.[key]??''" :placeholder="builtinGift(id)[key]||'填写覆盖值'" :type="key==='message'?'textarea':'text'" @update:value="value=>setGift(id,key,value)"/>
+      </n-form-item>
+      <div class="coordinates">
+       <n-form-item v-for="[axis,max] in [['x',640],['y',426]]" :key="axis" :label="'展示 '+axis.toUpperCase()">
+        <n-input-number :value="objectValue[id]?.[axis]??null" :placeholder="String(builtinGift(id)[axis]??'')" :min="0" :max="max" @update:value="value=>setGift(id,axis,value)"/>
+       </n-form-item>
+       <n-form-item v-for="index in [0,1]" :key="index" :label="index===0?'落脚点 X':'落脚点 Y'">
+        <n-input-number :value="objectValue[id]?.point?.[index]??null" :placeholder="String(builtinGift(id).point?.[index]??'')" :min="0" :max="index===0?640:426" @update:value="value=>setGiftPoint(id,index,value)"/>
+       </n-form-item>
+      </div>
+      <n-button size="small" :disabled="!objectValue[id]" @click="delete objectValue[id]">恢复此礼物的包内配置</n-button>
+     </n-form>
+    </n-collapse-item>
+   </n-collapse>
+   <n-form v-else-if="selected==='announcement'||selected==='notification'" label-placement="top">
+    <n-form-item label="启用"><n-switch v-model:value="objectValue.enabled"/></n-form-item>
+    <n-form-item label="标题"><n-input v-model:value="objectValue.title" :maxlength="80"/></n-form-item>
+    <n-form-item label="正文"><n-input v-model:value="objectValue.body" type="textarea" :maxlength="4000" :autosize="{minRows:5,maxRows:12}"/></n-form-item>
+   </n-form>
+   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch v-model:value="objectValue.enabled"/> 启用统计</label><n-button @click="readStatistics">刷新在线统计</n-button><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
+   <section v-else-if="selected==='bundled'" class="bundled-browser">
+    <n-tabs v-model:value="bundledTab" type="line">
+     <n-tab-pane v-for="[id,title] in [['texts','文案'],['worlds','场景与互动'],['gifts','礼物'],['media','媒体'],['musicRoom','歌单'],['announcement','游戏私告']]" :key="id" :name="id" :tab="title"/>
+    </n-tabs>
+    <n-input v-model:value="bundledQuery" clearable placeholder="搜索名称、内容或 ID"/>
+    <n-data-table v-if="bundledTab==='texts'" :data="bundledRows" :columns="[{key:'key',title:'文案 ID',width:235},{key:'summary',title:'包内文案'}]" :scroll-x="420" :pagination="{pageSize:16,pageSlot:5}"/>
+    <n-collapse v-else>
+     <n-collapse-item v-for="row in bundledRows" :key="row.key" :name="row.key" :title="row.summary">
+      <dl v-if="row.value && typeof row.value==='object'" class="bundled-fields">
+       <template v-for="(value,key) in row.value" :key="key"><dt>{{key}}</dt><dd><ul v-if="Array.isArray(value) && value.some(v=>typeof v==='object')"><li v-for="(part,index) in value" :key="index">{{part?.name||part?.title||part?.id||part?.join?.(' / ')||part}}</li></ul><span v-else>{{Array.isArray(value)?value.join(' / '):value}}</span></dd></template>
+      </dl><p v-else>{{row.value}}</p>
+     </n-collapse-item>
+    </n-collapse>
+    <p v-if="!bundledRows.length">没有可显示的包内条目。</p>
+   </section>
+   <div v-else-if="selected==='all'" class="config-links"><n-card v-for="[id,title,help] in sections.filter(([id])=>!['all','guide','assets','history','packages'].includes(id))" :key="id" :title="title" size="small"><p>{{help}}</p><n-button size="small" @click="choose(id)">打开{{title}}</n-button></n-card></div>
    <div class="publish"><div class="actions">
     <n-button :disabled="busy || !loaded" @click="replaceConfirm=true">载入线上配置</n-button>
     <n-button v-if="conflict" @click="rebaseDraft">确认以当前版本为基准</n-button>
@@ -381,5 +454,14 @@ const formSections=['texts','giftGames','musicRoom','media',...Object.keys(struc
  </div>
  <publisher-dialog v-model="replaceConfirm" title="载入线上配置？" width="min(440px,94vw)"><p>当前草稿会先保存到本机，然后载入线上内容。</p><template #footer><n-button @click="replaceConfirm=false">取消</n-button><n-button type="primary" @click="saveLocal(true); replaceConfirm=false; request('snapshot')">载入</n-button></template></publisher-dialog>
  <publisher-dialog v-model="confirm" title="发布当前草稿？" width="min(440px, 94vw)"><p>玩家下次启动时会同步此配置。</p><p>变更分区 {{summary.map(id=>labels[id]||id).join('、') || '无变更'}}</p><template #footer><n-button @click="confirm=false">取消</n-button><n-button type="primary" @click="confirm=false; request('publish')">确认发布</n-button></template></publisher-dialog>
+<publisher-dialog v-model="discardConfirm" title="放弃本机草稿？"><p>当前未发布改动会清除，编辑器恢复到已读取的线上版本。</p><template #footer><n-button @click="discardConfirm=false">取消</n-button> <n-button type="error" @click="discardDraft">放弃草稿</n-button></template></publisher-dialog>
+ <publisher-dialog v-model="passwordOpen" title="修改密码">
+  <n-form label-placement="top" @submit.prevent="changePassword">
+   <n-form-item label="当前密码"><n-input v-model:value="currentPassword" type="password" :input-props="{autocomplete:'current-password'}"/></n-form-item>
+   <n-form-item label="新密码（至少 12 字符）"><n-input v-model:value="newPassword" type="password" :input-props="{autocomplete:'new-password'}"/></n-form-item>
+   <p v-if="passwordStatus" role="alert">{{passwordStatus}}</p>
+   <n-button type="primary" attr-type="submit" :disabled="!currentPassword||newPassword.length<12">保存密码</n-button>
+  </n-form>
+ </publisher-dialog>
 </AdminLayout>
  </template>

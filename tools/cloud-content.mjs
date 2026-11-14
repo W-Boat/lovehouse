@@ -178,6 +178,12 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
  const loginHash=process.env.LOVEHOUSE_ADMIN_PASSWORD_HASH;
  const loginSalt=process.env.LOVEHOUSE_ADMIN_PASSWORD_SALT;
  const sessions=new Map(),attempts=new Map();
+ const passwordFile=file+'.password.json';
+ const currentPassword=async()=>{
+  try{return JSON.parse(await readFile(passwordFile,'utf8'))}
+  catch(error){if(error.code!=='ENOENT')throw error;return {salt:loginSalt,hash:loginHash}}
+ };
+ const verifyPassword=(password,credential)=>typeof password==='string'&&password.length<=256&&/^[a-f0-9]{128}$/.test(credential.hash??'')&&timingSafeEqual(scryptSync(password,credential.salt,64),Buffer.from(credential.hash,'hex'));
  let pendingWrite=Promise.resolve();
  const serialize=operation=>{
   const result=pendingWrite.then(operation);
@@ -283,8 +289,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
     try{
      const {username,password}=await readJson(request);
      if(typeof username!=='string'||typeof password!=='string'||username.length>80||password.length>256)throw Error();
-     const supplied=scryptSync(password,loginSalt,64);
-     if(!timingSafeEqual(supplied,Buffer.from(loginHash,'hex'))||username!==loginUser)throw Error();
+     if(!verifyPassword(password,await currentPassword())||username!==loginUser)throw Error();
      attempts.delete(address);
      for(const [key,expires] of sessions)if(expires<=now)sessions.delete(key);
      const key=randomBytes(32).toString('hex');
@@ -295,6 +300,23 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
    }
    if(pathname==='/admin/api/logout'&&request.method==='POST'){sessions.delete(session);sendJson(response,200,{});return}
    if (!authenticated(request.headers.authorization,token)&&!(sessions.get(session)>now)) { sendJson(response,401,{error:'登录已过期或发布令牌无效'}); return }
+   if(pathname==='/admin/api/password'&&request.method==='POST'){
+    if(!(sessions.get(session)>now)){sendJson(response,401,{error:'请先通过账号登录'});return}
+    try{
+     const {current,next}=await readJson(request);
+     if(typeof next!=='string'||next.length<12||next.length>256){sendJson(response,400,{error:'新密码须为 12 至 256 个字符'});return}
+     const changed=await serialize(async()=>{
+      if(!(sessions.get(session)>Date.now())||!verifyPassword(current,await currentPassword()))return false;
+      const salt=randomBytes(16).toString('hex');
+      const hash=scryptSync(next,salt,64).toString('hex');
+      await saveSnapshot(passwordFile,JSON.stringify({salt,hash}));
+      sessions.clear();return true;
+     });
+     if(!changed){sendJson(response,403,{error:'当前密码有误或登录已过期'});return}
+     sendJson(response,200,{});
+    }catch{sendJson(response,500,{error:'暂时无法修改密码'})}
+    return;
+   }
    if(pathname.startsWith('/admin/api/android-update/')&&request.method==='POST'){
     const target=pathname.slice('/admin/api/android-update/'.length);
     try{
