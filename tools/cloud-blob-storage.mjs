@@ -85,6 +85,14 @@ export function createBucket(config,{probe=false}={}){
    const {getSignedUrl}=await import('@aws-sdk/s3-request-presigner');
    return getSignedUrl(client,new s3.PutObjectCommand({Bucket:bucket,Key:key,ContentLength:size,ContentType:mime,ChecksumSHA256:Buffer.from(sha256,'hex').toString('base64')}),{expiresIn:900,signableHeaders:new Set(['content-length','content-type']),unhoistableHeaders:new Set(['x-amz-checksum-sha256'])});
   },
+  async signDownload(key,name,mime,{head=false}={}){
+   await command('HeadObjectCommand',{Key:key});
+   const {client,s3}=await sdk;
+   const {getSignedUrl}=await import('@aws-sdk/s3-request-presigner');
+   const operation=head?s3.HeadObjectCommand:s3.GetObjectCommand;
+   return getSignedUrl(client,new operation({Bucket:bucket,Key:key,
+    ResponseContentDisposition:'attachment; filename="'+name+'"',ResponseContentType:mime}),{expiresIn:900});
+  },
   async put(key,body,size,mime){
    const uploaded=await command('PutObjectCommand',{Key:key,Body:body,ContentLength:size,ContentType:mime},300000);
    if(!uploaded)throw Error('Bucket unavailable');
@@ -188,6 +196,19 @@ export function createBlobStore(group,bucket,getRules=async()=>defaultStorageRul
    if(local!==undefined)return local;
    const active=await resolveBucket();
    return active?.size(active.key(group,id));
+  },
+  downloadUrl(id,file,size,name,mime,options){
+   return route('download',size,{
+    local:async()=>{
+     if(await localSize(file)===undefined)throw Object.assign(Error('File missing'),{code:'ENOENT'});
+     return null;
+    },
+    s3:async active=>{
+     const key=active.key(group,id);
+     if(await active.size(key)!==size)throw Object.assign(Error('Object missing'),{code:'ENOENT'});
+     return active.signDownload(key,name,mime,options);
+    },
+   });
   },
   bytes(id,file,size){
    return route('download',size,{

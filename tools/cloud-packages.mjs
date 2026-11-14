@@ -117,13 +117,19 @@ export function createPackageStore(directory,publicPrefix,bucket,rules){
   const id=sha256+'.'+extension,blob=join(directory,id);
   const size=await blobs.size(id,blob);
   if(size===undefined)return false;
+  const location=await blobs.downloadUrl(id,blob,size,name,format.mime,{head:request.method==='HEAD'});
+  if(location){
+   response.writeHead(302,{Location:location,'Cache-Control':'private, no-store',
+    'Referrer-Policy':'no-referrer','Content-Length':'0'}).end();
+   return true;
+  }
   let start=0,end=size-1,status=200;
   const headers={'Content-Type':format.mime,'Content-Disposition':'attachment; filename="'+name+'"',
    'X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=86400','Accept-Ranges':'bytes'};
   if(request.headers.range){
    const range=/^bytes=(\d*)-(\d*)$/.exec(request.headers.range);
    if(range?.[1]){start=Number(range[1]);if(range[2])end=Math.min(end,Number(range[2]))}
-   else if(range?.[2])start=Math.max(0,info.size-Number(range[2]));
+   else if(range?.[2])start=Math.max(0,size-Number(range[2]));
    else start=size;
    if(start>end||!Number.isSafeInteger(start)){
     response.writeHead(416,{'Content-Range':'bytes */'+size}).end();return true;
