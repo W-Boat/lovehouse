@@ -3,6 +3,8 @@
 import {computed,h,ref,onMounted,onBeforeUnmount} from 'vue';
 import {NButton,NConfigProvider,NLayout,NLayoutSider,NMenu,NIcon,NDrawer,NDrawerContent,zhCN,dateZhCN} from 'naive-ui';
 
+import menuIconData from '@iconify-icons/mdi/menu';
+import IconButton from './IconButton.vue';
 import file from '@iconify-icons/mdi/file-document-outline';
 import image from '@iconify-icons/mdi/image-multiple-outline';
 import chart from '@iconify-icons/mdi/chart-timeline-variant';
@@ -26,11 +28,11 @@ const homeMarkup=homeIcon.body;
 const menuIcon=key=>()=>h(NIcon,null,{default:()=>h('svg',{viewBox:'0 0 24 24',innerHTML:(icons[key]??file).body})});
 const props=defineProps({groups:Array,labels:Object,selected:String});
 const emit=defineEmits(['select']);
-const drawerWidth=ref(280);
+const drawerWidth=ref(184);
 const collapsed=ref(false),mobile=ref(false),drawer=ref(false);
 const media=window.matchMedia('(max-width: 760px)');
-const measure=()=>{mobile.value=media.matches;drawerWidth.value=Math.min(280,window.innerWidth-24);drawer.value=false};
-const resizeDrawer=()=>{drawerWidth.value=Math.min(280,window.innerWidth-24)};
+const measure=()=>{mobile.value=media.matches;drawerWidth.value=Math.min(196,Math.round(window.innerWidth*.54));drawer.value=false};
+const resizeDrawer=()=>{drawerWidth.value=Math.min(196,Math.round(window.innerWidth*.54))};
 measure();onMounted(()=>{media.addEventListener('change',measure);window.addEventListener('resize',resizeDrawer)});
 onBeforeUnmount(()=>{media.removeEventListener('change',measure);window.removeEventListener('resize',resizeDrawer)});
 function select(key){drawer.value=false;emit('select',key)}
@@ -50,7 +52,7 @@ const themeOverrides={common:{primaryColor:'#28624e',primaryColorHover:'#397d64'
    </n-layout-sider>
    <n-layout class="naive-work-area">
     <header class="naive-header">
-     <n-button quaternary aria-label="切换后台导航" :aria-expanded="mobile?drawer:!collapsed" @click="toggle">菜单</n-button>
+     <IconButton quaternary label="切换后台导航" :icon="menuIconData" :aria-expanded="mobile?drawer:!collapsed" @click="toggle"/>
      <slot name="header"/>
     </header>
     <main class="naive-content"><slot/></main>

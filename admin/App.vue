@@ -1,17 +1,24 @@
 <script setup>
+import IconButton from './IconButton.vue';
+import PageLoading from './page-loading.js';
+import checkIcon from '@iconify-icons/mdi/check-decagram-outline';
+import publishIcon from '@iconify-icons/mdi/cloud-upload-outline';
+import keyIcon from '@iconify-icons/mdi/key-outline';
+import logoutIcon from '@iconify-icons/mdi/logout';
+import refreshIcon from '@iconify-icons/mdi/refresh';
 import {NInputNumber} from 'naive-ui';
 import {PublisherAlert,PublisherDialog} from './publisher-components.js';
-const Guide=defineAsyncComponent(()=>import('./Guide.vue'));
+const Guide=defineAsyncComponent({loader:()=>import('./Guide.vue'),loadingComponent:PageLoading,delay:120});
 import AdminLayout from './AdminLayout.vue';
-import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem,NPagination,NTabs,NTabPane,NCollapse,NCollapseItem,NDropdown} from 'naive-ui';
-const Assets=defineAsyncComponent(()=>import('./Assets.vue'));
-const Packages=defineAsyncComponent(()=>import('./Packages.vue'));
-const History=defineAsyncComponent(()=>import('./History.vue'));
-const ScenePreview=defineAsyncComponent(()=>import('./ScenePreview.vue'));
-const SceneInteractions=defineAsyncComponent(()=>import('./SceneInteractions.vue'));
+import {NButton,NInput,NTag,NSwitch,NDataTable,NCard,NForm,NFormItem,NPagination,NTabs,NTabPane,NCollapse,NCollapseItem,NDropdown,NSpin} from 'naive-ui';
+const Assets=defineAsyncComponent({loader:()=>import('./Assets.vue'),loadingComponent:PageLoading,delay:120});
+const Packages=defineAsyncComponent({loader:()=>import('./Packages.vue'),loadingComponent:PageLoading,delay:120});
+const History=defineAsyncComponent({loader:()=>import('./History.vue'),loadingComponent:PageLoading,delay:120});
+const ScenePreview=defineAsyncComponent({loader:()=>import('./ScenePreview.vue'),loadingComponent:PageLoading,delay:120});
+const SceneInteractions=defineAsyncComponent({loader:()=>import('./SceneInteractions.vue'),loadingComponent:PageLoading,delay:120});
 const interactionZone=ref('');
-const MusicForm=defineAsyncComponent(()=>import('./MusicForm.vue'));
-const MediaForm=defineAsyncComponent(()=>import('./MediaForm.vue'));
+const MusicForm=defineAsyncComponent({loader:()=>import('./MusicForm.vue'),loadingComponent:PageLoading,delay:120});
+const MediaForm=defineAsyncComponent({loader:()=>import('./MediaForm.vue'),loadingComponent:PageLoading,delay:120});
 import { computed, ref, watch, onBeforeUnmount, onMounted, defineAsyncComponent } from 'vue';
 
 const sections = [
@@ -362,15 +369,15 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
   <div class="top-actions">
    <input ref="importInput" type="file" accept=".json,application/json" hidden @change="importDraft">
    <div class="desktop-publish-actions">
-    <n-button size="small" :disabled="busy||!loaded" @click="publishingAction('check')">校验草稿</n-button>
-    <n-button size="small" type="primary" :disabled="busy||!loaded||conflict" @click="publishingAction('publish')">发布</n-button>
+    <IconButton label="校验草稿" :icon="checkIcon" size="small" :disabled="busy||!loaded" @click="publishingAction('check')"/>
+    <IconButton label="发布" :icon="publishIcon" size="small" type="primary" :disabled="busy||!loaded||conflict" @click="publishingAction('publish')"/>
    </div>
    <n-dropdown trigger="click" placement="bottom-end" :options="publishOptions" @select="publishingAction">
     <n-button size="small" class="publishing-menu" aria-label="草稿与发布操作"><span class="publishing-menu-text">草稿操作</span><span class="publishing-menu-dots" aria-hidden="true">⋯</span></n-button>
    </n-dropdown>
 
    <n-tag :type="authState==='ready'?'success':authState==='error'?'error':'info'">{{{idle:'访客',checking:'正在验证',ready:'已认证',error:'认证失败'}[authState]}}</n-tag>
-   <n-button size="small" @click="passwordOpen=true">修改密码</n-button><n-button size="small" @click="logout">退出</n-button>
+   <IconButton label="修改密码" :icon="keyIcon" size="small" @click="passwordOpen=true"/><IconButton label="退出登录" :icon="logoutIcon" size="small" @click="logout"/>
   </div>
  </template>
  <div class="workspace-main">
@@ -380,6 +387,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
    <div><span>Windows 便携包</span><strong>{{publicPackages.windows?.version||'—'}}</strong></div>
   </div>
   <section class="editor">
+   <div v-if="authState==='checking'" class="admin-loading" role="status"><n-spin size="small"/><span>正在加载线上配置…</span></div>
    <publisher-alert v-if="conflict" title="草稿与线上版本的基准不同，请核对后确认发布基准。" type="warning" :closable="false"/>
    <publisher-alert v-if="status" :title="status" :type="success?'success':'error'" :closable="false" show-icon />
    <publisher-alert v-if="draftAvailable" title="发现本机未发布草稿" type="info" :closable="false"><n-button @click="restoreLocal">恢复草稿</n-button></publisher-alert>
@@ -452,7 +460,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     <n-form-item label="标题"><n-input v-model:value="objectValue.title" :maxlength="80"/></n-form-item>
     <n-form-item label="正文"><n-input v-model:value="objectValue.body" type="textarea" :maxlength="4000" :autosize="{minRows:5,maxRows:12}"/></n-form-item>
    </n-form>
-   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch v-model:value="objectValue.enabled"/> 启用统计</label><n-button @click="readStatistics">刷新在线统计</n-button><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
+   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch v-model:value="objectValue.enabled"/> 启用统计</label><IconButton label="刷新在线统计" :icon="refreshIcon" @click="readStatistics"/><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 人 · 7 天内 '+statisticsReport.sessions.length+' 次进入')}}</p><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
    <section v-else-if="selected==='bundled'" class="bundled-browser">
     <n-tabs v-model:value="bundledTab" type="line">
      <n-tab-pane v-for="[id,title] in [['texts','文案'],['worlds','场景与互动'],['gifts','礼物'],['media','媒体'],['musicRoom','歌单'],['announcement','游戏私告']]" :key="id" :name="id" :tab="title"/>

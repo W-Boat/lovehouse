@@ -178,3 +178,6 @@ body { margin: 0; }
 }
 .desktop-publish-actions{display:flex;gap:6px}.publishing-menu-dots{display:none}.publishing-menu{flex-shrink:0}
 @media(max-width:760px){.desktop-publish-actions,.publishing-menu-text{display:none}.publishing-menu-dots{display:inline;font-size:23px;line-height:1}.publishing-menu{min-width:44px}}
+.admin-loading{display:flex;align-items:center;justify-content:center;gap:12px;min-height:92px;color:#54695f}
+.admin-icon-button{width:36px;padding:0}
+@media(max-width:760px){.admin-icon-button{width:40px;min-height:40px}.n-drawer .n-menu .n-menu-item-content{padding-left:10px!important;padding-right:8px}.n-drawer .n-drawer-header{padding-inline:12px}.naive-header .top-actions .n-tag{display:none}}
