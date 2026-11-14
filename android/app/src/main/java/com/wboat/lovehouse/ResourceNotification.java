@@ -61,9 +61,17 @@ final class ResourceNotification {
         if (Build.VERSION.SDK_INT >= 33 && activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
         Notification.Builder builder = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(activity, CHANNEL) : new Notification.Builder(activity);
         Intent open = new Intent(activity, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        int percentage = state.optInt("progress");
+        String message = state.optString("message");
+        if (phase.equals("downloading")) {
+            message += " · " + percentage + "%";
+            long bytes = state.optLong("totalBytes", 0);
+            if (bytes > 0) message += String.format(java.util.Locale.ROOT, " · %.1f / %.1f MiB",
+                state.optLong("downloadedBytes") / 1048576.0, bytes / 1048576.0);
+        }
         builder.setContentTitle(progress ? "小屋资源更新中" : complete ? "小屋资源已校验" : "小屋资源暂未更新")
             .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setContentText(state.optString("message"))
+            .setContentText(message)
             .setContentIntent(PendingIntent.getActivity(activity, ID, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT))
             .setOnlyAlertOnce(true).setShowWhen(false).setOngoing(progress).setAutoCancel(!progress);
         if (progress) {
@@ -71,6 +79,7 @@ final class ResourceNotification {
             if (Build.VERSION.SDK_INT >= 36) {
                 Bundle extras = new Bundle();
                 extras.putBoolean("android.requestPromotedOngoing", true);
+                extras.putCharSequence("android.shortCriticalText", phase.equals("downloading") ? percentage + "%" : "检查中");
                 builder.addExtras(extras);
             }
         } else if (Build.VERSION.SDK_INT >= 26) builder.setTimeoutAfter(45000);

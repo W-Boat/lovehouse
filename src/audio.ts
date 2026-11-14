@@ -8,8 +8,15 @@ let failedConcertSource='',musicGeneration=0,ducked=false,externalMusic=false,ca
 export function toggleCampusRadio(){campusRadio=!campusRadio;void music(true)}
 export function setExternalMusic(enabled:boolean){externalMusic=enabled;if(enabled)pauseMusic();else void music()}
 const musicLevel=()=>save.settings.musicVolume*(ducked?.45:1);
-export function haptic(kind:'soft'|'success'|'error'='soft'){if(save.settings.haptics&&typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(kind==='success'?[18,35,18]:kind==='error'?[12,40,12]:10)}
-export function sound(note=783){if(!active||save.settings.sfxVolume===0)return;haptic('soft');const index=Math.abs(Math.round(note))%5;let audio=sounds.get(index);if(!audio){audio=new Audio(url('ui-'+index+'.wav'));sounds.set(index,audio)}audio.volume=save.settings.sfxVolume*.45;audio.currentTime=0;void audio.play().catch(()=>{})}
+let lastSoftHaptic=-Infinity;
+export function haptic(kind:'soft'|'success'|'error'='soft',preview=false){
+ if(!save.settings.haptics||typeof navigator==='undefined')return;
+ const now=performance.now();
+ if(!preview&&kind==='soft'&&now-lastSoftHaptic<90)return;
+ try{if(!navigator.vibrate?.(kind==='success'?[18,35,18]:kind==='error'?[12,40,12]:10))return;
+ lastSoftHaptic=now;}catch{/* Haptics are optional. */}
+}
+export function sound(note=783,feedback:'soft'|'success'|'error'='soft'){haptic(feedback);if(!active||save.settings.sfxVolume===0)return;const index=Math.abs(Math.round(note))%5;let audio=sounds.get(index);if(!audio){audio=new Audio(url('ui-'+index+'.wav'));sounds.set(index,audio)}audio.volume=save.settings.sfxVolume*.45;audio.currentTime=0;void audio.play().catch(()=>{})}
 export async function music(userGesture=false){
  if(userGesture){
   active=true;

@@ -3,7 +3,7 @@ use rsa::{pkcs8::DecodePublicKey, pkcs1v15::{VerifyingKey, Signature}, signature
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use std::{collections::BTreeMap, fs, io::{Read, Write}, path::{Component, Path, PathBuf}, sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}}, time::Duration};
+use std::{collections::BTreeMap, fs, io::{Read, Write}, path::{Component, Path, PathBuf}, sync::{Arc, Mutex, atomic::{AtomicBool, AtomicUsize, Ordering}}, time::{Duration, Instant}};
 use tauri::Manager;
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -90,8 +90,12 @@ impl Updates {
         atomic_write(&self.root.join("state.json"),&data)
     }
     fn event(&self,app:&tauri::AppHandle,phase:&str,message:&str,progress:u64) {
+        self.event_with_bytes(app,phase,message,progress,None);
+    }
+    fn event_with_bytes(&self,app:&tauri::AppHandle,phase:&str,message:&str,progress:u64,transfer:Option<(u64,u64)>) {
         let version=self.active.as_ref().map(|(_,m)|m.version).unwrap_or_else(bundled_version);
-        let detail=json!({"phase":phase,"nativeBase":env!("LOVEHOUSE_THIN_BASE"),"nativeRevision":env!("LOVEHOUSE_NATIVE_REVISION"),"message":message,"progress":progress,"version":version,"availableVersion":self.versions.lock().ok().and_then(|v|v.pending).unwrap_or(0),"url":format!("{}/android-update/update.json",env!("LOVEHOUSE_CONTENT_SERVER").trim_end_matches('/'))});
+        let mut detail=json!({"phase":phase,"nativeBase":env!("LOVEHOUSE_THIN_BASE"),"nativeRevision":env!("LOVEHOUSE_NATIVE_REVISION"),"message":message,"progress":progress,"version":version,"availableVersion":self.versions.lock().ok().and_then(|v|v.pending).unwrap_or(0),"url":format!("{}/android-update/update.json",env!("LOVEHOUSE_CONTENT_SERVER").trim_end_matches('/'))});
+        if let Some((read,total))=transfer {detail["downloadedBytes"]=json!(read);detail["totalBytes"]=json!(total);}
         if let Some(window)=app.get_webview_window("main"){
             let _=window.eval(format!("document.dispatchEvent(new CustomEvent('cottage-update-status',{{detail:{}}}))",detail));
         }
@@ -119,6 +123,7 @@ impl Updates {
             }self.event(&app,"current","资源已就绪",100);return
         }
         if action=="status" {
+            if self.busy.load(Ordering::SeqCst){return}
             let pending=self.versions.lock().ok().and_then(|state|state.pending);
             if pending.is_some(){self.event(&app,"available","资源已校验，重新打开小屋即可启用",100);}
             else{self.event(&app,"current","资源状态已读取",100);}
@@ -170,22 +175,74 @@ impl Updates {
         }
         fs::create_dir_all(&self.root).map_err(|e|e.to_string())?;
         let staging=tempfile::Builder::new().prefix("staging-").tempdir_in(&self.root).map_err(|e|e.to_string())?;
-        for (index,(name,spec)) in next.files.iter().enumerate() {
+        let mut missing=Vec::new();
+        self.event(app,"checking","正在核对本机已有资源",0);
+        for (name,spec) in &next.files {
             let destination=staging.path().join(name);
+            fs::create_dir_all(destination.parent().ok_or("资源路径无效")?).map_err(|e|e.to_string())?;
             let prior=self.active.as_ref().and_then(|(root,_)|fs::read(root.join(name)).ok())
                 .filter(|bytes|bytes.len() as u64==spec.bytes&&digest(bytes)==spec.sha256);
             let bundled=if prior.is_none(){app.asset_resolver().get(name.clone()).map(|a|a.bytes).filter(|bytes|bytes.len() as u64==spec.bytes&&digest(bytes)==spec.sha256)}else{None};
-            let bytes=if let Some(bytes)=prior.or(bundled){bytes}else{
-                let blob=url.join(&format!("blobs/{}",spec.sha256)).map_err(|e|e.to_string())?;
-                let response=blob_client.get(blob).send().and_then(|r|r.error_for_status()).map_err(|e|e.to_string())?;
-                let mut bytes=Vec::new();response.take(spec.bytes+1).read_to_end(&mut bytes).map_err(|e|e.to_string())?;
-                if bytes.len() as u64!=spec.bytes || digest(&bytes)!=spec.sha256{return Err(format!("资源校验失败：{}",name))}
-                bytes
-            };
-            fs::create_dir_all(destination.parent().unwrap()).map_err(|e|e.to_string())?;
-            fs::write(destination,bytes).map_err(|e|e.to_string())?;
-            self.event(app,"downloading","正在准备变更资源",(index as u64+1)*100/next.files.len() as u64);
+            if let Some(bytes)=prior.or(bundled){fs::write(destination,bytes).map_err(|e|e.to_string())?}
+            else{missing.push((name,spec,destination));}
         }
+        missing.sort_unstable_by_key(|(_,spec,_)|std::cmp::Reverse(spec.bytes));
+        let total=missing.iter().map(|(_,spec,_)|spec.bytes).sum::<u64>();
+        self.event_with_bytes(app,"downloading","正在下载和校验资源",if total==0 {100}else{0},Some((0,total)));
+        let queue=AtomicUsize::new(0);
+        let cancelled=AtomicBool::new(false);
+        let progress=Mutex::new((0u64,Instant::now()));
+        let report=|delta:i64,force:bool|{
+            let mut state=progress.lock().unwrap_or_else(|e|e.into_inner());
+            state.0=state.0.saturating_add_signed(delta);
+            if force||state.1.elapsed()>=Duration::from_millis(200){
+                state.1=Instant::now();
+                self.event_with_bytes(app,"downloading","正在下载和校验资源",
+                    if total==0 {100}else{state.0*100/total},Some((state.0,total)));
+            }
+        };
+        std::thread::scope(|scope| -> Result<(),String>{
+            let workers:Vec<_>=(0..missing.len().min(6)).map(|_|scope.spawn(|| -> Result<(),String>{
+                while !cancelled.load(Ordering::Relaxed){
+                    let Some((name,spec,destination))=missing.get(queue.fetch_add(1,Ordering::Relaxed)) else{break};
+                    let mut result=Err("下载失败".to_string());
+                    for attempt in 0..3 {
+                        if cancelled.load(Ordering::Relaxed){return Ok(())}
+                        let mut written=0u64;
+                        result=(||{
+                            let blob=url.join(&format!("blobs/{}",spec.sha256)).map_err(|_|"资源地址无效".to_string())?;
+                            let response=blob_client.get(blob).send().and_then(|r|r.error_for_status())
+                                .map_err(|_|format!("无法下载资源：{}",name))?;
+                            let mut input=response.take(spec.bytes+1);
+                            let mut output=fs::File::create(destination).map_err(|e|e.to_string())?;
+                            let mut hash=Sha256::new();
+                            let mut buffer=[0u8;65536];
+                            loop{
+                                if cancelled.load(Ordering::Relaxed){return Err("下载已取消".into())}
+                                let count=input.read(&mut buffer).map_err(|_|format!("资源下载中断：{}",name))?;
+                                if count==0{break}
+                                if written+count as u64>spec.bytes{return Err(format!("资源大小不符：{}",name))}
+                                output.write_all(&buffer[..count]).map_err(|e|e.to_string())?;
+                                hash.update(&buffer[..count]);written+=count as u64;report(count as i64,false);
+                            }
+                            if written!=spec.bytes || format!("{:x}",hash.finalize())!=spec.sha256{return Err(format!("资源校验失败：{}",name))}
+                            Ok(())
+                        })();
+                        if result.is_ok(){break}
+                        report(-(written as i64),false);
+                        if attempt<2{std::thread::sleep(Duration::from_millis(350*(attempt+1)));}
+                    }
+                    if result.is_err(){cancelled.store(true,Ordering::Relaxed);return result}
+                }
+                Ok(())
+            })).collect();
+            let mut error=None;
+            for worker in workers{
+                if let Err(reason)=worker.join().unwrap_or_else(|_|Err("资源下载任务中断".into())){error.get_or_insert(reason);}
+            }
+            error.map_or(Ok(()),Err)
+        })?;
+        report(0,true);
         fs::write(staging.path().join("update.json"),signed).map_err(|e|e.to_string())?;
         let destination=self.root.join(next.version.to_string());
         if destination.exists(){fs::remove_dir_all(&destination).map_err(|e|e.to_string())?;}

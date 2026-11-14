@@ -17,9 +17,10 @@ import java.security.*;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 import java.util.zip.*;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -75,9 +76,14 @@ final class ContentUpdates {
     }
 
     private void publish(String phase, String message, int progress) {
+        publish(phase, message, progress, -1, -1);
+    }
+
+    private void publish(String phase, String message, int progress, long downloaded, long total) {
         JSONObject result = new JSONObject();
         try {
             result.put("phase", phase).put("message", message).put("progress", progress);
+            if (total >= 0) result.put("downloadedBytes", downloaded).put("totalBytes", total);
             result.put("version", Math.max(bundledVersion, activeVersion()));
             result.put("nativeBase", BuildConfig.BASE_PACKAGE).put("nativeRevision", BuildConfig.NATIVE_REVISION)
                 .put("autoUpdate", preferences.getBoolean("autoUpdate", true));
@@ -218,53 +224,144 @@ final class ContentUpdates {
         } finally { connection.disconnect(); }
     }
 
-    private void stageDelta(JSONObject files, File staging, URL blobs, boolean automatic) throws Exception {
+    private static final class Blob {
+        final String hash;
+        final long size;
+        final ArrayList<File> destinations = new ArrayList<>();
+        Blob(String hash, long size) { this.hash = hash; this.size = size; }
+    }
+
+    private final class TransferProgress {
+        private final long total;
+        private long downloaded;
+        private long lastUpdate = -1000;
+        TransferProgress(long total) { this.total = total; }
+        synchronized void report(long change, boolean force) {
+            downloaded += change;
+            long now = android.os.SystemClock.elapsedRealtime();
+            if (force || now - lastUpdate >= 200) {
+                lastUpdate = now;
+                int ratio = total == 0 ? 100 : (int) (downloaded * 100 / total);
+                publish("downloading", total == 0 ? "正在准备本地资源" : "正在下载和校验资源", ratio, downloaded, total);
+            }
+        }
+    }
+
+    private void stageDelta(JSONObject files, File staging, URL blobs) throws Exception {
         String active = preferences.getString("active", "");
         File base = active.matches("[0-9]+") ? new File(root, active) : null;
         byte[] buffer = new byte[65536];
-        long expanded = 0;
-        int done = 0;
-        Map<String, File> stagedByHash = new HashMap<>();
+        long expanded = 0, missingBytes = 0;
+        Map<String, Blob> grouped = new HashMap<>();
+        Map<File, String> namesByDestination = new HashMap<>();
         for (Iterator<String> names = files.keys(); names.hasNext();) {
             String name = names.next();
             File destination = safeFile(staging, name);
             JSONObject metadata = files.getJSONObject(name);
             long size = metadata.getLong("bytes");
             String hash = metadata.getString("sha256");
-            if (size < 0 || size > 200_000_000 || !hash.matches("[a-f0-9]{64}") || (expanded += size) > 700_000_000)
-                throw new IOException("增量资源清单无效");
+            if (size < 0 || size > 200_000_000 || !hash.matches("[a-f0-9]{64}") || (expanded += size) > 700_000_000
+                    || namesByDestination.put(destination, name) != null) throw new IOException("增量资源清单无效");
+            Blob entry = grouped.computeIfAbsent(hash, key -> new Blob(key, size));
+            if (entry.size != size) throw new IOException("增量资源大小冲突");
+            entry.destinations.add(destination);
+        }
+
+        publish("checking", "正在核对本机已有资源", 0);
+        List<Blob> missing = new ArrayList<>();
+        for (Blob blob : grouped.values()) {
+            File destination = blob.destinations.get(0);
             destination.getParentFile().mkdirs();
             boolean reused = false;
-            File identical = stagedByHash.get(hash);
-            if (identical != null) {
-                try (InputStream input = new FileInputStream(identical)) {
-                    reused = copyVerified(input, destination, size, hash, buffer);
+            for (File path : blob.destinations) {
+                String name = namesByDestination.get(path);
+                if (base != null) {
+                    File cached = safeFile(base, name);
+                    if (cached.isFile() && cached.length() == blob.size) {
+                        try (InputStream input = new FileInputStream(cached)) {
+                            reused = copyVerified(input, destination, blob.size, blob.hash, buffer);
+                        }
+                    }
                 }
-            }
-            if (!reused && base != null) {
-                try (InputStream input = new FileInputStream(safeFile(base, name))) {
-                    reused = copyVerified(input, destination, size, hash, buffer);
-                } catch (FileNotFoundException ignored) { }
-            }
-            if (!reused) {
-                InputStream bundled = null;
-                try { bundled = activity.getAssets().open(name); } catch (FileNotFoundException ignored) { }
-                if (bundled != null) {
-                    try (InputStream input = bundled) { reused = copyVerified(input, destination, size, hash, buffer); }
+                if (!reused) {
+                    InputStream bundled = null;
+                    try { bundled = activity.getAssets().open(name); } catch (FileNotFoundException ignored) { }
+                    if (bundled != null) try (InputStream input = bundled) {
+                        reused = copyVerified(input, destination, blob.size, blob.hash, buffer);
+                    }
                 }
+                if (reused) break;
             }
-            if (!reused) {
-                HttpsURLConnection connection = connect(new URL(blobs, hash));
+            if (reused) copyAliases(blob, buffer);
+            else { missing.add(blob); missingBytes += blob.size; }
+        }
+
+        TransferProgress progress = new TransferProgress(missingBytes);
+        progress.report(0, true);
+        if (missing.isEmpty()) return;
+        missing.sort(Comparator.comparingLong((Blob blob) -> blob.size).reversed());
+        ExecutorService downloads = Executors.newFixedThreadPool(Math.min(6, missing.size()));
+        CompletionService<Void> completion = new ExecutorCompletionService<>(downloads);
+        try {
+            for (Blob blob : missing) completion.submit(() -> {
+                downloadBlob(blobs, blob, progress);
+                return null;
+            });
+            for (int remaining = missing.size(); remaining > 0; remaining--) completion.take().get();
+            progress.report(0, true);
+        } catch (ExecutionException failed) {
+            if (failed.getCause() instanceof Exception) throw (Exception) failed.getCause();
+            throw failed;
+        } finally {
+            downloads.shutdownNow();
+            // No worker may write to staging after install() starts cleaning it.
+            boolean interrupted = false;
+            while (!downloads.isTerminated()) {
+                try { downloads.awaitTermination(1, TimeUnit.SECONDS); }
+                catch (InterruptedException ignored) { interrupted = true; }
+            }
+            if (interrupted) Thread.currentThread().interrupt();
+        }
+    }
+
+    private void downloadBlob(URL blobs, Blob blob, TransferProgress progress) throws Exception {
+        byte[] buffer = new byte[65536];
+        for (int attempt = 0; ; attempt++) {
+            long[] read = {0};
+            HttpsURLConnection connection = null;
+            try {
+                connection = connect(new URL(blobs, blob.hash));
                 try (InputStream input = connection.getInputStream()) {
-                    if (!copyVerified(input, destination, size, hash, buffer)) throw new IOException("增量资源校验失败");
-                } finally { connection.disconnect(); }
+                    if (!copyVerified(input, blob.destinations.get(0), blob.size, blob.hash, buffer, bytes -> {
+                        read[0] += bytes;
+                        progress.report(bytes, false);
+                    })) throw new IOException("增量资源校验失败");
+                }
+                break;
+            } catch (IOException error) {
+                progress.report(-read[0], false);
+                if (attempt >= 2 || Thread.currentThread().isInterrupted() || error instanceof InterruptedIOException && !(error instanceof SocketTimeoutException)) throw error;
+                Thread.sleep(350L * (attempt + 1));
+            } finally { if (connection != null) connection.disconnect(); }
+        }
+        copyAliases(blob, buffer);
+    }
+
+    private void copyAliases(Blob blob, byte[] buffer) throws Exception {
+        for (int i = 1; i < blob.destinations.size(); i++) {
+            File target = blob.destinations.get(i);
+            target.getParentFile().mkdirs();
+            try (InputStream input = new FileInputStream(blob.destinations.get(0))) {
+                if (!copyVerified(input, target, blob.size, blob.hash, buffer)) throw new IOException("本地资源校验失败");
             }
-            stagedByHash.put(hash, destination);
-            publish("downloading", "正在下载和校验资源", ++done * 100 / files.length());
         }
     }
 
     private boolean copyVerified(InputStream input, File file, long size, String hash, byte[] buffer) throws Exception {
+        return copyVerified(input, file, size, hash, buffer, bytes -> {});
+    }
+
+    private boolean copyVerified(InputStream input, File file, long size, String hash, byte[] buffer, LongConsumer progress) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         try (OutputStream output = new FileOutputStream(file)) {
             long total = 0;
@@ -275,6 +372,7 @@ final class ContentUpdates {
                 if (total > size) return false;
                 digest.update(buffer, 0, read);
                 output.write(buffer, 0, read);
+                progress.accept(read);
             }
             return total == size && hash.equals(hex(digest.digest()));
         }
@@ -290,7 +388,7 @@ final class ContentUpdates {
         try {
             JSONObject files = manifest.getJSONObject("files");
             if (blobs != null) {
-                stageDelta(files, staging, blobs, automatic);
+                stageDelta(files, staging, blobs);
             } else {
                 connection = connect(url);
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -302,7 +400,7 @@ final class ContentUpdates {
                         if (total > expected) throw new IOException("资源包大小与清单不符");
                         digest.update(buffer, 0, read); output.write(buffer, 0, read);
                         int progress = (int) (total * 100 / expected);
-                        if (progress != prior) { publish("downloading", "正在下载资源", progress); prior = progress; }
+                        if (progress != prior) { publish("downloading", "正在下载资源", progress, total, expected); prior = progress; }
                     }
                     if (total != expected || !hex(digest.digest()).equals(manifest.getString("archiveSha256"))) throw new IOException("资源包校验失败");
                 }
