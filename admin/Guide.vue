@@ -1,6 +1,8 @@
 <script setup>
 import MarkdownIt from 'markdown-it';
-import {NTabs,NTabPane,NCard} from 'naive-ui';
+import {NTabs,NTabPane,NCard,NButton,NIcon} from 'naive-ui';
+import downloadIcon from '@iconify-icons/mdi/download-outline';
+const skillUrl=import.meta.env.BASE_URL+'assets/lovehouse-skill.zip';
 import architecture from './guide/architecture.md?raw';
 import development from './guide/development.md?raw';
 import cli from './guide/cli.md?raw';
@@ -12,6 +14,13 @@ const markdown=new MarkdownIt({html:false,linkify:true});
 const renderedPages=pages.map(([key,title,source])=>({key,title,source,html:markdown.render(source)}));
 </script>
 <template>
+ <n-card size="small" class="guide-section" title="Agent 接入">
+  <p>下载并解压技能包。将 .ENV.example 复制为 .ENV，填写本机仓库路径和发布令牌。后台服务器地址已预填。</p>
+  <n-button tag="a" :href="skillUrl" download="lovehouse-skill.zip" type="primary">
+   <template #icon><n-icon><svg viewBox="0 0 24 24" v-html="downloadIcon.body" aria-hidden="true"/></n-icon></template>
+   下载 lovehouse-skill
+  </n-button>
+ </n-card>
  <n-tabs type="line">
   <n-tab-pane v-for="{key,title,source,html} in renderedPages" :key="key" :name="key" :tab="title">
    <n-card size="small" class="guide-section">

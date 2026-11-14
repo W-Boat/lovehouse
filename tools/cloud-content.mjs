@@ -163,7 +163,7 @@ async function readJson(request) {
  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
-const assetTypes = new Map([['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8'],['svg','image/svg+xml'],['png','image/png'],['webp','image/webp'],['woff2','font/woff2']]);
+const assetTypes = new Map([['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8'],['svg','image/svg+xml'],['png','image/png'],['webp','image/webp'],['woff2','font/woff2'],['zip','application/zip']]);
 const adminDir = new URL('../admin/dist/',import.meta.url);
 
 export function createContentHandler({file,token,publicPrefix='',bundledDirectory,bundledCatalog}) {
@@ -505,7 +505,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
     try {
      const contents = await readFile(new URL(asset,adminDir));
      response.writeHead(200,{
-      'Content-Type':mime,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
+      'Content-Type':mime,...(asset==='assets/lovehouse-skill.zip'?{'Content-Disposition':'attachment; filename=lovehouse-skill.zip'}:{}),'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
       'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data: https:; media-src 'self' https:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
      }).end(contents);
      return;
