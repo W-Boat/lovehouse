@@ -23,5 +23,18 @@ export function findPath(start:Point,end:Point,walkable:Walkable):Point[]{
  }
  if(!found)return[];const path:Point[]=[];for(let k=endKey;k!==-1;k=parent[k])path.push({x:(k%cols)*4,y:Math.floor(k/cols)*4});path.reverse();path.unshift({x:start.x,y:start.y});const last=path.at(-1)!;if(walkable(end)&&segmentWalkable(last,end,walkable))path.push({x:end.x,y:end.y});return path;
 }
+// A* emits grid steps. Join visible waypoints without crossing a collision boundary.
+export function smoothRoute(path:Point[],walkable:Walkable){
+ if(path.length<3)return path;
+ const result=[path[0]];
+ let start=0;
+ while(start<path.length-1){
+  let next=Math.min(start+24,path.length-1);
+  while(next>start+1&&!segmentWalkable(path[start],path[next],walkable))next--;
+  result.push(path[next]);
+  start=next;
+ }
+ return result;
+}
 export function moveWithCollision(actor:Point,dx:number,dy:number,walkable:Walkable){const target={x:actor.x+dx,y:actor.y+dy};if(segmentWalkable(actor,target,walkable)){actor.x=target.x;actor.y=target.y;return}const x={x:actor.x+dx,y:actor.y};if(segmentWalkable(actor,x,walkable))actor.x=x.x;const y={x:actor.x,y:actor.y+dy};if(segmentWalkable(actor,y,walkable))actor.y=y.y}
 export function advanceAlong(actor:Point,path:Point[],budget:number,walkable:Walkable){let moved=0;while(path.length&&budget>0){const p=path[0],distance=Math.hypot(p.x-actor.x,p.y-actor.y);if(distance<.001){path.shift();continue}const step=Math.min(distance,budget),next={x:actor.x+(p.x-actor.x)/distance*step,y:actor.y+(p.y-actor.y)/distance*step};if(!segmentWalkable(actor,next,walkable)){path.length=0;break}actor.x=next.x;actor.y=next.y;moved+=step;budget-=step;if(step>=distance-.001)path.shift()}return moved}

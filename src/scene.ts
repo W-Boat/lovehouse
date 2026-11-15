@@ -46,7 +46,7 @@ export class Cottage extends Phaser.Scene {
  private companionHat!:Phaser.GameObjects.Image;private outdoorEnvironment?:OutdoorEnvironment;private background!:Phaser.GameObjects.Image;private shadow!:Phaser.GameObjects.Ellipse;private boyShadow!:Phaser.GameObjects.Ellipse;
  private climateGround?:Phaser.GameObjects.Graphics;private trail!:Phaser.GameObjects.Graphics;private glow!:Phaser.GameObjects.Graphics;private effects!:Phaser.GameObjects.Graphics;
  private markers:Phaser.GameObjects.Container[]=[];private giftMarkers=new Map<string,Phaser.GameObjects.Container>();private props=new Map<string,Phaser.GameObjects.Image>();private objects:Item[]=[];
- private keys!:Record<string,Phaser.Input.Keyboard.Key>;private path:Point[]=[];private boyPath:Point[]=[];private pending?:()=>void;private moveTime=0;private idleTime=0;private follower=new FootstepFollower();private dir=0;private lastMotionAt=-1;private starTime=0;private focusId='';private sitReturn?:Point;private boyReturn?:Point;
+ private keys!:Record<string,Phaser.Input.Keyboard.Key>;private path:Point[]=[];private boyPath:Point[]=[];private pending?:()=>void;private moveTime=0;private idleTime=0;private follower=new FootstepFollower();private dir=0;private directionChanges=new WeakMap<Phaser.GameObjects.Image,{candidate:number;distance:number}>();private boyDirection=0;private boyMoveTime=0;private starTime=0;private focusId='';private sitReturn?:Point;private boyReturn?:Point;
  private failedAssets=new Set<string>();private readyToEnter=false;
  private cakeDark!:Phaser.GameObjects.Rectangle;private sparkles:Phaser.GameObjects.Rectangle[]=[];
  constructor(){super('cottage')}
@@ -221,6 +221,26 @@ export class Cottage extends Phaser.Scene {
  if(generation!==this.transitionGeneration)this.cloudMotion.discard(keys);
  else {const prior=this.pendingLayers.get(zone);if(prior)this.cloudMotion.discard(prior);this.pendingLayers.set(zone,keys)}
 }if(generation!==this.transitionGeneration){if(key!==worlds[this.zone].texture&&key!==worlds[this.transitionTarget].texture&&!coreTextureKeys.includes(key as any))this.textures.remove(key);return}this.sceneCache=this.sceneCache.filter(k=>k!==key);this.sceneCache.push(key);while(this.sceneCache.length>3){const old=this.sceneCache.shift()!;if(!coreTextureKeys.includes(old as any))this.textures.remove(old)}for(const exit of worlds[zone].items.filter(i=>i.to).slice(0,2)){const next=worlds[exit.to!].texture;if(!worlds[exit.to!].backgroundUrl&&!this.textures.exists(next)){const image=new Image();image.src=assetUrl(textureFiles[next as keyof typeof textureFiles])}}}
+ // Keep facing stable on diagonal route segments and while the feet settle at a turn.
+ private movementDirection(dx:number,dy:number,previous:number){
+  const ax=Math.abs(dx),ay=Math.abs(dy);
+  if(ax+ay<.05)return previous;
+  const horizontal=previous===1||previous===3;
+  if(ax>ay*1.18||horizontal&&ax*1.18>=ay&&ax>0)return dx<0?1:3;
+  return dy<0?2:0;
+ }
+ private routeDirection(actor:Phaser.GameObjects.Image,dx:number,dy:number,previous:number){
+  const candidate=this.movementDirection(dx,dy,previous);
+  if(candidate===previous){
+   this.directionChanges.delete(actor);
+   return previous;
+  }
+  const pending=this.directionChanges.get(actor);
+  const distance=(pending?.candidate===candidate?pending.distance:0)+Math.hypot(dx,dy);
+  if(distance>=5){this.directionChanges.delete(actor);return candidate}
+  this.directionChanges.set(actor,{candidate,distance});
+  return previous;
+ }
  private renderMoving(actor:Phaser.GameObjects.Image,who:'girl'|'boy',dir:number,moving:boolean,phase:number){
   const index=dir*4+phase;
   const base=who+'-stride-'+index;
@@ -287,12 +307,16 @@ export class Cottage extends Phaser.Scene {
   camera.once('camerafadeoutcomplete',covered);camera.fadeOut(duration,19,17,28);
  }
 
- private pickupTexture(id?:string){
+ pickupTexture(id?:string){
   const key='pickup-'+id;
   if(this.textures.exists(key))return key;
-  if(id==='film')return 'gift-moon';
+  if(id==='film')return 'ui-photo';
+  if(id==='quiz-star')return 'gift-moon';
+  if(id==='quiz-ribbon')return 'pickup-ribbon';
+  if(id==='quiz-heart')return 'pickup-token';
+  if(id==='marshmallow')return 'gift-chestnuts';
   if(id==='school-bookmark')return 'ui-journal';
-  if(id==='postcard')return 'ui-letter';
+  if(id==='postcard')return 'ui-portrait';
   return 'ui-bag';
  }
 
@@ -600,8 +624,8 @@ export class Cottage extends Phaser.Scene {
  private updateOnline(dt:number){this.companionHat.setVisible(false);const net=this.onlineWorld!,local=this.controlledActor,who=net.role==='guest'?'boy':'girl',old={x:local.x,y:local.y};
   if(this.onlineSeat){const seat=this.onlineSeat;seat.elapsed+=dt;const t=Math.min(1,seat.elapsed/.65),ease=t*t*(3-2*t);local.setPosition(seat.from.x+(seat.to.x-seat.from.x)*ease,seat.from.y+(seat.to.y-seat.from.y)*ease);if(!seat.standing&&t===1&&seat.elapsed-dt<.65)this.bridge.emit('seat-settled',this.seated);if(seat.standing&&t===1){this.onlineSeat=undefined;this.seated='';this.seatedPhase=0;this.finishStanding()}}
   if(!this.blocked&&this.entered&&!this.onlineSeat){const dx=(this.keys.D.isDown||this.keys.RIGHT.isDown?1:0)-(this.keys.A.isDown||this.keys.LEFT.isDown?1:0)+this.joystick.x,dy=(this.keys.S.isDown||this.keys.DOWN.isDown?1:0)-(this.keys.W.isDown||this.keys.UP.isDown?1:0)+this.joystick.y,d=Math.hypot(dx,dy);if(d>.13&&!net.contactLocksMovement){if(!(net.role==='host'&&net.handWalking))net.cancelAffection();net.cancelFollowing();this.actor.cancel();this.onlinePose='idle';moveWithCollision(local,dx/Math.max(1,d)*84*dt,dy/Math.max(1,d)*84*dt,this.walkable)}else this.actor.update(local,dt,this.walkable)}
-  const dx=local.x-old.x,dy=local.y-old.y,moving=Math.hypot(dx,dy)>.01;if(moving&&!this.onlineSeat){this.onlineDirection=Math.abs(dx)>Math.abs(dy)?dx<0?1:3:dy<0?2:0;this.onlinePose='move'}else if(this.idleTime>=this.onlinePoseUntil)this.onlinePose='idle';
-  this.renderOnlineActor(local,who,this.onlineSeat?this.seatedFacing:this.onlineDirection,moving,this.onlinePose);this.pairImage?.setVisible(false);net.update(dt);if(net.role==='guest'&&net.snapshot?.following){const dx=local.x-old.x,dy=local.y-old.y,moved=Math.hypot(dx,dy)>.01;if(moved){this.onlineDirection=Math.abs(dx)>Math.abs(dy)?dx<0?1:3:dy<0?2:0;this.onlinePose='move'}this.renderOnlineActor(local,who,this.onlineDirection,moved,moved?'move':'idle')}this.renderOnlineEquipment();if(this.pairImage?.visible){this.hat.setVisible(false);this.earwear.setVisible(false);this.band.setVisible(false);this.onlineBoyGear?.hat.setVisible(false);this.onlineBoyGear?.ear.setVisible(false);this.onlineBoyGear?.band.setVisible(false)}this.shadow.setVisible(this.player.visible).setPosition(this.player.x,this.player.y-1);this.boyShadow.setVisible(this.boy.visible).setPosition(this.boy.x,this.boy.y-1);
+  const dx=local.x-old.x,dy=local.y-old.y,moving=Math.hypot(dx,dy)>.01;if(moving&&!this.onlineSeat){this.onlineDirection=this.onlinePose==='move'?this.routeDirection(local,dx,dy,this.onlineDirection):this.movementDirection(dx,dy,this.onlineDirection);this.onlinePose='move'}else if(this.idleTime>=this.onlinePoseUntil)this.onlinePose='idle';
+  this.renderOnlineActor(local,who,this.onlineSeat?this.seatedFacing:this.onlineDirection,moving,this.onlinePose);this.pairImage?.setVisible(false);net.update(dt);if(net.role==='guest'&&net.snapshot?.following){const dx=local.x-old.x,dy=local.y-old.y,moved=Math.hypot(dx,dy)>.01;if(moved){this.onlineDirection=this.onlinePose==='move'?this.routeDirection(local,dx,dy,this.onlineDirection):this.movementDirection(dx,dy,this.onlineDirection);this.onlinePose='move'}this.renderOnlineActor(local,who,this.onlineDirection,moved,moved?'move':'idle')}this.renderOnlineEquipment();if(this.pairImage?.visible){this.hat.setVisible(false);this.earwear.setVisible(false);this.band.setVisible(false);this.onlineBoyGear?.hat.setVisible(false);this.onlineBoyGear?.ear.setVisible(false);this.onlineBoyGear?.band.setVisible(false)}this.shadow.setVisible(this.player.visible).setPosition(this.player.x,this.player.y-1);this.boyShadow.setVisible(this.boy.visible).setPosition(this.boy.x,this.boy.y-1);
   let nearest:Item|undefined;
   for(const item of this.objects){
    if(item.id==='boy'||!inReach(local,item,this.walkable))continue;
@@ -619,15 +643,31 @@ export class Cottage extends Phaser.Scene {
    let moving=false;const old={x:this.player.x,y:this.player.y};
    if(Math.hypot(dx,dy)>.13){this.actor.cancel();this.path=[];this.pending=undefined;if(this.movingTo){this.movingTo=undefined;this.bridge.emit('approaching',undefined)}const d=Math.max(1,Math.hypot(dx,dy));dx/=d;dy/=d;moveWithCollision(this.player,dx*84*dt,dy*84*dt,this.walkable);moving=Math.hypot(this.player.x-old.x,this.player.y-old.y)>.001}
    else moving=this.actor.update(this.player,dt,this.walkable);
-   if(moving){dx=this.player.x-old.x;dy=this.player.y-old.y;if(Math.abs(dx)+Math.abs(dy)>.05)this.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?1:3):(dy<0?2:0);this.moveTime+=dt;this.player.setAngle(0)}
-   else{this.player.setAngle(0);if(this.movingTo){this.face(this.movingTo);this.focusId=this.movingTo.id;this.movingTo=undefined;this.bridge.emit('approaching',undefined)}}
-   if(moving)this.lastMotionAt=this.idleTime;const animated=moving||this.idleTime-this.lastMotionAt<.10;this.walkingNow=animated;const phase=Math.floor(this.moveTime*8)%4;if(!this.seated)this.renderMoving(this.player,'girl',this.dir,animated,phase);
+   if(!this.seated&&!this.actionKind&&!this.blocked&&!this.transitioning){
+    const distance=Math.hypot(this.player.x-old.x,this.player.y-old.y);
+    const animated=moving&&distance>.05;
+    if(animated){
+     this.dir=Math.hypot(dx,dy)<=.13&&this.moveTime>0?this.routeDirection(this.player,this.player.x-old.x,this.player.y-old.y,this.dir):this.movementDirection(this.player.x-old.x,this.player.y-old.y,this.dir);
+     this.moveTime+=distance/84;
+    }else{
+     this.moveTime=0;this.directionChanges.delete(this.player);
+     if(this.movingTo){this.face(this.movingTo);this.focusId=this.movingTo.id;this.movingTo=undefined;this.bridge.emit('approaching',undefined)}
+    }
+    this.player.setAngle(0);
+    this.walkingNow=animated;
+    this.renderMoving(this.player,'girl',this.dir,animated,Math.floor(this.moveTime*8)%4);
+   }
   }
   const oldBoy={x:this.boy.x,y:this.boy.y};
   if(this.boyPath.length&&!this.seated)this.advance(this.boy,this.boyPath,87*dt);
   else if(!this.seated&&!this.blocked&&!this.actionKind){const formed=this.holding&&this.handFormation.update(this.boy,this.player,dt,this.walkable,this.actorHeight*.4375);if(!formed)this.follower.update(this.boy,this.player,dt,this.walkable,Boolean(this.movingTo));}
   const boyDx=this.boy.x-oldBoy.x,boyDy=this.boy.y-oldBoy.y;
-  if(!this.seated&&!this.actionKind&&Math.hypot(boyDx,boyDy)>.001)this.renderMoving(this.boy,'boy',(Math.abs(boyDx)>Math.abs(boyDy)?boyDx<0?1:3:boyDy<0?2:0),true,Math.floor(this.idleTime*8)%4);else if(!this.seated&&!this.actionKind)this.setPose(this.boy,'boy','idle',this.dir);
+  if(!this.seated&&!this.actionKind&&!this.blocked&&!this.transitioning){
+   const distance=Math.hypot(boyDx,boyDy),moving=distance>.05;
+   if(moving){this.boyDirection=this.boyMoveTime>0?this.routeDirection(this.boy,boyDx,boyDy,this.boyDirection):this.movementDirection(boyDx,boyDy,this.boyDirection);this.boyMoveTime+=distance/84}
+   else {this.boyMoveTime=0;this.directionChanges.delete(this.boy)}
+   this.renderMoving(this.boy,'boy',this.boyDirection,moving,Math.floor(this.boyMoveTime*8)%4);
+  }
   if(this.seated==='swing'&&!save.reduced){const y=149+Math.sin(this.idleTime*2.5)*2;this.player.y=y;this.boy.y=y}
   if(!this.seated&&!this.actionKind){const joined=this.holding&&this.handFormation.active&&!this.blocked;if(joined&&this.pairImage){const key=this.pairTexture(this.dir*4+(this.walkingNow?Math.floor(this.moveTime*8)%4:0),true);this.pairImage.setTexture(key).setPosition((this.player.x+this.boy.x)/2,Math.max(this.player.y,this.boy.y)).setVisible(true).setDepth(10+Math.max(this.player.y,this.boy.y)/1000);const art=this.pairImage.texture.getSourceImage() as HTMLCanvasElement;this.pairImage.setDisplaySize(this.actorHeight*art.width/art.height,this.actorHeight)}else this.pairImage?.setVisible(false);this.player.setVisible(!joined);this.boy.setVisible(!joined)}
   const actorScale=this.actorHeight/64;this.shadow.setDisplaySize(19*actorScale,6*actorScale);this.boyShadow.setDisplaySize(19*actorScale,6*actorScale);this.band.setDisplaySize(5*actorScale,3*actorScale);this.shadow.setPosition(this.player.x,this.player.y-1).setVisible(!this.seated);this.boyShadow.setPosition(this.boy.x,this.boy.y-1).setVisible(!this.seated);

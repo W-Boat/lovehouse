@@ -129,7 +129,7 @@ export function installUI(ctx:UIContext){const {scene,open,close,toast}=ctx;let 
   const tabs=bagCategories.map(id=>`<button id="bag-filter-${id}" class="${id===category?'primary':'secondary'}" aria-pressed="${id===category}">${esc(uiCopy(`bag.category.${id}`))}</button>`).join('');
   const slots=items.map(id=>{
    const worn=gear.find(piece=>piece===id);
-   const texture=scene.textures.exists('gift-'+id)?'gift-'+id:id==='shell'?'prop-5':id==='lantern'?'prop-0':id==='marshmallow'?'gift-chestnuts':'ui-letter';
+   const texture=scene.textures.exists('gift-'+id)?'gift-'+id:scene.pickupTexture(id);
    const status=Object.values(save.placements).includes(id)?'bag.placed':worn&&save[worn]?'bag.equipped':'bag.collected';
    return `<button class="bag-item" id="bag-${id}"><img class="bag-art" src="${thumbnail(texture)}" alt=""><b>${esc(itemNames[id]??id)}</b><small>${esc(uiCopy(status))}</small></button>`;
   }).join('');
