@@ -200,8 +200,11 @@ function validateOpening(value){
 const assetTypes = new Map([['html','text/html; charset=utf-8'],['js','text/javascript; charset=utf-8'],['css','text/css; charset=utf-8'],['svg','image/svg+xml'],['png','image/png'],['webp','image/webp'],['woff2','font/woff2'],['zip','application/zip']]);
 const adminDir = new URL('../admin/dist/',import.meta.url);
 
-export function createContentHandler({file,token,publicPrefix='',bundledDirectory,bundledCatalog,bucket,probeBucket=testBucket}) {
+export function createContentHandler({file,token,publicPrefix='',bundledDirectory,bundledCatalog,bucket,localCdn=process.env.LOVEHOUSE_LOCAL_CDN,probeBucket=testBucket}) {
  if(!/^(?:\/[a-zA-Z0-9_-]+)*$/.test(publicPrefix))throw Error('Invalid LOVEHOUSE_PUBLIC_PREFIX');
+ const cdn=localCdn?new URL(localCdn):null;
+ if(cdn&&(cdn.protocol!=='https:'||cdn.username||cdn.password||cdn.pathname!=='/'||cdn.search||cdn.hash))
+  throw Error('LOVEHOUSE_LOCAL_CDN must be an HTTPS origin');
  const bundled=createBundledCatalog({publicPrefix,directory:bundledDirectory,catalog:bundledCatalog});
  const publicAsset=asset=>({...asset,path:publicPrefix+asset.path});
  const storageFile=file+'.storage.json';
@@ -287,7 +290,16 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   let url;
   try { url = new URL(request.url,'http://localhost') }
   catch { sendJson(response,400,{error:'Invalid request URL'}); return }
-  const {pathname} = url;
+  let {pathname}=url;
+  const localOnly=pathname.startsWith('/cdn-local/');
+  if(localOnly){
+   pathname=pathname.slice('/cdn-local'.length);
+   if(!['GET','HEAD'].includes(request.method)||!/^\/(?:media|packages|android-update\/blobs)\//.test(pathname)){
+    sendJson(response,404,{error:'Not found'});return;
+   }
+  }
+  const cdnUrl=cdn&&!localOnly?new URL(publicPrefix+'/cdn-local'+pathname,cdn).href:undefined;
+
   if(pathname==='/download'&&['GET','HEAD'].includes(request.method)){
    response.writeHead(308,{Location:publicPrefix+'/download/','Cache-Control':'no-store'}).end();
    return;
@@ -332,7 +344,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
   }
   if(pathname.startsWith('/android-update/')&&['GET','HEAD'].includes(request.method)){
    try{
-    if(!await androidUpdate.serve(request,response,pathname.slice('/android-update/'.length)))sendJson(response,404,{error:'No update available'});
+    if(!await androidUpdate.serve(request,response,pathname.slice('/android-update/'.length),{localOnly,cdnUrl}))sendJson(response,404,{error:'No update available'});
    }catch{if(!response.headersSent)sendJson(response,500,{error:'Unable to serve Android update'})}
    return;
   }
@@ -350,7 +362,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
    return;
   }
   if(pathname.startsWith('/packages/')&&['GET','HEAD'].includes(request.method)){
-   try{if(!await packages.serve(request,response,pathname))sendJson(response,404,{error:'Package not found'})}
+   try{if(!await packages.serve(request,response,pathname,{localOnly,cdnUrl}))sendJson(response,404,{error:'Package not found'})}
    catch{if(!response.headersSent)sendJson(response,500,{error:'Unable to download package'})}
    return;
   }
@@ -384,7 +396,7 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
    const id=pathname.slice('/media/'.length);
    if(isAssetId(id)){
     try {
-     const data=await assets.download(id,{head:request.method==='HEAD'});
+     const data=await assets.download(id,{head:request.method==='HEAD',localOnly,cdnUrl});
      if(data?.location){
       response.writeHead(302,{Location:data.location,'Cache-Control':'private, no-store',
        'Access-Control-Allow-Origin':'*','Referrer-Policy':'no-referrer','Content-Length':'0'}).end();

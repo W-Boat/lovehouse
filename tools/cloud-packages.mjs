@@ -1,6 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto';
-import {createWriteStream} from 'node:fs';
-import {mkdir,readFile,readdir,rename,rm,writeFile} from 'node:fs/promises';
+import {createReadStream,createWriteStream} from 'node:fs';
+import {mkdir,readFile,readdir,rename,rm,stat,writeFile} from 'node:fs/promises';
 import {createBlobStore} from './cloud-blob-storage.mjs';
 import {join} from 'node:path';
 import {Transform} from 'node:stream';
@@ -139,7 +139,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   if(received!==bytes||digest.digest('hex')!==sha256||header.toString('hex')!=='504b0304')throw Error('Bucket package verification failed');
   return register(platform,version,sha256,bytes,serialize,baseVersion,title);
  }
- async function serve(request,response,pathname){
+ async function serve(request,response,pathname,{localOnly=false,cdnUrl}={}){
   const match=/^\/packages\/([a-f0-9]{64})\/(lovehouse-(android|windows)-[A-Za-z0-9._-]+\.(apk|zip))$/.exec(pathname);
   if(!match)return false;
   const [,sha256,name,platform,extension]=match;
@@ -147,9 +147,11 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   if(format.extension!==extension)return false;
   const id=sha256+'.'+extension,blob=join(directory,id);
   const released=(await history()).find(row=>row.sha256===sha256&&row.name===name&&row.platform===platform);
-  const size=released?.bytes??await blobsFor(platform).size(id,blob);
+  const localSize=()=>stat(blob).then(info=>info.isFile()?info.size:undefined).catch(error=>{if(error.code!=='ENOENT')throw error});
+  const size=localOnly?await localSize():released?.bytes??await blobsFor(platform).size(id,blob);
+  if(localOnly&&(!released||size!==released.bytes))return false;
   if(size===undefined)return false;
-  const location=await blobsFor(platform).downloadUrl(id,blob,size,name,format.mime,{head:request.method==='HEAD'});
+  const location=localOnly?null:await blobsFor(platform).downloadUrl(id,blob,size,name,format.mime,{head:request.method==='HEAD'})??cdnUrl;
   if(location){
    response.writeHead(302,{Location:location,'Cache-Control':'private, no-store',
     'Referrer-Policy':'no-referrer','Content-Length':'0'}).end();
@@ -170,7 +172,7 @@ export function createPackageStore(directory,publicPrefix,bucket,rules,androidBu
   }
   headers['Content-Length']=end-start+1;
   let body;
-  try{if(request.method!=='HEAD')body=await blobsFor(platform).stream(id,blob,size,status===206?{start,end}:undefined)}
+  try{if(request.method!=='HEAD')body=localOnly?createReadStream(blob,status===206?{start,end}:undefined):await blobsFor(platform).stream(id,blob,size,status===206?{start,end}:undefined)}
   catch(error){if(error.code==='ENOENT')return false;throw error}
   response.writeHead(status,headers);
   if(body)await pipeline(body,response);

@@ -1,5 +1,5 @@
 import {createHash, randomUUID} from 'node:crypto';
-import {mkdir, readdir, readFile, rename, rm, writeFile} from 'node:fs/promises';
+import {mkdir, readdir, readFile, rename, rm, stat, writeFile} from 'node:fs/promises';
 import {createBlobStore} from './cloud-blob-storage.mjs';
 import {join} from 'node:path';
 
@@ -105,12 +105,15 @@ export function createAssetStore(directory,bucket,rules) {
    await rm(record(id));
    return true;
   },
-  async download(id,{head=false}={}){
+  async download(id,{head=false,localOnly=false,cdnUrl}={}){
    const asset=await get(id);
    if(!asset)return;
    const mime=formats.get(id.split('.').at(-1));
+   const local=()=>stat(blob(id)).then(info=>info.isFile()&&info.size===asset.bytes).catch(error=>{if(error.code==='ENOENT')return false;throw error});
+   if(localOnly)return await local()?{bytes:await readFile(blob(id)),mime}:undefined;
    const location=await blobs.downloadUrl(id,blob(id),asset.bytes,id,mime,{head,disposition:'inline'});
    if(location)return {location,mime};
+   if(cdnUrl&&await local())return {location:cdnUrl,mime};
    return {bytes:await blobs.bytes(id,blob(id),asset.bytes),mime};
   },
   async read(id){
