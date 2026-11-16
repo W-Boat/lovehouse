@@ -22,14 +22,17 @@ function unionDuration(intervals){
 export function summarizeSessions(rows,now=Date.now()){
  const groups=new Map();
  for(const row of rows){
-  const key=JSON.stringify([row.ip,row.platform,row.userAgent,row.screen??'']);
+  const key=JSON.stringify([row.platform,row.userAgent,row.screen??'']);
   let group=groups.get(key);
   if(!group){
    group={ip:row.ip,platform:row.platform,userAgent:row.userAgent,screen:row.screen,enteredAt:row.enteredAt,lastSeenAt:row.lastSeenAt,visits:0,intervals:[]};
    groups.set(key,group);
   }
   group.enteredAt=Math.min(group.enteredAt,row.enteredAt);
-  group.lastSeenAt=Math.max(group.lastSeenAt,row.lastSeenAt);
+  if(row.lastSeenAt>group.lastSeenAt){
+   group.lastSeenAt=row.lastSeenAt;
+   group.ip=row.ip;
+  }
   group.visits++;
   const periods=Array.isArray(row.periods)?row.periods:[[row.enteredAt,row.lastSeenAt]];
   for(const [start,end] of periods)group.intervals.push([Math.max(now-retention,start),Math.min(now,end+300000)]);
@@ -80,7 +83,7 @@ export function createStats(file){
       const periods=existing.periods??[[existing.enteredAt,existing.lastSeenAt]];
       if(now-existing.lastSeenAt<=onlineWindow)periods[periods.length-1][1]=now;
       else periods.push([now,now]);
-      existing.periods=periods;existing.lastSeenAt=now;
+      existing.periods=periods;existing.lastSeenAt=now;existing.ip=ip;
      }
      else rows.unshift({id,ip,platform:fields.get('platform')?.slice(0,80)??'',screen:fields.get('screen')?.slice(0,20)??'',language:fields.get('language')?.slice(0,24)??'',userAgent:String(request.headers['user-agent']??'').slice(0,240),enteredAt:now,lastSeenAt:now,periods:[[now,now]]});
      await save(rows.slice(0,10000));
