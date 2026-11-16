@@ -376,12 +376,18 @@ export function createContentHandler({file,token,publicPrefix='',bundledDirector
    try {
     let json = await readFile(file,'utf8');
     const snapshot=JSON.parse(json);
+    let projected=false;
     if(url.searchParams.get('features')!=='animated-scenes-v1' &&
       (snapshot.scenes?.some(scene=>scene.layers?.length)||snapshot.interactions?.some(item=>item.visual))){
      snapshot.scenes=snapshot.scenes?.map(({layers,...scene})=>scene);
      snapshot.interactions=snapshot.interactions?.map(({visual,...item})=>item);
-     json=prepareSnapshot(snapshot).json;
+     projected=true;
     }
+    if(url.searchParams.get('stats-heartbeat')!=='1'&&snapshot.statistics?.heartbeatMinutes!==undefined){
+     snapshot.statistics={enabled:snapshot.statistics.enabled};
+     projected=true;
+    }
+    if(projected)json=prepareSnapshot(snapshot).json;
     const {revision} = JSON.parse(json);
     const etag = '"' + revision + '"';
     if (url.searchParams.get('revision')===revision || request.headers['if-none-match']===etag) {

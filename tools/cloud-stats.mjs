@@ -3,7 +3,8 @@ import {isIP} from 'node:net';
 import {randomUUID} from 'node:crypto';
 
 const retention=7*86400000;
-const onlineWindow=6*60000;
+const defaultHeartbeatMinutes=5;
+const heartbeatWindow=minutes=>(minutes+1)*60000;
 export function clientIp(request){
  const peer=request.socket.remoteAddress??'';
  const forwarded=request.headers['x-real-ip'];
@@ -19,7 +20,7 @@ function unionDuration(intervals){
  }
  return total+end-start;
 }
-export function summarizeSessions(rows,now=Date.now()){
+export function summarizeSessions(rows,now=Date.now(),heartbeatMinutes=defaultHeartbeatMinutes){
  const groups=new Map();
  for(const row of rows){
   const key=JSON.stringify([row.platform,row.userAgent,row.screen??'']);
@@ -35,18 +36,20 @@ export function summarizeSessions(rows,now=Date.now()){
   }
   group.visits++;
   const periods=Array.isArray(row.periods)?row.periods:[[row.enteredAt,row.lastSeenAt]];
-  for(const [start,end] of periods)group.intervals.push([Math.max(now-retention,start),Math.min(now,end+300000)]);
+  for(const [start,end] of periods)group.intervals.push([Math.max(now-retention,start),Math.min(now,end+heartbeatMinutes*60000)]);
  }
  const sessions=[...groups.values()].sort((a,b)=>b.lastSeenAt-a.lastSeenAt).map(({intervals,...row})=>({
-  ...row,online:now-row.lastSeenAt<onlineWindow,estimatedSeconds:Math.round(unionDuration(intervals)/1000),
+  ...row,online:now-row.lastSeenAt<heartbeatWindow(heartbeatMinutes),estimatedSeconds:Math.round(unionDuration(intervals)/1000),
   enteredAt:new Date(row.enteredAt).toISOString(),lastSeenAt:new Date(row.lastSeenAt).toISOString(),
  }));
- return {online:sessions.filter(row=>row.online).length,totalEstimatedSeconds:sessions.reduce((sum,row)=>sum+row.estimatedSeconds,0),sessions};
+ return {heartbeatMinutes,online:sessions.filter(row=>row.online).length,totalEstimatedSeconds:sessions.reduce((sum,row)=>sum+row.estimatedSeconds,0),sessions};
 }
 export function validateStats(value){
  if(value===undefined)return;
  if(!value||typeof value!=='object'||typeof value.enabled!=='boolean')throw Error('Invalid statistics configuration');
- return {enabled:value.enabled};
+ const {heartbeatMinutes}=value;
+ if(heartbeatMinutes!==undefined&&(!Number.isInteger(heartbeatMinutes)||heartbeatMinutes<1||heartbeatMinutes>60))throw Error('心跳间隔必须为 1 至 60 的整数分钟');
+ return {enabled:value.enabled,...(heartbeatMinutes===undefined?{}:{heartbeatMinutes})};
 }
 export function createStats(file){
  const database=file+'.statistics.json';
@@ -81,7 +84,7 @@ export function createStats(file){
      if(existing&&now-existing.lastSeenAt<60000)return;
      if(existing){
       const periods=existing.periods??[[existing.enteredAt,existing.lastSeenAt]];
-      if(now-existing.lastSeenAt<=onlineWindow)periods[periods.length-1][1]=now;
+      if(now-existing.lastSeenAt<=heartbeatWindow(config.statistics.heartbeatMinutes??defaultHeartbeatMinutes))periods[periods.length-1][1]=now;
       else periods.push([now,now]);
       existing.periods=periods;existing.lastSeenAt=now;existing.ip=ip;
      }
@@ -94,7 +97,8 @@ export function createStats(file){
   summary:()=>queue(async()=>{
    const now=Date.now(),all=await load(),rows=all.filter(row=>now-row.lastSeenAt<retention);
    if(rows.length!==all.length)await save(rows);
-   return summarizeSessions(rows,now);
+   const config=JSON.parse(await readFile(file,'utf8').catch(error=>{if(error.code==='ENOENT')return '{}';throw error}));
+   return summarizeSessions(rows,now,config.statistics?.heartbeatMinutes??defaultHeartbeatMinutes);
   }),
  };
 }

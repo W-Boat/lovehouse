@@ -36,7 +36,7 @@ const sections = [
  ['gifts','礼物配置','按礼物 ID 修改内容、HTTPS 配图、坐标 x/y 和落脚点 point。',{}],
  ['resources','启动资源包','进入游戏时预下载这些文件。',[]],
  ['opening','定时开放','设置开放时间和可提前进入的公网 IP。',null],
- ['statistics','在线统计','启用后采集 IP、基础设备和访问时间，每 5 分钟更新一次在线状态。',{enabled:false}],
+ ['statistics','在线统计','启用后采集 IP、基础设备和访问时间，按已发布的心跳间隔更新在线状态。',{enabled:false}],
  ['notification','系统通知','游戏运行期间会定期同步。填写标题、正文并启用后发布。',{enabled:false,title:'',body:''}],
  ['announcement','游戏私告','启用后在玩家进入小屋时显示。',{enabled:false,title:'',body:''}],
  ['giftGames','礼物小游戏','以礼物 ID 绑定独立游戏的 HTTPS 地址。',{}],
@@ -374,7 +374,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     if(!response.ok)throw Error('无法读取发布状态');
     return response.json();
    };
-   const [content,packages,resources]=await Promise.allSettled([read('content.json?features=animated-scenes-v1'),read('packages.json?view=full'),read('android-update/status.json')]);
+   const [content,packages,resources]=await Promise.allSettled([read('content.json?features=animated-scenes-v1&stats-heartbeat=1'),read('packages.json?view=full'),read('android-update/status.json')]);
    if(content.status==='fulfilled')publicRevision.value=content.value.revision??'';
    if(packages.status==='fulfilled')publicPackages.value=packages.value;
    if(resources.status==='fulfilled')resourceVersion.value=resources.value.active?.version??null;
@@ -614,7 +614,7 @@ const formSections=['texts','giftGames','musicRoom','media','gifts','announcemen
     <n-form-item label="标题"><n-input v-model:value="objectValue.title" :maxlength="80"/></n-form-item>
     <n-form-item label="正文"><n-input v-model:value="objectValue.body" type="textarea" :maxlength="4000" :autosize="{minRows:5,maxRows:12}"/></n-form-item>
    </n-form>
-   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch v-model:value="objectValue.enabled"/> 启用统计</label><IconButton label="刷新在线统计" :icon="refreshIcon" @click="readStatistics"/><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 个客户端 · 7 天内 '+statisticsReport.sessions.length+' 个去重客户端 · 估算总在线 '+durationLabel(statisticsReport.totalEstimatedSeconds))}}</p><small>按客户端、设备平台和屏幕尺寸合并，显示最近 IP。重叠会话不重复累计。每次心跳最多推算后续 5 分钟，统计保留 7 天。</small><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
+   <template v-else-if="selected==='statistics'"><label class="stats-switch"><n-switch v-model:value="objectValue.enabled"/> 启用统计</label><n-form-item label="心跳间隔（分钟）"><n-input-number :value="objectValue.heartbeatMinutes??5" :min="1" :max="60" :precision="0" @update:value="value=>{if(value!=null)objectValue.heartbeatMinutes=value}"/></n-form-item><IconButton label="刷新在线统计" :icon="refreshIcon" @click="readStatistics"/><template v-if="statisticsReport"><p>{{statisticsReport.error||('当前在线 '+statisticsReport.online+' 个客户端 · 7 天内 '+statisticsReport.sessions.length+' 个去重客户端 · 估算总在线 '+durationLabel(statisticsReport.totalEstimatedSeconds))}}</p><small>按客户端、设备平台和屏幕尺寸合并，显示最近 IP。重叠会话不重复累计。每次心跳最多推算后续 {{statisticsReport.heartbeatMinutes??5}} 分钟，统计保留 7 天。</small><n-data-table v-if="statisticsReport.sessions" :data="statisticsReport.sessions" :columns="statisticsColumns" :pagination="{pageSize:20}" :scroll-x="780"/></template></template>
    <section v-else-if="selected==='bundled'" class="bundled-browser">
     <n-tabs v-model:value="bundledTab" type="line">
      <n-tab-pane v-for="[id,title] in [['texts','文案'],['worlds','场景与互动'],['gifts','礼物'],['media','媒体'],['musicRoom','歌单'],['announcement','游戏私告']]" :key="id" :name="id" :tab="title"/>

@@ -13,7 +13,7 @@ import {parseMusicConfig,type MusicRoomConfig} from './music-config';
 declare const __CONTENT_SERVER__: string;
 export function defaultContentServer(){return typeof __CONTENT_SERVER__==='string'?__CONTENT_SERVER__:''}
 type Portal = {label:string;url:string};
-let statisticsEnabled=false;
+let statisticsEnabled=false,statisticsHeartbeatMinutes=5;
 let initialNotification:ReturnType<typeof validateAnnouncement>;
 export let cloudAnnouncement:ReturnType<typeof validateAnnouncement>;
 export let cloudPortals: Portal[] = [];
@@ -58,6 +58,7 @@ export async function syncCloudContent(){
  try {snapshot=await verifyCloudSnapshot(JSON.parse(localStorage.getItem(key)??'null'))}catch{}
  try {
   endpoint.searchParams.set('features','animated-scenes-v1');
+  endpoint.searchParams.set('stats-heartbeat','1');
   if(snapshot)endpoint.searchParams.set('revision',snapshot.revision);
   const response=await fetch(endpoint,{signal:AbortSignal.timeout(2200),credentials:'omit',cache:'no-store'});
   if(response.status!==304 && response.status!==204){
@@ -96,6 +97,7 @@ export function installCloudSnapshot(snapshot:CloudSnapshot){
   cloudAnnouncement=snapshot.announcement;
   initialNotification=snapshot.notification;
   statisticsEnabled=snapshot.statistics?.enabled===true;
+  statisticsHeartbeatMinutes=snapshot.statistics?.heartbeatMinutes??5;
   for(const gift of birthdayConfig.gifts){
    const override=snapshot.gifts?.[gift.id];
    if(!override)continue;
@@ -129,8 +131,14 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
   const form=new URLSearchParams({session,platform:navigator.platform,screen:screen.width+'x'+screen.height,language:navigator.language});
   try{await fetch(new URL('statistics',endpoint),{method:'POST',body:form,credentials:'omit',signal:AbortSignal.timeout(4000)})}catch{}
  }
- void sendOnlineStatus();
- window.setInterval(sendOnlineStatus,300000);
+ let heartbeatTimer:number|undefined;
+ function scheduleHeartbeat(){
+  window.clearInterval(heartbeatTimer);
+  if(!statisticsEnabled)return;
+  void sendOnlineStatus();
+  heartbeatTimer=window.setInterval(sendOnlineStatus,statisticsHeartbeatMinutes*60000);
+ }
+ scheduleHeartbeat();
  const show=async(notice:ReturnType<typeof validateAnnouncement>)=>{
   if(!notice?.enabled||!notice.body.trim())return;
   const key=JSON.stringify([notice.title,notice.body]);
@@ -144,7 +152,7 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
   if(checking||document.hidden)return;
   checking=true;
   try{
-   const url=new URL(endpoint);url.searchParams.set('features','animated-scenes-v1');
+   const url=new URL(endpoint);url.searchParams.set('features','animated-scenes-v1');url.searchParams.set('stats-heartbeat','1');
    if(revision)url.searchParams.set('revision',revision);
    const response=await fetch(url,{signal:AbortSignal.timeout(2500),credentials:'omit',cache:'no-store'});
    if(response.status!==304&&response.status!==204&&response.ok){
@@ -155,18 +163,24 @@ export function watchSystemNotifications(display:(title:string,body:string)=>voi
      document.dispatchEvent(new CustomEvent('cottage-cloud-patch',{detail:snapshot}));
     }
     const enabled=snapshot.statistics?.enabled===true;
-    if(enabled&&!statisticsEnabled){statisticsEnabled=true;void sendOnlineStatus()}else statisticsEnabled=enabled;
+    const interval=snapshot.statistics?.heartbeatMinutes??5;
+    if(enabled!==statisticsEnabled||interval!==statisticsHeartbeatMinutes){
+     statisticsEnabled=enabled;statisticsHeartbeatMinutes=interval;scheduleHeartbeat();
+    }
    }
   }catch{}finally{checking=false}
  }
  window.setInterval(poll,60000);
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)void poll()});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){void poll();scheduleHeartbeat()}});
 }
 
 function readStatistics(value:unknown){
  if(value===undefined)return;
  if(!value||typeof value!=='object'||!('enabled' in value)||typeof value.enabled!=='boolean')throw Error('Invalid statistics configuration');
- return {enabled:value.enabled};
+ const interval='heartbeatMinutes' in value?value.heartbeatMinutes:undefined;
+ if(interval===undefined)return {enabled:value.enabled};
+ if(typeof interval!=='number'||!Number.isInteger(interval)||interval<1||interval>60)throw Error('Invalid statistics heartbeat interval');
+ return {enabled:value.enabled,heartbeatMinutes:interval};
 }
 
 function readResources(value:unknown){
